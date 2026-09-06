@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - workers/*
+
+onlyBuiltDependencies:
+  - esbuild
+  - supabase
+
+# Refine MUI supports MUI 6, while its optional notistack 2 dependency still
+# advertises an old MUI 5-only peer range.
+peerDependencyRules:
+  allowedVersions:
+    "@mui/material": "6"

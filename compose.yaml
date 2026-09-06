@@ -1,0 +1,145 @@
+name: estudio-automation
+
+services:
+  kestra-postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: ${KESTRA_DB_PASSWORD:-kestra-local}
+    volumes:
+      - kestra-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kestra -d kestra"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  kestra:
+    image: kestra/kestra:v1.3.29
+    user: root
+    command: server standalone --worker-thread=32
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://kestra-postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: ${KESTRA_DB_PASSWORD:-kestra-local}
+        kestra:
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: /app/storage
+          queue:
+            type: postgres
+          tasks:
+            tmp-dir:
+              path: /tmp/kestra-wd/tmp
+          server:
+            basic-auth:
+              enabled: true
+              username: ${KESTRA_BASIC_AUTH_USERNAME:-admin@local.test}
+              password: ${KESTRA_BASIC_AUTH_PASSWORD:-change-me-local}
+    ports:
+      - "127.0.0.1:8082:8080"
+    volumes:
+      - kestra-data:/app/storage
+      - kestra-work:/tmp/kestra-wd
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      kestra-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  superset-postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: ${SUPERSET_DB_PASSWORD:-superset-local}
+    volumes:
+      - superset-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset -d superset"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  superset-redis:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - superset-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  superset-init:
+    image: estudio-automation/superset:6.1.0
+    build:
+      context: ./infra/superset
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        superset db upgrade &&
+        (superset fab create-admin
+        --username "$$SUPERSET_ADMIN_USERNAME"
+        --firstname Local
+        --lastname Admin
+        --email "$$SUPERSET_ADMIN_EMAIL"
+        --password "$$SUPERSET_ADMIN_PASSWORD" || true) &&
+        superset init
+    environment: &superset-environment
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-change-me-local-with-at-least-42-characters}
+      SUPERSET_DB_PASSWORD: ${SUPERSET_DB_PASSWORD:-superset-local}
+      SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-change-me-local}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@local.test}
+    volumes:
+      - ./infra/superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      superset-postgres:
+        condition: service_healthy
+      superset-redis:
+        condition: service_healthy
+    restart: "no"
+
+  superset:
+    image: estudio-automation/superset:6.1.0
+    build:
+      context: ./infra/superset
+    command: >-
+      gunicorn --bind 0.0.0.0:8088 --workers 2 --worker-class gthread
+      --threads 20 --timeout 120 --limit-request-line 0
+      --limit-request-field_size 0 "superset.app:create_app()"
+    environment: *superset-environment
+    ports:
+      - "127.0.0.1:8088:8088"
+    volumes:
+      - ./infra/superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8088/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  kestra-postgres-data:
+  kestra-data:
+  kestra-work:
+  superset-postgres-data:
+  superset-redis-data:

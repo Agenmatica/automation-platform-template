@@ -1,0 +1,10 @@
+services:
+  kestra:
+    ports: !reset []
+
+  superset:
+    ports: !reset []
+
+# On the VPS, attach a reverse proxy to the generated default network and route
+# HTTPS traffic to kestra:8080 and superset:8088. Required secrets live in the
+# VPS .env file and are never committed.

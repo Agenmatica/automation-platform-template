@@ -1,0 +1,19 @@
+{
+  "name": "estudio-automation",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "pnpm --filter @estudio/web dev",
+    "build": "pnpm --filter @estudio/web build",
+    "lint": "pnpm --filter @estudio/web lint",
+    "preview": "pnpm --filter @estudio/web preview",
+    "supabase": "supabase",
+    "infra:config": "docker compose config --quiet",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "supabase": "^2.57.2"
+  }
+}

@@ -1,0 +1,21 @@
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+.DS_Store
+Thumbs.db
+*.log
+
+# Agent-local state; shared skills and instructions remain versioned.
+.claude/settings.local.json
+.codex/

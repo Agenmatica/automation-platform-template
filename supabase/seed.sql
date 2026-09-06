@@ -1,0 +1,1 @@
+-- Datos de demostración se agregarán sólo cuando exista la primera spec de negocio.
