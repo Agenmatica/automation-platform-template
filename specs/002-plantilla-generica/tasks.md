@@ -112,8 +112,8 @@ y el CI corre exitosamente.
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Bajar y reconstruir `infra/runner` (`docker compose -f infra/runner/compose.yaml down` + `pnpm dev:runner`) para que las 3 réplicas se registren contra el repo nuevo (depende de T010, T011)
-- [ ] T029 [US3] Confirmar vía `gh api repos/Agenmatica/automation-platform-template/actions/runners` que las 3 réplicas están `online`, sin registros huérfanos del nombre viejo
+- [X] T028 [US3] Bajar y reconstruir `infra/runner` (`docker compose -f infra/runner/compose.yaml down` + `pnpm dev:runner`) para que las 3 réplicas se registren contra el repo nuevo (depende de T010, T011) — el `down` con el compose nuevo no encontró los contenedores viejos (proyecto Docker con nombre distinto); hubo que bajarlos explícitamente con `--project-name estudio-automation-runner-dev`
+- [X] T029 [US3] Confirmar vía `gh api repos/Agenmatica/automation-platform-template/actions/runners` que las 3 réplicas están `online`, sin registros huérfanos del nombre viejo — el cleanup automático del entrypoint no llegó a desregistrar a tiempo del `down`; se borraron los 3 registros huérfanos a mano vía API antes de levantar los nuevos
 - [ ] T030 [US3] Push de todos los commits a `main`, `gh run watch` para confirmar que los 3 jobs terminan en éxito, y verificar con `gh run view <id> --json jobs` que la duración total es menor a 5 minutos (SC-003) (depende de T022, T027, T029)
 
 **Checkpoint**: El CI real, corriendo en GitHub, confirma que todo el rename funciona de punta a punta.
