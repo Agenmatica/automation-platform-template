@@ -114,9 +114,15 @@ y el CI corre exitosamente.
 
 - [X] T028 [US3] Bajar y reconstruir `infra/runner` (`docker compose -f infra/runner/compose.yaml down` + `pnpm dev:runner`) para que las 3 réplicas se registren contra el repo nuevo (depende de T010, T011) — el `down` con el compose nuevo no encontró los contenedores viejos (proyecto Docker con nombre distinto); hubo que bajarlos explícitamente con `--project-name estudio-automation-runner-dev`
 - [X] T029 [US3] Confirmar vía `gh api repos/Agenmatica/automation-platform-template/actions/runners` que las 3 réplicas están `online`, sin registros huérfanos del nombre viejo — el cleanup automático del entrypoint no llegó a desregistrar a tiempo del `down`; se borraron los 3 registros huérfanos a mano vía API antes de levantar los nuevos
-- [ ] T030 [US3] Push de todos los commits a `main`, `gh run watch` para confirmar que los 3 jobs terminan en éxito, y verificar con `gh run view <id> --json jobs` que la duración total es menor a 5 minutos (SC-003) (depende de T022, T027, T029)
+- [X] T030 [US3] Push de todos los commits a `main`, `gh run watch` para confirmar que los 3 jobs terminan en éxito, y verificar con `gh run view <id> --json jobs` que la duración total es menor a 5 minutos (SC-003) (depende de T022, T027, T029) — encontró 4 problemas reales no anticipados en el plan (ver nota abajo)
 
 **Checkpoint**: El CI real, corriendo en GitHub, confirma que todo el rename funciona de punta a punta.
+
+**Desvíos encontrados en T030** (no anticipados en plan.md/research.md, corregidos en el momento):
+1. `infra:config:runner` con `--env-file .env` explícito falla duro en CI (el archivo no existe ahí, a propósito) — se sacó esa bandera de `infra:config:runner` (no de `dev:runner`, que sí necesita el secreto real).
+2. `test:db:ci` fallaba con error de TLS contra el Postgres local — faltaba `sslmode=disable` explícito en la URL.
+3. `supabase test db --db-url` no autodescubría `supabase/tests/` como sí hace `--local` — necesitaba el path explícito.
+4. El fix anterior tampoco alcanzó: `supabase test db` arma su propio contenedor `pg_prove` internamente, y con Docker-fuera-de-Docker ese contenedor anidado no puede montar los `.sql` del checkout (esa ruta solo existe dentro del contenedor del runner). Se resolvió instalando `pg_prove` directo en la imagen del runner y corriéndolo sin pasar por ese wrapper — lo que a su vez destapó que `pgtap` no estaba habilitada como extensión explícita (`supabase test db` la habilitaba sola, como efecto secundario oculto). Se agregó la migración `enable_pgtap`, mismo criterio que `enable_pgvector`.
 
 ---
 
@@ -124,9 +130,9 @@ y el CI corre exitosamente.
 
 **Purpose**: Verificación integral de que no quedó nada suelto
 
-- [ ] T031 [P] Correr los bloques 2 y 3 de `quickstart.md` (gates de validación completos, proyectos Docker locales) como cierre
-- [ ] T032 Barrido final: `git grep -i "estudio-automation\|estudio contable\|estudio/web"` sobre todo el repo (sin exclusiones esta vez) y confirmar cero resultados — es el checkpoint real de SC-001
-- [ ] T033 Marcar todas las tareas de este archivo como completas y anotar cualquier desvío respecto al plan
+- [X] T031 [P] Correr los bloques 2 y 3 de `quickstart.md` (gates de validación completos, proyectos Docker locales) como cierre — 4 de los 6 productos locales (kestra, superset, playwright, refine) seguían corriendo con contenedores del nombre viejo (nunca se habían reiniciado tras el rename de sus compose.yaml); se bajaron con `--project-name` explícito y se relevantaron, ahora los 6 muestran el prefijo nuevo
+- [X] T032 Barrido final: `git grep -i "estudio-automation\|estudio contable\|estudio/web"` sobre todo el repo (sin exclusiones esta vez) y confirmar cero resultados — es el checkpoint real de SC-001. Único resultado: dentro de `specs/002-plantilla-generica/` (spec, plan, research, tasks — documentan el rename en sí, igual que el Sync Impact Report de la constitución). Código, infra, docs de producto y constitución: cero coincidencias.
+- [X] T033 Marcar todas las tareas de este archivo como completas y anotar cualquier desvío respecto al plan — desvíos documentados en la nota de T030 (4 problemas reales de CI no anticipados, todos corregidos) y en T028/T029/T032 (detalles puntuales de ejecución)
 
 ---
 
