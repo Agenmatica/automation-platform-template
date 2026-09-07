@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-07
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Convertir el repo estudio-automation en automation-platform-template: una base reutilizable para productos de automatización multi-tenant. Alcance de esta spec: renombrar el proyecto de \"estudio-automation\" a \"automation-platform-template\" en todo el código, infraestructura Docker, documentación y el repo de GitHub (ya renombrado a Agenmatica/automation-platform-template), eliminando todo el lenguaje específico de \"estudios contables\" para que el template quede genérico. Incluye reescribir la constitución (título, Principio I en términos de aislamiento multi-tenant genérico en vez de \"seguridad contable\"), actualizar CLAUDE.md/AGENTS.md con las reglas nuevas acordadas en la conversación (commits en castellano, criterio de cuándo hace falta spec, licencias permisivas/código entregable, CI self-hosted), y reconstruir el runner self-hosted contra el repo renombrado. No incluye todavía las tablas de organizaciones/usuarios_organizacion ni la consola de superadmin (eso queda para specs separadas después)."
 
