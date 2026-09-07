@@ -1,61 +1,6 @@
-name: estudio-automation
+name: estudio-automation-superset-dev
 
 services:
-  kestra-postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: kestra
-      POSTGRES_USER: kestra
-      POSTGRES_PASSWORD: ${KESTRA_DB_PASSWORD:-kestra-local}
-    volumes:
-      - kestra-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kestra -d kestra"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  kestra:
-    image: kestra/kestra:v1.3.29
-    user: root
-    command: server standalone --worker-thread=32
-    environment:
-      KESTRA_CONFIGURATION: |
-        datasources:
-          postgres:
-            url: jdbc:postgresql://kestra-postgres:5432/kestra
-            driverClassName: org.postgresql.Driver
-            username: kestra
-            password: ${KESTRA_DB_PASSWORD:-kestra-local}
-        kestra:
-          repository:
-            type: postgres
-          storage:
-            type: local
-            local:
-              base-path: /app/storage
-          queue:
-            type: postgres
-          tasks:
-            tmp-dir:
-              path: /tmp/kestra-wd/tmp
-          server:
-            basic-auth:
-              enabled: true
-              username: ${KESTRA_BASIC_AUTH_USERNAME:-admin@local.test}
-              password: ${KESTRA_BASIC_AUTH_PASSWORD:-change-me-local}
-    ports:
-      - "127.0.0.1:8082:8080"
-    volumes:
-      - kestra-data:/app/storage
-      - kestra-work:/tmp/kestra-wd
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      kestra-postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
   superset-postgres:
     image: postgres:17-alpine
     environment:
@@ -86,7 +31,7 @@ services:
   superset-init:
     image: estudio-automation/superset:6.1.0
     build:
-      context: ./infra/superset
+      context: .
     entrypoint: ["/bin/sh", "-c"]
     command:
       - >-
@@ -106,7 +51,7 @@ services:
       SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-change-me-local}
       SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@local.test}
     volumes:
-      - ./infra/superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
     depends_on:
       superset-postgres:
         condition: service_healthy
@@ -117,7 +62,7 @@ services:
   superset:
     image: estudio-automation/superset:6.1.0
     build:
-      context: ./infra/superset
+      context: .
     command: >-
       gunicorn --bind 0.0.0.0:8088 --workers 2 --worker-class gthread
       --threads 20 --timeout 120 --limit-request-line 0
@@ -126,7 +71,7 @@ services:
     ports:
       - "127.0.0.1:8088:8088"
     volumes:
-      - ./infra/superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
     depends_on:
       superset-init:
         condition: service_completed_successfully
@@ -138,8 +83,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  kestra-postgres-data:
-  kestra-data:
-  kestra-work:
   superset-postgres-data:
   superset-redis-data:

@@ -17,3 +17,6 @@ revisa `.specify/memory/constitution.md` y los artefactos de la funcionalidad en
 - Activa RLS en toda tabla expuesta y nunca uses la service-role key en el navegador.
 - No guardes secretos en Git; actualiza únicamente los archivos `.env.example`.
 - Conserva desarrollo local reproducible y despliegues independientes por producto.
+- Nunca uses un Compose raíz: cada producto tiene su archivo en `infra/<producto>/compose.yaml`.
+- Toda spec debe declarar su alcance de entrega: `refine`, `supabase`, `kestra`, `superset` y/o `workers`.
+- Para desarrollo Docker usa los comandos `dev:<producto>`; para Refine fuera de Docker usa `dev:refine:host`.

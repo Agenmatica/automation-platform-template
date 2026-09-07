@@ -4,14 +4,27 @@
   "private": true,
   "packageManager": "pnpm@11.19.0",
   "scripts": {
-    "dev": "pnpm --filter @estudio/web dev",
+    "dev": "pnpm dev:refine",
+    "dev:refine": "docker compose -f infra/refine/compose.yaml up -d --build",
+    "dev:refine:host": "pnpm --filter @estudio/web dev",
+    "dev:supabase": "supabase start",
+    "dev:kestra": "docker compose -f infra/kestra/compose.yaml up -d",
+    "dev:superset": "docker compose -f infra/superset/compose.yaml up -d --build",
+    "dev:playwright": "docker compose -f infra/playwright/compose.yaml up -d",
+    "dev:down:refine": "docker compose -f infra/refine/compose.yaml down",
+    "dev:down:supabase": "supabase stop --project-id estudio-automation-supabase-dev",
+    "dev:down:kestra": "docker compose -f infra/kestra/compose.yaml down",
+    "dev:down:superset": "docker compose -f infra/superset/compose.yaml down",
+    "dev:down:playwright": "docker compose -f infra/playwright/compose.yaml down",
     "build": "pnpm --filter @estudio/web build",
     "lint": "pnpm --filter @estudio/web lint",
     "preview": "pnpm --filter @estudio/web preview",
     "supabase": "supabase",
-    "infra:config": "docker compose config --quiet",
-    "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down"
+    "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright",
+    "infra:config:refine": "docker compose -f infra/refine/compose.yaml config --quiet",
+    "infra:config:kestra": "docker compose -f infra/kestra/compose.yaml config --quiet",
+    "infra:config:superset": "docker compose -f infra/superset/compose.yaml config --quiet",
+    "infra:config:playwright": "docker compose -f infra/playwright/compose.yaml config --quiet"
   },
   "devDependencies": {
     "supabase": "^2.57.2"

@@ -1,0 +1,13 @@
+name: estudio-automation-playwright-dev
+
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.61.0-noble
+    init: true
+    user: pwuser
+    working_dir: /home/pwuser
+    command: >
+      /bin/sh -c "npx -y playwright@1.61.0 run-server --port 3000 --host 0.0.0.0"
+    ports:
+      - "127.0.0.1:3103:3000"
+    restart: unless-stopped

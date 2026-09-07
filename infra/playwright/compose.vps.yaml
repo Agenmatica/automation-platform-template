@@ -1,0 +1,8 @@
+services:
+  playwright:
+    ports:
+      - "127.0.0.1:3103:3000"
+
+# A diferencia de Kestra/Superset, este servicio no lo expone el reverse proxy
+# (nadie le pega desde afuera): solo lo consume Kestra, del mismo VPS. Se
+# mantiene el mismo mapeo de puerto en localhost que en desarrollo.

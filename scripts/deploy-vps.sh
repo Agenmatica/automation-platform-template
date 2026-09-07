@@ -13,12 +13,17 @@ if [[ ! -f "$env_file" ]]; then
   exit 2
 fi
 
-project="estudio-${environment}"
-docker compose --project-name "$project" --env-file "$env_file" \
-  -f compose.yaml -f compose.vps.yaml config --quiet
-docker compose --project-name "$project" --env-file "$env_file" \
-  -f compose.yaml -f compose.vps.yaml pull
-docker compose --project-name "$project" --env-file "$env_file" \
-  -f compose.yaml -f compose.vps.yaml up -d --remove-orphans
-docker compose --project-name "$project" --env-file "$env_file" \
-  -f compose.yaml -f compose.vps.yaml ps
+for product in kestra superset playwright; do
+  compose_base="infra/${product}/compose.yaml"
+  compose_vps="infra/${product}/compose.vps.yaml"
+  project="estudio-${environment}-${product}"
+
+  docker compose --project-name "$project" --env-file "$env_file" \
+    -f "$compose_base" -f "$compose_vps" config --quiet
+  docker compose --project-name "$project" --env-file "$env_file" \
+    -f "$compose_base" -f "$compose_vps" pull
+  docker compose --project-name "$project" --env-file "$env_file" \
+    -f "$compose_base" -f "$compose_vps" up -d --remove-orphans
+  docker compose --project-name "$project" --env-file "$env_file" \
+    -f "$compose_base" -f "$compose_vps" ps
+done

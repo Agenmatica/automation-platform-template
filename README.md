@@ -22,10 +22,16 @@ las dependencias del repositorio).
 Copy-Item .env.example .env
 Copy-Item apps/web/.env.example apps/web/.env.local
 pnpm install
-pnpm supabase start
-pnpm infra:up
-pnpm dev
+pnpm dev:supabase
+pnpm dev:refine
+pnpm dev:kestra
+pnpm dev:superset
 ```
+
+Cada comando levanta sólo un producto Docker y queda agrupado de forma
+independiente en Docker Desktop. Para detener uno, ejecuta
+`pnpm dev:down:<producto>`. Refine también puede ejecutarse sin Docker con
+`pnpm dev:refine:host`.
 
 | Servicio | URL |
 |---|---|
@@ -42,7 +48,9 @@ pnpm dev
 3. Diseñar la solución con `/speckit-plan`.
 4. Generar el trabajo con `/speckit-tasks`.
 5. Implementar con `/speckit-implement`.
-6. Ejecutar `pnpm lint`, `pnpm build` y `pnpm infra:config` antes de integrar.
+6. Declarar en la spec qué productos toca (`refine`, `supabase`, `kestra`,
+   `superset`, `workers`) y ejecutar sus validaciones.
+7. Ejecutar `pnpm lint`, `pnpm build` y `pnpm infra:config` antes de integrar.
 
 Los comandos están disponibles tanto en Claude Code (`.claude/skills`) como en
 Codex (`.agents/skills`). Consulta `docs/architecture.md` y

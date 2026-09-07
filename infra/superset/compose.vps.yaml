@@ -1,0 +1,6 @@
+services:
+  superset:
+    ports: !reset []
+
+# The VPS reverse proxy joins this project's default network and forwards HTTPS
+# traffic to superset:8088. Use a distinct .env.staging or .env.production file.

@@ -15,13 +15,46 @@ vistas de lectura preparadas para analítica; no es la interfaz transaccional.
 ## Estructura del monorepo
 
 ```text
-apps/web/          Refine y configuración Vercel
-supabase/          configuración, migraciones, seed y funciones
-infra/             configuración de servicios del VPS
-workers/           procesos aislados futuros
-specs/             especificaciones por funcionalidad
-.specify/          reglas y plantillas de Spec Kit
+apps/web/                  Refine y configuración Vercel
+supabase/                  configuración, migraciones, seed y funciones
+infra/refine/              Docker local de Refine
+infra/kestra/              Compose local y VPS de Kestra
+infra/superset/            Compose local y VPS de Superset
+workers/                   procesos aislados futuros
+specs/                     especificaciones por funcionalidad
+.specify/                  reglas y plantillas de Spec Kit
 ```
 
 Compartir repositorio no significa desplegar todo junto. Un cambio sólo activa
 el pipeline correspondiente a las rutas que modifica.
+
+## Proyectos Docker locales
+
+```text
+estudio-automation-refine-dev      infra/refine/compose.yaml
+estudio-automation-supabase-dev    supabase/config.toml (Supabase CLI)
+estudio-automation-kestra-dev      infra/kestra/compose.yaml
+estudio-automation-superset-dev    infra/superset/compose.yaml
+estudio-automation-playwright-dev  infra/playwright/compose.yaml
+```
+
+Cada proyecto tiene red, contenedores y volúmenes propios. Se comunican por
+interfaces explícitas (API, URL o credenciales configuradas), no porque Docker
+los incluya dentro de un mismo Compose. Docker Desktop los muestra como cinco
+grupos planos; esa es la representación más granular que admite Compose.
+
+## Playwright: servicio propio para automatización de navegador
+
+`infra/playwright/compose.yaml` levanta un `playwright run-server` (imagen
+`mcr.microsoft.com/playwright:v1.61.0-noble`), que expone un endpoint
+WebSocket en `127.0.0.1:3103`. Se prende y apaga igual que cualquier otro
+producto (`pnpm dev:playwright` / `pnpm dev:down:playwright`) — no corre
+salvo que lo hayas levantado.
+
+Los flows de Kestra que necesitan navegador no descargan la imagen pesada por
+ejecución: un Script task liviano (solo el cliente de Playwright, sin
+navegadores) se conecta a ese servidor remoto en vez de lanzar uno local. La
+dirección exacta con la que un flow alcanza este servicio (`host.docker.internal`,
+una red Docker compartida, o la IP del VPS) queda por resolver cuando se
+escriba el primer flow real que lo use — es una decisión de ese flow, no de
+esta pieza de infraestructura.
