@@ -1,4 +1,4 @@
-name: estudio-automation-refine-dev
+name: automation-platform-template-refine-dev
 
 services:
   refine:
@@ -7,7 +7,7 @@ services:
       dockerfile: infra/refine/Dockerfile
     working_dir: /workspace
     command: >-
-      sh -c "pnpm install --frozen-lockfile && pnpm --filter @estudio/web dev --host 0.0.0.0"
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @platform/web dev --host 0.0.0.0"
     environment:
       CHOKIDAR_USEPOLLING: "true"
     ports:

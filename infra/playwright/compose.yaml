@@ -1,4 +1,4 @@
-name: estudio-automation-playwright-dev
+name: automation-platform-template-playwright-dev
 
 services:
   playwright:

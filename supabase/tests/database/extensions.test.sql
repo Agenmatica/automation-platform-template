@@ -1,5 +1,5 @@
 -- Smoke test de capacidades habilitadas por migracion, sin depender de
--- ninguna tabla de negocio (todavia no existen). Cuando exista "estudios",
+-- ninguna tabla de negocio (todavia no existen). Cuando exista "organizaciones",
 -- el test de aislamiento RLS real se agrega en este mismo directorio.
 begin;
 

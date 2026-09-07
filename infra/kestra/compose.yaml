@@ -1,4 +1,4 @@
-name: estudio-automation-kestra-dev
+name: automation-platform-template-kestra-dev
 
 services:
   kestra-postgres:

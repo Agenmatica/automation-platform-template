@@ -12,4 +12,4 @@ COPY apps/web apps/web
 
 EXPOSE 3100
 
-CMD ["pnpm", "--filter", "@estudio/web", "dev", "--host", "0.0.0.0"]
+CMD ["pnpm", "--filter", "@platform/web", "dev", "--host", "0.0.0.0"]

@@ -31,12 +31,12 @@ el pipeline correspondiente a las rutas que modifica.
 ## Proyectos Docker locales
 
 ```text
-estudio-automation-refine-dev      infra/refine/compose.yaml
-estudio-automation-supabase-dev    supabase/config.toml (Supabase CLI)
-estudio-automation-kestra-dev      infra/kestra/compose.yaml
-estudio-automation-superset-dev    infra/superset/compose.yaml
-estudio-automation-playwright-dev  infra/playwright/compose.yaml
-estudio-automation-runner-dev      infra/runner/compose.yaml
+automation-platform-template-refine-dev      infra/refine/compose.yaml
+automation-platform-template-supabase-dev    supabase/config.toml (Supabase CLI)
+automation-platform-template-kestra-dev      infra/kestra/compose.yaml
+automation-platform-template-superset-dev    infra/superset/compose.yaml
+automation-platform-template-playwright-dev  infra/playwright/compose.yaml
+automation-platform-template-runner-dev      infra/runner/compose.yaml
 ```
 
 Cada proyecto tiene red, contenedores y volúmenes propios. Se comunican por

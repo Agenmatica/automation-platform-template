@@ -1,8 +1,10 @@
-# Estudio Automation
+# Automation Platform Template
 
-Producto para automatizar operaciones de estudios contables. Es un monorepo:
-frontend, infraestructura, migraciones y workers evolucionan juntos, con una
-sola historia Git y despliegues independientes.
+Base reutilizable para productos de automatización multi-tenant. Es un
+monorepo: frontend, infraestructura, migraciones y workers evolucionan
+juntos, con una sola historia Git y despliegues independientes. Cada
+producto real (por ejemplo, uno para un vertical específico) parte de esta
+base y agrega su propio dominio encima.
 
 ## Stack
 

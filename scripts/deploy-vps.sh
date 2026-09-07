@@ -16,7 +16,7 @@ fi
 for product in kestra superset playwright; do
   compose_base="infra/${product}/compose.yaml"
   compose_vps="infra/${product}/compose.vps.yaml"
-  project="estudio-${environment}-${product}"
+  project="platform-${environment}-${product}"
 
   docker compose --project-name "$project" --env-file "$env_file" \
     -f "$compose_base" -f "$compose_vps" config --quiet

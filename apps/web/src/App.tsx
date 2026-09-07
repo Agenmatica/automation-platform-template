@@ -28,8 +28,8 @@ function Landing() {
   return (
     <main className="shell">
       <header className="hero">
-        <p className="eyebrow">Estudio Automation</p>
-        <h1>Operaciones contables, coordinadas en un solo producto.</h1>
+        <p className="eyebrow">Automation Platform Template</p>
+        <h1>Automatizaciones multi-tenant, coordinadas en un solo producto.</h1>
         <p className="lead">
           Base técnica preparada para desarrollar con Claude Code o Codex usando
           el mismo flujo de especificaciones.
