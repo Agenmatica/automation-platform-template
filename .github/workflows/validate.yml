@@ -50,4 +50,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm supabase start
-      - run: pnpm test:db
+      # test:db (no test:db:ci) usa 127.0.0.1, que en el runner self-hosted
+      # en Docker apunta al propio contenedor, no al host donde corre
+      # Supabase. test:db:ci se conecta por host.docker.internal en su
+      # lugar. Ver docs/deployment.md.
+      - run: pnpm test:db:ci

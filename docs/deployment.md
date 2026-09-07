@@ -59,6 +59,14 @@ jobs terminan controlando el Docker del host, no uno anidado.
 Hoy corre en la PC de desarrollo, no en un VPS — cuando exista uno, se migra
 sin cambiar nada del Dockerfile, solo dónde se levanta el compose.
 
+Detalle a tener en cuenta: dentro del contenedor del runner, `127.0.0.1` es
+el contenedor mismo, no el host — por eso el job `database` usa
+`pnpm test:db:ci` (conecta por `host.docker.internal`) en vez de
+`pnpm test:db` (que asume `127.0.0.1`, correcto solo para correrlo a mano en
+el host). `supabase start` sí funciona igual en los dos casos porque controla
+al Docker del host vía el socket montado, no depende de la red del
+contenedor.
+
 ## Promoción simple
 
 ```text

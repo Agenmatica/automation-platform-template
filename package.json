@@ -23,6 +23,7 @@
     "test": "pnpm --filter @estudio/web test && pnpm test:db",
     "test:web": "pnpm --filter @estudio/web test",
     "test:db": "supabase test db --local",
+    "test:db:ci": "supabase test db --db-url postgresql://postgres:postgres@host.docker.internal:5434/postgres",
     "preview": "pnpm --filter @estudio/web preview",
     "supabase": "supabase",
     "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",

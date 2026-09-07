@@ -4,7 +4,10 @@ set -euo pipefail
 : "${GH_PAT:?falta GH_PAT}"
 : "${RUNNER_REPO:?falta RUNNER_REPO}"
 
-RUNNER_NAME="${RUNNER_NAME:-estudio-automation-docker}"
+# Sufijo con el hostname del contenedor (único por réplica en Docker) para
+# poder escalar con `deploy.replicas` sin que dos réplicas choquen por
+# registrarse con el mismo nombre en GitHub.
+RUNNER_NAME="${RUNNER_NAME:-estudio-automation-docker}-$(hostname)"
 RUNNER_LABELS="${RUNNER_LABELS:-self-hosted,estudio-local}"
 
 # Los tokens de registro de GitHub expiran en ~1h, así que se piden en
