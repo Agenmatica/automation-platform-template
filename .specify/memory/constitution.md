@@ -20,8 +20,8 @@ El código comparte repositorio y contratos, pero Refine, Supabase, Kestra,
 Superset y cada worker conservan configuración y ciclo de despliegue propios.
 En desarrollo Docker, cada producto usa su propio proyecto Compose: `estudio-automation-refine-dev`,
 `estudio-automation-supabase-dev`, `estudio-automation-kestra-dev`,
-`estudio-automation-superset-dev` y `estudio-automation-playwright-dev`. No
-existe un Compose raíz que los fusione.
+`estudio-automation-superset-dev`, `estudio-automation-playwright-dev` y
+`estudio-automation-runner-dev`. No existe un Compose raíz que los fusione.
 
 ### V. Simplicidad operativa
 Se agrega infraestructura sólo cuando existe un caso de uso. Desarrollo es
@@ -48,4 +48,4 @@ Esta constitución prevalece sobre decisiones ad hoc de los agentes. Una
 excepción debe quedar documentada en la spec y su plan. Los cambios de principios
 requieren actualizar versión, fecha y artefactos afectados.
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-06
+**Version**: 1.2.1 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-07

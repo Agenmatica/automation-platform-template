@@ -36,11 +36,12 @@ estudio-automation-supabase-dev    supabase/config.toml (Supabase CLI)
 estudio-automation-kestra-dev      infra/kestra/compose.yaml
 estudio-automation-superset-dev    infra/superset/compose.yaml
 estudio-automation-playwright-dev  infra/playwright/compose.yaml
+estudio-automation-runner-dev      infra/runner/compose.yaml
 ```
 
 Cada proyecto tiene red, contenedores y volúmenes propios. Se comunican por
 interfaces explícitas (API, URL o credenciales configuradas), no porque Docker
-los incluya dentro de un mismo Compose. Docker Desktop los muestra como cinco
+los incluya dentro de un mismo Compose. Docker Desktop los muestra como seis
 grupos planos; esa es la representación más granular que admite Compose.
 
 ## Playwright: servicio propio para automatización de navegador

@@ -11,11 +11,13 @@
     "dev:kestra": "docker compose -f infra/kestra/compose.yaml up -d",
     "dev:superset": "docker compose -f infra/superset/compose.yaml up -d --build",
     "dev:playwright": "docker compose -f infra/playwright/compose.yaml up -d",
+    "dev:runner": "docker compose --env-file .env -f infra/runner/compose.yaml up -d --build",
     "dev:down:refine": "docker compose -f infra/refine/compose.yaml down",
     "dev:down:supabase": "supabase stop --project-id estudio-automation-supabase-dev",
     "dev:down:kestra": "docker compose -f infra/kestra/compose.yaml down",
     "dev:down:superset": "docker compose -f infra/superset/compose.yaml down",
     "dev:down:playwright": "docker compose -f infra/playwright/compose.yaml down",
+    "dev:down:runner": "docker compose -f infra/runner/compose.yaml down",
     "build": "pnpm --filter @estudio/web build",
     "lint": "pnpm --filter @estudio/web lint",
     "test": "pnpm --filter @estudio/web test && pnpm test:db",
@@ -23,11 +25,12 @@
     "test:db": "supabase test db --local",
     "preview": "pnpm --filter @estudio/web preview",
     "supabase": "supabase",
-    "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright",
+    "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",
     "infra:config:refine": "docker compose -f infra/refine/compose.yaml config --quiet",
     "infra:config:kestra": "docker compose -f infra/kestra/compose.yaml config --quiet",
     "infra:config:superset": "docker compose -f infra/superset/compose.yaml config --quiet",
-    "infra:config:playwright": "docker compose -f infra/playwright/compose.yaml config --quiet"
+    "infra:config:playwright": "docker compose -f infra/playwright/compose.yaml config --quiet",
+    "infra:config:runner": "docker compose --env-file .env -f infra/runner/compose.yaml config --quiet"
   },
   "devDependencies": {
     "supabase": "^2.57.2"

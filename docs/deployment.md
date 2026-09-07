@@ -41,13 +41,23 @@ configuración; las credenciales son distintas en cada entorno.
 
 `.github/workflows/validate.yml` corre en un runner self-hosted (no en
 `ubuntu-latest`), para no depender de la cuota de minutos de GitHub Actions.
-Hoy ese runner vive en la PC de desarrollo (`estudio-automation-pc-nico`,
-levantado con `.\run.cmd` desde `C:\Users\Nico\actions-runner\estudio-automation`,
-sin instalar como servicio de Windows por falta de permisos de Administrador
-en esta sesión — solo escucha mientras esa PC/proceso estén activos). Cuando
-haya un VPS, conviene migrarlo ahí como servicio real (`.\config.cmd ...
---runasservice`, corrido desde una consola con permisos de Administrador) para
-que quede escuchando 24/7.
+Vive en `infra/runner/` (`pnpm dev:runner` / `pnpm dev:down:runner`), como
+cualquier otro producto — un contenedor Docker, no un proceso nativo del
+sistema operativo.
+
+La imagen (`infra/runner/Dockerfile`) es genérica: no tiene nada específico
+de este proyecto adentro, solo Node/pnpm/Docker CLI/el runner de GitHub. Lo
+que ata un contenedor a un repo puntual son las variables de entorno
+(`RUNNER_REPO`, `RUNNER_NAME`, `RUNNER_LABELS` en `infra/runner/compose.yaml`
+y `GH_RUNNER_PAT` en `.env`) — para reutilizarlo en otro proyecto, se copia
+la carpeta tal cual y solo cambia `RUNNER_REPO`.
+
+Usa el mismo patrón Docker-fuera-de-Docker que Kestra (monta
+`/var/run/docker.sock`): los `docker compose`/`supabase start` que corren los
+jobs terminan controlando el Docker del host, no uno anidado.
+
+Hoy corre en la PC de desarrollo, no en un VPS — cuando exista uno, se migra
+sin cambiar nada del Dockerfile, solo dónde se levanta el compose.
 
 ## Promoción simple
 

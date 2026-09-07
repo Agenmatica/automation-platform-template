@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${GH_PAT:?falta GH_PAT}"
+: "${RUNNER_REPO:?falta RUNNER_REPO}"
+
+RUNNER_NAME="${RUNNER_NAME:-estudio-automation-docker}"
+RUNNER_LABELS="${RUNNER_LABELS:-self-hosted,estudio-local}"
+
+# Los tokens de registro de GitHub expiran en ~1h, así que se piden en
+# caliente en cada arranque del contenedor en vez de guardarlos.
+fetch_token() {
+  curl -fsSL -X POST \
+    -H "Authorization: token ${GH_PAT}" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${RUNNER_REPO}/actions/runners/registration-token" \
+    | jq -r .token
+}
+
+./config.sh --url "https://github.com/${RUNNER_REPO}" \
+  --token "$(fetch_token)" \
+  --name "$RUNNER_NAME" \
+  --work _work \
+  --labels "$RUNNER_LABELS" \
+  --unattended --replace
+
+cleanup() {
+  echo "Desregistrando runner..."
+  ./config.sh remove --token "$(fetch_token)" || true
+}
+trap cleanup EXIT INT TERM
+
+./run.sh &
+wait $!
