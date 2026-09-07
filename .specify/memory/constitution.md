@@ -1,11 +1,30 @@
-# Estudio Automation Constitution
+<!--
+Sync Impact Report
+- Version change: 1.2.1 → 1.3.0 (MINOR: generaliza el alcance del Principio I
+  y actualiza el Principio IV; ninguna regla existente se elimina ni se
+  vuelve incompatible, se generaliza terminología y se agregan nombres de
+  proyecto Docker)
+- Modified principles:
+  - I. "Seguridad contable por diseño" → "Aislamiento multi-tenant por diseño"
+    (de lenguaje específico de estudios contables a aislamiento genérico por
+    organización/tenant, como corresponde a un template reutilizable)
+  - IV. "Un monorepo, despliegues independientes" — se actualiza la lista de
+    proyectos Docker a los nombres nuevos (automation-platform-template-*)
+- Added sections: ninguna
+- Removed sections: ninguna
+- Title: "Estudio Automation Constitution" → "Automation Platform Template Constitution"
+- Follow-up TODOs: ninguno
+-->
+
+# Automation Platform Template Constitution
 
 ## Core Principles
 
-### I. Seguridad contable por diseño
-Los datos de cada estudio y cliente deben estar aislados. Toda tabla expuesta
-debe usar RLS, el navegador sólo puede recibir claves públicas y los secretos
-deben permanecer en gestores de variables o archivos locales ignorados por Git.
+### I. Aislamiento multi-tenant por diseño
+Los datos de cada organización y sus clientes deben estar aislados. Toda
+tabla expuesta debe usar RLS, el navegador sólo puede recibir claves
+públicas y los secretos deben permanecer en gestores de variables o
+archivos locales ignorados por Git.
 
 ### II. Especificar antes de implementar
 Cada funcionalidad comienza con una spec verificable. Los planes y tareas deben
@@ -18,10 +37,14 @@ ejecución importante registra origen, actor, estado, timestamps y error útil.
 ### IV. Un monorepo, despliegues independientes
 El código comparte repositorio y contratos, pero Refine, Supabase, Kestra,
 Superset y cada worker conservan configuración y ciclo de despliegue propios.
-En desarrollo Docker, cada producto usa su propio proyecto Compose: `estudio-automation-refine-dev`,
-`estudio-automation-supabase-dev`, `estudio-automation-kestra-dev`,
-`estudio-automation-superset-dev`, `estudio-automation-playwright-dev` y
-`estudio-automation-runner-dev`. No existe un Compose raíz que los fusione.
+En desarrollo Docker, cada producto usa su propio proyecto Compose:
+`automation-platform-template-refine-dev`,
+`automation-platform-template-supabase-dev`,
+`automation-platform-template-kestra-dev`,
+`automation-platform-template-superset-dev`,
+`automation-platform-template-playwright-dev` y
+`automation-platform-template-runner-dev`. No existe un Compose raíz que los
+fusione.
 
 ### V. Simplicidad operativa
 Se agrega infraestructura sólo cuando existe un caso de uso. Desarrollo es
@@ -48,4 +71,4 @@ Esta constitución prevalece sobre decisiones ad hoc de los agentes. Una
 excepción debe quedar documentada en la spec y su plan. Los cambios de principios
 requieren actualizar versión, fecha y artefactos afectados.
 
-**Version**: 1.2.1 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-07
+**Version**: 1.3.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-07

@@ -92,11 +92,11 @@ sesión.
 
 ### Implementation for User Story 2
 
-- [ ] T023 [US2] Ejecutar `/speckit-constitution` con la actualización: título nuevo ("Automation Platform Template Constitution"), Principio I reescrito en términos de aislamiento multi-tenant genérico ("organización" en vez de "estudio", sin lenguaje contable), lista de proyectos Docker del Principio IV con los nombres nuevos, bump de versión 1.2.1 → 1.3.0 (depende de T005–T012 para conocer los nombres finales de los proyectos Docker)
-- [ ] T024 [P] [US2] Agregar las 4 reglas nuevas (commits en castellano; criterio capacidad-vs-spec; código entregable con licencias permisivas y Superset exportado a YAML; CI en runners self-hosted) a "Reglas del proyecto" en `CLAUDE.md`
-- [ ] T025 [P] [US2] Agregar las mismas 4 reglas, de forma idéntica, a `AGENTS.md`
-- [ ] T026 [US2] Correr el bloque 5 de `quickstart.md` (grep "contable" + diff `CLAUDE.md`/`AGENTS.md`) y confirmar que pasa (depende de T023–T025)
-- [ ] T027 [US2] Commit: "docs: reescribir constitución, CLAUDE.md y AGENTS.md en términos genéricos"
+- [X] T023 [US2] Ejecutar `/speckit-constitution` con la actualización: título nuevo ("Automation Platform Template Constitution"), Principio I reescrito en términos de aislamiento multi-tenant genérico ("organización" en vez de "estudio", sin lenguaje contable), lista de proyectos Docker del Principio IV con los nombres nuevos, bump de versión 1.2.1 → 1.3.0 (depende de T005–T012 para conocer los nombres finales de los proyectos Docker)
+- [X] T024 [P] [US2] Agregar las 4 reglas nuevas (commits en castellano; criterio capacidad-vs-spec; código entregable con licencias permisivas y Superset exportado a YAML; CI en runners self-hosted) a "Reglas del proyecto" en `CLAUDE.md`
+- [X] T025 [P] [US2] Agregar las mismas 4 reglas, de forma idéntica, a `AGENTS.md`
+- [X] T026 [US2] Correr el bloque 5 de `quickstart.md` (grep "contable" + diff `CLAUDE.md`/`AGENTS.md`) y confirmar que pasa (depende de T023–T025) — "contable" solo aparece dentro del Sync Impact Report de la constitución (documenta el cambio, no es una regla viva); el cuerpo real está limpio
+- [X] T027 [US2] Commit: "docs: reescribir constitución, CLAUDE.md y AGENTS.md en términos genéricos"
 
 **Checkpoint**: Cualquier agente/persona que lea la constitución o `CLAUDE.md`/`AGENTS.md` ve reglas genéricas, sin rastro de "estudio contable".
 

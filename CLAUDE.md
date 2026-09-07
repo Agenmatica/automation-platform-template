@@ -21,3 +21,7 @@ revisa `.specify/memory/constitution.md` y los artefactos de la funcionalidad en
 - Nunca uses un Compose raíz: cada producto tiene su archivo en `infra/<producto>/compose.yaml`.
 - Toda spec debe declarar su alcance de entrega: `refine`, `supabase`, `kestra`, `superset` y/o `workers`.
 - Para desarrollo Docker usa los comandos `dev:<producto>`; para Refine fuera de Docker usa `dev:refine:host`.
+- Los commits siempre llevan título claro y en castellano; lo mismo para nombres de rama y slugs de specs de Spec Kit.
+- Habilitar una capacidad o herramienta sin un caso de uso de negocio todavía (una extensión de Postgres, una imagen Docker) no necesita spec — la funcionalidad real que la use, sí.
+- Lo que se entrega es código versionado en git. Evitá herramientas cuya licencia restrinja el uso comercial de lo que se opera como propio (por eso Kestra —Apache 2.0— en vez de n8n —Sustainable Use License—). Los dashboards de Superset se exportan a YAML y se commitean, nunca quedan solo en la UI.
+- El CI corre en runners self-hosted (`infra/runner/`), no en `ubuntu-latest` — no lo cambies sin motivo, evita gasto de minutos de GitHub Actions.
