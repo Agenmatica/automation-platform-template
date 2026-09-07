@@ -23,7 +23,7 @@
     "test": "pnpm --filter @platform/web test && pnpm test:db",
     "test:web": "pnpm --filter @platform/web test",
     "test:db": "supabase test db --local",
-    "test:db:ci": "supabase test db --db-url postgresql://postgres:postgres@host.docker.internal:5434/postgres",
+    "test:db:ci": "supabase test db --db-url postgresql://postgres:postgres@host.docker.internal:5434/postgres?sslmode=disable",
     "preview": "pnpm --filter @platform/web preview",
     "supabase": "supabase",
     "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",
@@ -31,7 +31,7 @@
     "infra:config:kestra": "docker compose -f infra/kestra/compose.yaml config --quiet",
     "infra:config:superset": "docker compose -f infra/superset/compose.yaml config --quiet",
     "infra:config:playwright": "docker compose -f infra/playwright/compose.yaml config --quiet",
-    "infra:config:runner": "docker compose --env-file .env -f infra/runner/compose.yaml config --quiet"
+    "infra:config:runner": "docker compose -f infra/runner/compose.yaml config --quiet"
   },
   "devDependencies": {
     "supabase": "^2.57.2"
