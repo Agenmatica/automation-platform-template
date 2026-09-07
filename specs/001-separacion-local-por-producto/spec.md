@@ -1,6 +1,6 @@
 # Feature Specification: Separación local por producto
 
-**Feature Branch**: `001-local-platform-separation`
+**Feature Branch**: `001-separacion-local-por-producto`
 
 **Created**: 2026-09-06
 

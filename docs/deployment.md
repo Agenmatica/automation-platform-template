@@ -18,7 +18,7 @@ pnpm dev:superset
 - La rama `staging` apunta a un proyecto Supabase Free separado de producción.
 - Kestra, Superset y workers usan un segundo proyecto Compose en el mismo VPS,
   sólo cuando hay que probar una integración completa.
-- Al terminar la prueba se ejecuta `docker compose -p estudio-staging down`.
+- Al terminar la prueba se ejecuta `docker compose -p platform-staging down`.
 
 Staging valida migraciones, permisos, workflows y conexión entre componentes
 sin tocar datos reales. Puede mantenerse en costo cero adicional mientras no se
@@ -77,5 +77,5 @@ Para cambios sólo visuales se puede omitir el staging completo. Para cambios de
 datos, permisos o automatizaciones, staging es obligatorio.
 
 En el VPS, `./scripts/deploy-vps.sh staging` o `production` despliega Kestra y
-Superset como proyectos Docker separados (`estudio-<entorno>-kestra` y
-`estudio-<entorno>-superset`).
+Superset como proyectos Docker separados (`platform-<entorno>-kestra` y
+`platform-<entorno>-superset`).

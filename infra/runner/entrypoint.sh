@@ -7,8 +7,8 @@ set -euo pipefail
 # Sufijo con el hostname del contenedor (único por réplica en Docker) para
 # poder escalar con `deploy.replicas` sin que dos réplicas choquen por
 # registrarse con el mismo nombre en GitHub.
-RUNNER_NAME="${RUNNER_NAME:-estudio-automation-docker}-$(hostname)"
-RUNNER_LABELS="${RUNNER_LABELS:-self-hosted,estudio-local}"
+RUNNER_NAME="${RUNNER_NAME:-automation-platform-template-docker}-$(hostname)"
+RUNNER_LABELS="${RUNNER_LABELS:-self-hosted,platform-local}"
 
 # Los tokens de registro de GitHub expiran en ~1h, así que se piden en
 # caliente en cada arranque del contenedor en vez de guardarlos.

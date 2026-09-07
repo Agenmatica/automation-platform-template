@@ -1,4 +1,4 @@
-name: estudio-automation-superset-dev
+name: automation-platform-template-superset-dev
 
 services:
   superset-postgres:
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
   superset-init:
-    image: estudio-automation/superset:6.1.0
+    image: automation-platform-template/superset:6.1.0
     build:
       context: .
     entrypoint: ["/bin/sh", "-c"]
@@ -60,7 +60,7 @@ services:
     restart: "no"
 
   superset:
-    image: estudio-automation/superset:6.1.0
+    image: automation-platform-template/superset:6.1.0
     build:
       context: .
     command: >-

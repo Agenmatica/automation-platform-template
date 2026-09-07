@@ -8,7 +8,7 @@ describe('App', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /Operaciones contables, coordinadas en un solo producto\./,
+        name: /Automatizaciones multi-tenant, coordinadas en un solo producto\./,
       }),
     ).toBeInTheDocument()
 
