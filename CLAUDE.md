@@ -9,6 +9,7 @@ revisa `.specify/memory/constitution.md` y los artefactos de la funcionalidad en
 - `pnpm lint`
 - `pnpm build`
 - `pnpm infra:config`
+- `pnpm test` (requiere `pnpm dev:supabase` corriendo para los tests de base de datos)
 
 ## Reglas del proyecto
 
