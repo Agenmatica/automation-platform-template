@@ -37,6 +37,18 @@ supere el plan gratuito de Vercel/Supabase ni sea necesario ampliar el VPS.
 No se promueven bases copiando datos. Se promueven código, migraciones y
 configuración; las credenciales son distintas en cada entorno.
 
+## CI
+
+`.github/workflows/validate.yml` corre en un runner self-hosted (no en
+`ubuntu-latest`), para no depender de la cuota de minutos de GitHub Actions.
+Hoy ese runner vive en la PC de desarrollo (`estudio-automation-pc-nico`,
+levantado con `.\run.cmd` desde `C:\Users\Nico\actions-runner\estudio-automation`,
+sin instalar como servicio de Windows por falta de permisos de Administrador
+en esta sesión — solo escucha mientras esa PC/proceso estén activos). Cuando
+haya un VPS, conviene migrarlo ahí como servicio real (`.\config.cmd ...
+--runasservice`, corrido desde una consola con permisos de Administrador) para
+que quede escuchando 24/7.
+
 ## Promoción simple
 
 ```text
