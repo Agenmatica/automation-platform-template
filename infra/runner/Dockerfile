@@ -16,8 +16,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get update && apt-get install -y --no-install-recommends \
       docker-ce-cli docker-compose-plugin nodejs \
+      postgresql-client libtap-parser-sourcehandler-pgtap-perl \
     && npm install -g pnpm@11.19.0 \
     && rm -rf /var/lib/apt/lists/*
+# pg_prove (del paquete pgtap de arriba) corre los tests pgTAP directo
+# contra el Postgres del host (via host.docker.internal), sin pasar por
+# el contenedor interno que arma "supabase test db" — ese contenedor
+# anidado no puede montar los .sql del checkout porque esa ruta solo
+# existe dentro de este contenedor, no en el host real (Docker-fuera-de-
+# Docker no traduce paths de un contenedor a otro).
 
 WORKDIR /home/runner
 RUN curl -fsSL -o actions-runner.tar.gz \

@@ -23,7 +23,7 @@
     "test": "pnpm --filter @platform/web test && pnpm test:db",
     "test:web": "pnpm --filter @platform/web test",
     "test:db": "supabase test db --local",
-    "test:db:ci": "supabase test db --db-url postgresql://postgres:postgres@host.docker.internal:5434/postgres?sslmode=disable supabase/tests/database",
+    "test:db:ci": "PGPASSWORD=postgres PGSSLMODE=disable pg_prove --host host.docker.internal --port 5434 --username postgres --dbname postgres supabase/tests/database/*.sql",
     "preview": "pnpm --filter @platform/web preview",
     "supabase": "supabase",
     "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",
