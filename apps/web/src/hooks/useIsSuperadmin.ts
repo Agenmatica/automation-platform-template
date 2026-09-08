@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useGetIdentity } from '@refinedev/core'
-import { supabaseClient } from '../lib/supabase'
+import { checkIsSuperadmin } from '../lib/superadmin'
 
 type Identity = { id: string; email?: string }
 
@@ -20,16 +20,11 @@ export function useIsSuperadmin() {
 
     let cancelled = false
 
-    supabaseClient
-      .from('superadmins')
-      .select('user_id')
-      .eq('user_id', identity.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) {
-          setChecked({ userId: identity.id, isSuperadmin: Boolean(data) })
-        }
-      })
+    checkIsSuperadmin(identity.id).then((isSuperadmin) => {
+      if (!cancelled) {
+        setChecked({ userId: identity.id, isSuperadmin })
+      }
+    })
 
     return () => {
       cancelled = true

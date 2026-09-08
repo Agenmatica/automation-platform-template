@@ -51,7 +51,7 @@ garantizada por el esquema, no solo por una regla de negocio.
 | Campo | Tipo | Notas |
 |---|---|---|
 | `id` | `uuid` | PK, `default gen_random_uuid()` |
-| `organizacion_id` | `uuid` | FK a `organizaciones(id)`, `not null` — el molde que reutiliza cualquier tabla de negocio futura |
+| `organizacion_id` | `uuid` | FK a `organizaciones(id)`, `not null default private.organizacion_id()` — el molde que reutiliza cualquier tabla de negocio futura. El `default` es parte del molde: sin él, crear una fila desde Refine sin indicar la organización a mano falla contra RLS (US3/AC1) |
 | `nombre` | `text` | `not null` |
 | `created_at` | `timestamptz` | `not null default now()` |
 

@@ -9,6 +9,7 @@ import routerProvider, {
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router'
 import { authProvider } from './providers/authProvider'
+import { accessControlProvider } from './providers/accessControlProvider'
 import { supabaseClient } from './lib/supabase'
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
@@ -71,6 +72,7 @@ function App() {
           <Refine
             dataProvider={supabaseDataProvider(supabaseClient)}
             authProvider={authProvider}
+            accessControlProvider={accessControlProvider}
             routerProvider={routerProvider}
             notificationProvider={useNotificationProvider}
             resources={[

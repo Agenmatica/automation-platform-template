@@ -173,3 +173,8 @@ historia es demostrable.
 4. US3 → primera entidad de negocio usable, con permisos correctos (commit propio).
 5. US4 → el superadmin puede operar cualquier organización (commit propio).
 6. Polish → validación integral de cierre.
+
+## Phase 7: Convergence
+
+- [X] T029 Agregar `default private.organizacion_id()` a `clientes.organizacion_id` (migración nueva) para que crear un cliente no requiera indicar la organización explícitamente, verificado contra el payload real que envía `apps/web/src/pages/clientes/create.tsx` per US3/AC1 (missing) — verificado en vivo: el mismo payload que antes devolvía 403 ahora devuelve 201
+- [X] T030 Agregar un `accessControlProvider` a `<Refine>` en `apps/web/src/App.tsx` que oculte el recurso `organizaciones` del menú para quien no sea superadmin per US2/AC2 (partial) — lógica compartida con `useIsSuperadmin` vía `apps/web/src/lib/superadmin.ts`
