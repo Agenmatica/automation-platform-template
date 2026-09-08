@@ -18,5 +18,17 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    // Sin "inline", vitest externaliza estos paquetes (los carga con el
+    // resolutor ESM nativo de Node en vez de con el de Vite): @mui/material
+    // reexporta subpaths sin extensión que Node no soporta como import de
+    // directorio, y react-router terminaba cargado dos veces (una copia
+    // externa, otra vía Vite en App.tsx) con contextos de React distintos
+    // ("useLocation() may be used only in the context of a <Router>").
+    // Ver App.test.tsx.
+    server: {
+      deps: {
+        inline: [/@refinedev\//, /@mui\//, /react-router/],
+      },
+    },
   },
 })
