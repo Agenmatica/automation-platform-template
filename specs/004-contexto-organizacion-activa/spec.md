@@ -17,6 +17,19 @@ explicación."
 
 **Delivery scope**: supabase | refine
 
+## Clarifications
+
+### Session 2026-09-08
+
+- Q: ¿Qué debe pasar si se invoca la salida de organización cuando el
+  superadmin no tiene ninguna organización activa? → A: No-op silencioso
+  — no falla, no hay nada que borrar ni que auditar.
+- Q: Al entrar a otra organización teniendo ya una activa, ¿`entrar_a_organizacion`
+  (spec 003) se modifica para registrar también la salida automática de la
+  anterior? → A: Sí — la RPC se extiende para registrar salida de la
+  anterior + entrada a la nueva (dos filas de auditoría), no solo la
+  entrada.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Sin organización activa, no aparecen pantallas que no aplican (Priority: P1)
@@ -76,9 +89,10 @@ estado sin organización activa (Historia 1).
    acción de salir, **Then** deja de tener organización activa y el
    sistema se comporta como en la Historia 1.
 3. **Given** un superadmin con la organización X activa, **When** entra a
-   la organización Y, **Then** el contexto activo pasa a ser Y (esto ya
-   ocurre hoy vía `entrar_a_organizacion`; esta historia agrega que ambos
-   movimientos — dejar X, entrar a Y — queden registrados).
+   la organización Y, **Then** el contexto activo pasa a ser Y (el cambio
+   de contexto en sí ya ocurre hoy vía `entrar_a_organizacion`) y quedan
+   registrados ambos movimientos — salida de X y entrada a Y — como dos
+   filas de auditoría, no solo la entrada.
 
 ### Edge Cases
 
@@ -86,12 +100,14 @@ estado sin organización activa (Historia 1).
   ninguna pantalla dependiente de organización (mismo comportamiento que
   haber salido — no hay estado especial de "primera vez").
 - Salir de la organización activa sin tener ninguna activa no debe ser
-  posible desde la UI (la acción no se muestra si no hay contexto activo)
-  y, si se invoca igual por otra vía, no debe fallar de forma confusa ni
-  generar un registro de auditoría sin sentido.
+  posible desde la UI (la acción no se muestra si no hay contexto activo).
+  Si se invoca igual por otra vía (por ejemplo, directo contra el RPC), es
+  un no-op silencioso — no falla, no hay nada que borrar ni que auditar.
 - Entrar a una organización teniendo ya otra activa reemplaza el contexto
-  directamente (comportamiento ya existente de `entrar_a_organizacion`,
-  sin cambios) — no hace falta salir explícitamente antes de entrar a otra.
+  directamente, sin necesidad de salir antes — comportamiento de
+  `entrar_a_organizacion` ya existente. Lo que se agrega en esta spec es
+  que esa misma RPC registre también la salida automática de la
+  organización anterior, no solo la entrada a la nueva.
 - Un administrador o miembro de una organización nunca ve el menú
   reducido de la Historia 1 ni el indicador de la Historia 2 — ellos
   siempre pertenecen a una única organización fija, sin concepto de
@@ -120,13 +136,20 @@ estado sin organización activa (Historia 1).
 - **FR-005**: El sistema DEBE ofrecer una acción explícita para que el
   superadmin salga de su organización activa, disponible únicamente
   cuando tiene una organización activa. Tras usarla, queda sin
-  organización activa (comportamiento de FR-001/FR-003).
+  organización activa (comportamiento de FR-001/FR-003). Invocarla sin
+  tener ninguna organización activa DEBE ser un no-op silencioso — no
+  falla, no genera registro de auditoría.
 - **FR-006**: El sistema DEBE registrar cada vez que un superadmin sale de
   una organización activa — quién, de qué organización, y cuándo — en la
   misma línea de tiempo de auditoría que ya registra las entradas
   (`superadmin_entradas`, FR-013 de la spec 003), no en una tabla
   separada.
-- **FR-007**: Ningún comportamiento de esta spec DEBE aplicar a
+- **FR-007**: Entrar a una organización teniendo ya otra activa DEBE
+  registrar dos eventos de auditoría — la salida automática de la
+  organización anterior y la entrada a la nueva — no solo la entrada. Esto
+  extiende el comportamiento de `entrar_a_organizacion` (spec 003, FR-013);
+  el cambio de contexto en sí (cuál organización queda activa) no cambia.
+- **FR-008**: Ningún comportamiento de esta spec DEBE aplicar a
   administrador ni miembro de una organización — ellos no tienen concepto
   de organización activa, siempre ven sus propias pantallas.
 
@@ -157,10 +180,11 @@ estado sin organización activa (Historia 1).
 
 ## Assumptions
 
-- El mecanismo de entrada (`entrar_a_organizacion`) y la tabla
-  `superadmin_organizacion_activa` de la spec 003 no cambian de
-  comportamiento — esta spec solo agrega la salida, la visibilidad, y el
-  ocultamiento de menú.
+- El mecanismo de entrada (`entrar_a_organizacion`) no cambia en qué
+  organización queda activa ni en sus validaciones existentes — solo se
+  extiende para además auditar la salida automática de la organización
+  anterior (FR-007). La tabla `superadmin_organizacion_activa` no cambia
+  de estructura.
 - "Pantalla que depende de una organización" es, por ahora, únicamente
   `clientes`; el mecanismo se diseña para que sumar una pantalla nueva a
   esa categoría (por ejemplo, una futura gestión de miembros) no requiera
