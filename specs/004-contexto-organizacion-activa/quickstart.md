@@ -43,7 +43,10 @@ la organización de la que saliste.
 1. Entrar a la organización A.
 2. Sin salir, entrar directamente a la organización B (acción "Ingresar"
    desde el listado).
-3. Consultar `superadmin_entradas` ordenado por `entrado_en` descendente.
+3. Consultar `superadmin_entradas` ordenado por `id` descendente (no por
+   `entrado_en`: ambas filas usan `clock_timestamp()` y quedan muy cerca
+   en el tiempo, pero `id` es la garantía determinística de orden de
+   inserción).
 
 **Resultado esperado**: el contexto activo pasa a ser B (sin datos
 mezclados de A); aparecen dos filas nuevas — `salida` de A y `entrada` a

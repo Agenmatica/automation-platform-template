@@ -17,8 +17,8 @@
 ## Cómo marcar qué recursos "dependen de organización", sin hardcodear cada uno
 
 - **Decision**: una lista simple de nombres de recurso (por ejemplo,
-  `RECURSOS_SCOPED_A_ORGANIZACION = ['clientes']`) exportada junto al
-  `accessControlProvider`, consultada por su lógica de `can`. Sumar un
+  `RECURSOS_DEPENDIENTES_DE_ORGANIZACION = ['clientes']`) exportada junto
+  al `accessControlProvider`, consultada por su lógica de `can`. Sumar un
   recurso nuevo a esta categoría (la futura pantalla de miembros) es
   agregar un string a esa lista, sin tocar la lógica del provider.
 - **Rationale**: mantiene la solución genérica (así lo pide la Assumption
@@ -65,12 +65,33 @@
 ## Guard de redirect como componente reutilizable, no repetido por página
 
 - **Decision**: un único componente/hook (`useOrganizacionActiva` +
-  wrapper de ruta) que envuelve cualquier ruta scoped a organización, en
-  vez de repetir el chequeo dentro de cada página (`clientes/list.tsx`,
-  y mañana `miembros/list.tsx`).
+  wrapper de ruta) que envuelve cualquier ruta dependiente de
+  organización, en vez de repetir el chequeo dentro de cada página
+  (`clientes/list.tsx`, y mañana `miembros/list.tsx`).
 - **Rationale**: mismo criterio que la lista de recursos del
   `accessControlProvider` — la solución tiene que escalar a la próxima
-  pantalla scoped sin duplicar lógica.
+  pantalla dependiente de organización sin duplicar lógica.
 - **Alternatives considered**: chequear dentro de cada página — descartado,
   no escala y contradice el objetivo explícito de la Assumption de la
   spec (que sumar `miembros` no requiera repetir esta lógica desde cero).
+
+## `clock_timestamp()`, no `now()`, para los dos inserts de auditoría al cambiar de organización
+
+- **Decision**: los dos `insert` que agrega esta spec en
+  `entrar_a_organizacion` (salida de la organización anterior, entrada a
+  la nueva) usan `clock_timestamp()` para `entrado_en`, no `now()`.
+- **Rationale**: `now()` en Postgres devuelve el inicio de la transacción
+  actual, no el reloj real — dentro de una misma función (una sola
+  transacción implícita), dos llamadas a `now()` devuelven el mismo
+  valor. Con ambos inserts en la misma transacción (decisión de más
+  arriba), usar `now()` dejaría las filas de salida y entrada con
+  `entrado_en` idéntico, rompiendo cualquier verificación que dependa de
+  ordenarlas por fecha (FR-007, SC-004). `clock_timestamp()` sí avanza
+  entre sentencias dentro de la misma transacción.
+- **Alternatives considered**: mantener `now()` y ordenar por `id`
+  (columna identity, que sí refleja el orden de inserción) en vez de por
+  `entrado_en` — descartado como única solución porque además de ser más
+  frágil para quien lea la tabla directamente (dos filas con timestamps
+  idénticos son confusas de leer), no hay ninguna razón para no usar la
+  función correcta (`clock_timestamp()`) cuando el propio caso de uso es
+  justamente necesitar dos momentos distintos.

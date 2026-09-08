@@ -51,8 +51,8 @@ lugares con lógica ligeramente distinta.
       `apps/web/src/hooks/useOrganizacionActiva.ts`, envolviendo
       `checkOrganizacionActiva` para components de React (con estado de
       loading) — lo consume el banner de US2 (depende de T002)
-- [ ] T004 [P] Crear `apps/web/src/lib/recursosScopedAOrganizacion.ts` con
-      la constante `RECURSOS_SCOPED_A_ORGANIZACION = ['clientes']`
+- [ ] T004 [P] Crear `apps/web/src/lib/recursosDependientesDeOrganizacion.ts`
+      con la constante `RECURSOS_DEPENDIENTES_DE_ORGANIZACION = ['clientes']`
       (research.md: "Cómo marcar qué recursos dependen de organización")
 
 **Checkpoint**: existe una única función para resolver organización activa — nada de negocio todavía.
@@ -72,10 +72,10 @@ que navegar a `/clientes` por URL redirige a `/organizaciones`.
 ### Implementation for User Story 1
 
 - [ ] T005 [US1] Extender `apps/web/src/providers/accessControlProvider.ts`:
-      para cualquier resource en `RECURSOS_SCOPED_A_ORGANIZACION`, si quien
-      pregunta es superadmin, `can` depende de `checkOrganizacionActiva`
-      (sin cambios para administrador/miembro, que siempre ven sus propias
-      pantallas — FR-008) (depende de T002, T004)
+      para cualquier resource en `RECURSOS_DEPENDIENTES_DE_ORGANIZACION`, si
+      quien pregunta es superadmin, `can` depende de
+      `checkOrganizacionActiva` (sin cambios para administrador/miembro,
+      que siempre ven sus propias pantallas — FR-008) (depende de T002, T004)
 - [ ] T006 [US1] Crear el guard de ruteo
       `apps/web/src/components/RequiereOrganizacionActiva.tsx`: redirige a
       `/organizaciones` si el superadmin no tiene organización activa
@@ -105,10 +105,15 @@ salida.
       `supabase/migrations/<timestamp>_contexto_organizacion_activa.sql`:
       `ALTER TABLE superadmin_entradas ADD COLUMN accion text NOT NULL
       DEFAULT 'entrada' CHECK (accion IN ('entrada', 'salida'))`;
-      `CREATE FUNCTION salir_de_organizacion()` (contracts/salir-de-organizacion.md);
-      `CREATE OR REPLACE FUNCTION entrar_a_organizacion(org_id uuid)` con
-      el paso nuevo de auditar la salida automática
-      (contracts/entrar-a-organizacion-delta.md)
+      `CREATE FUNCTION salir_de_organizacion()` con
+      `grant execute on function public.salir_de_organizacion() to authenticated`
+      (contracts/salir-de-organizacion.md — sin este grant, el RPC no es
+      invocable desde el cliente); `CREATE OR REPLACE FUNCTION
+      entrar_a_organizacion(org_id uuid)` con el paso nuevo de auditar la
+      salida automática, usando `clock_timestamp()` (no `now()`) en los
+      dos inserts de auditoría de esta función para que salida y entrada
+      no queden con el mismo timestamp (contracts/entrar-a-organizacion-delta.md,
+      research.md)
 - [ ] T009 [US2] Aplicar la migración (`supabase migration up`) y
       confirmar que corre sin errores (depende de T008)
 - [ ] T010 [US2] Extender
@@ -117,8 +122,11 @@ salida.
       no inserta fila — Clarifications Q1); salir con organización activa
       inserta una fila `accion = 'salida'`; `entrar_a_organizacion` a una
       segunda organización, teniendo ya una activa, inserta dos filas —
-      salida de la primera y entrada a la segunda, en ese orden
-      (Clarifications Q2) (depende de T009)
+      salida de la primera y entrada a la segunda — verificado ordenando
+      por `id` (no por `entrado_en`: aunque ahora use `clock_timestamp()`,
+      `id` es la garantía determinística de orden de inserción,
+      `entrado_en` es solo para lectura humana) (Clarifications Q2)
+      (depende de T009)
 - [ ] T011 [US2] Correr `pnpm test:db` y confirmar que pasa (depende de T010)
 
 ### Implementation for User Story 2
@@ -127,9 +135,9 @@ salida.
       muestra el nombre de la organización activa (`useOrganizacionActiva`,
       T003) y un botón "Salir" que llama al RPC `salir_de_organizacion`
       (depende de T003, T009)
-- [ ] T013 [US2] Montar el banner en las pantallas scoped a organización
-      (`clientes`) en `apps/web/src/App.tsx`, junto al guard de la
-      Historia 1 (depende de T012, T007)
+- [ ] T013 [US2] Montar el banner en las pantallas dependientes de
+      organización (`clientes`) en `apps/web/src/App.tsx`, junto al guard
+      de la Historia 1 (depende de T012, T007)
 
 **Checkpoint**: el superadmin ve dónde está parado, puede salir, y toda entrada/salida queda auditada.
 

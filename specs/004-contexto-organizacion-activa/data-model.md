@@ -20,20 +20,27 @@ append-only, nunca se actualiza ni se borra.
 
 ## Funciones (delta)
 
-- **`salir_de_organizacion() returns void`** (nueva, `security definer`):
+- **`salir_de_organizacion() returns void`** (nueva, `security definer`,
+  `grant execute ... to authenticated` — mismo patrón que
+  `entrar_a_organizacion` en la spec 003, imprescindible para que
+  `supabase.rpc('salir_de_organizacion')` sea invocable desde el cliente):
   valida que quien llama sea superadmin (`private.is_superadmin()`); si no
   tiene fila en `superadmin_organizacion_activa`, es un no-op (Clarifications,
   Q1); si tiene una, la borra e inserta en `superadmin_entradas` una fila
-  con `accion = 'salida'` para esa organización.
+  con `accion = 'salida'`, `entrado_en = now()`, para esa organización.
 - **`entrar_a_organizacion(org_id uuid) returns void`** (modificada, spec
-  003 → esta spec): antes del `upsert` en `superadmin_organizacion_activa`,
-  si ya existía una fila con una `organizacion_id` distinta a `org_id`,
-  inserta en `superadmin_entradas` una fila con `accion = 'salida'` para
-  esa organización anterior. Después, hace el `upsert` (sin cambios) e
-  inserta la fila de `accion = 'entrada'` para `org_id` (sin cambios de
-  comportamiento respecto a la spec 003, solo se le suma el paso de
-  salida cuando corresponde). Si no había ninguna organización activa
-  antes, el comportamiento es idéntico al de la spec 003 (solo entrada).
+  003 → esta spec, conserva su `grant execute` existente): antes del
+  `upsert` en `superadmin_organizacion_activa`, si ya existía una fila con
+  una `organizacion_id` distinta a `org_id`, inserta en
+  `superadmin_entradas` una fila con `accion = 'salida'`,
+  **`entrado_en = clock_timestamp()`** (no `now()` — ver research.md,
+  "`clock_timestamp()`, no `now()`..." — dos llamadas a `now()` en la
+  misma transacción devuelven el mismo valor), para esa organización
+  anterior. Después, hace el `upsert` (sin cambios) e inserta la fila de
+  `accion = 'entrada'`, también con `entrado_en = clock_timestamp()`, para
+  `org_id`. Si no había ninguna organización activa antes, el
+  comportamiento es idéntico al de la spec 003 (solo entrada, y en ese
+  caso da igual `now()` o `clock_timestamp()` porque es un solo insert).
 
 ## Relaciones
 

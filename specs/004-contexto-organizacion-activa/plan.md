@@ -109,11 +109,11 @@ supabase/
     └── aislamiento_organizaciones.test.sql   # extendido: no-op de salida, doble auditoría al cambiar
 
 apps/web/src/
-├── providers/accessControlProvider.ts   # extendido: lista de recursos "scoped a organización"
-│                                          # ocultos para superadmin sin organización activa
+├── providers/accessControlProvider.ts   # extendido: lista de recursos dependientes
+│                                          # de organización, ocultos para superadmin sin activa
 ├── hooks/useOrganizacionActiva.ts        # nuevo: lee superadmin_organizacion_activa + nombre
 ├── components/OrganizacionActivaBanner.tsx  # nuevo: indicador + acción "Salir"
-└── App.tsx                               # wiring: guard de redirect en rutas scoped, banner
+└── App.tsx                               # wiring: guard de redirect en rutas dependientes, banner
 ```
 
 **Structure Decision**: se reutiliza la estructura ya establecida de

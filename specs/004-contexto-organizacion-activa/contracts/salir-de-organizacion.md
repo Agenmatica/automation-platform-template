@@ -13,6 +13,13 @@ parámetros:
 supabase.rpc('salir_de_organizacion')
 ```
 
+## Permisos
+
+`grant execute on function public.salir_de_organizacion() to authenticated;`
+— mismo patrón que `entrar_a_organizacion` (spec 003). Sin este grant, la
+llamada RPC del request de abajo falla con `permission denied` antes de
+llegar a evaluar `private.is_superadmin()`.
+
 ## Comportamiento (dentro de la función, `security definer`)
 
 1. Verifica `private.is_superadmin()`. Si es falso, `raise exception` (→
@@ -31,6 +38,6 @@ misma transacción de la función.
 
 Sin cuerpo (`void`) en éxito, tanto si había organización activa como si
 no (mismo resultado observable desde el cliente). El frontend, tras la
-llamada exitosa, deja de mostrar el banner y oculta las pantallas scoped a
-organización (comportamiento de Historia 1). Error (excepción) solo si
-quien llama no es superadmin.
+llamada exitosa, deja de mostrar el banner y oculta las pantallas
+dependientes de organización (comportamiento de Historia 1). Error
+(excepción) solo si quien llama no es superadmin.
