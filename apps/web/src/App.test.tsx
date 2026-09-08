@@ -3,17 +3,11 @@ import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('App', () => {
-  it('renders the landing page with every product listed', () => {
+  it('redirects an unauthenticated visitor to the login screen', async () => {
     render(<App />)
 
     expect(
-      screen.getByRole('heading', {
-        name: /Automatizaciones multi-tenant, coordinadas en un solo producto\./,
-      }),
+      await screen.findByRole('heading', { name: /Sign in to your account/i }),
     ).toBeInTheDocument()
-
-    for (const product of ['Refine', 'Supabase', 'Kestra', 'Superset']) {
-      expect(screen.getByRole('heading', { name: product })).toBeInTheDocument()
-    }
   })
 })
