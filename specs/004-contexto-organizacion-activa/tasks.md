@@ -165,6 +165,18 @@ salida.
       montado en el guard, no repetido en App.tsx) y T014 (validación de
       UI por código+build, no por navegador)
 
+**Post-implementación** (encontrado por el usuario probando la app real,
+no por `/speckit-analyze` ni `/speckit-converge` — ninguno de los dos
+ejecuta la UI): tras "Ingresar"/"Salir", el menú seguía mostrando solo
+"Organizaciones" porque el `Sider` vive en el layout persistente y
+`useCan` (`@refinedev/core`) cachea el resultado de
+`accessControlProvider` vía react-query — una navegación de cliente
+(`navigate()`) nunca dispara una re-consulta. Fix: `window.location.assign()`
+en vez de `navigate()` en ambas acciones (`organizaciones/list.tsx`,
+`OrganizacionActivaBanner.tsx`) — recarga completa, que de paso también
+evita cualquier dato cacheado por el dataProvider de la organización
+anterior.
+
 ---
 
 ## Dependencies & Execution Order
