@@ -258,7 +258,7 @@ create policy superadmin_entradas_select on superadmin_entradas
 -- Grants (auto_expose_new_tables = false: hacen falta explícitos)
 -- ============================================================================
 
-grant usage on schema public to authenticated;
+grant usage on schema public to authenticated, service_role;
 
 grant select on roles_organizacion to authenticated;
 grant select on organizaciones to authenticated;
@@ -267,3 +267,11 @@ grant select, insert, update on clientes to authenticated;
 grant select on superadmins to authenticated;
 grant select on superadmin_organizacion_activa to authenticated;
 grant select on superadmin_entradas to authenticated;
+
+-- service_role: la Edge Function crear-organizacion (contracts/crear-organizacion.md)
+-- llama a PostgREST con la service-role key. bypassrls le evita el chequeo
+-- de RLS, pero los GRANT de tabla se siguen aplicando igual — hacen falta
+-- explícitos acá también, no solo para "authenticated".
+grant select on superadmins to service_role;
+grant select, insert, delete on organizaciones to service_role;
+grant insert on usuarios_organizacion to service_role;
