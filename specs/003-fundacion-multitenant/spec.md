@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-07
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "spec 1" — referido en la conversación como la
 "Fundación multi-tenant": organizaciones, usuarios_organizacion, la función
