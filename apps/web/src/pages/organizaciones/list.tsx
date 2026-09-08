@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import { useTable } from '@refinedev/core'
 import { List } from '@refinedev/mui'
 import {
@@ -25,7 +24,6 @@ type Organizacion = {
 // "Crear organización" (lo agrega <List> solo si canCreate, ver App.tsx) +
 // "Ingresar" por fila (US4, contrato: contracts/entrar-a-organizacion.md).
 export function OrganizacionList() {
-  const navigate = useNavigate()
   const { isSuperadmin, isLoading: checkingSuperadmin } = useIsSuperadmin()
   const { tableQuery } = useTable<Organizacion>({ resource: 'organizaciones' })
   const [entrandoA, setEntrandoA] = useState<string | null>(null)
@@ -59,7 +57,14 @@ export function OrganizacionList() {
       return
     }
 
-    navigate('/clientes')
+    // Recarga completa, no navigate() de React Router (spec 004): el Sider
+    // vive en el layout persistente y cachea el resultado de
+    // accessControlProvider.can vía react-query — con una navegación SPA
+    // nunca se entera de que ahora hay una organización activa y seguiría
+    // mostrando el menú reducido de la Historia 1. Una recarga entera
+    // también evita cualquier dato ya cacheado por el dataProvider de una
+    // sesión anterior sin organización activa.
+    window.location.assign('/clientes')
   }
 
   return (

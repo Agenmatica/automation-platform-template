@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import { Alert, Button } from '@mui/material'
 import { useOrganizacionActiva } from '../hooks/useOrganizacionActiva'
 import { supabaseClient } from '../lib/supabase'
@@ -10,7 +9,6 @@ import { supabaseClient } from '../lib/supabase'
 // que nunca tienen fila en superadmin_organizacion_activa y por lo tanto
 // nunca ven este banner.
 export function OrganizacionActivaBanner() {
-  const navigate = useNavigate()
   const { organizacionActiva, isLoading } = useOrganizacionActiva()
   const [saliendo, setSaliendo] = useState(false)
 
@@ -25,7 +23,10 @@ export function OrganizacionActivaBanner() {
     // es superadmin, caso que no puede darse acá (el banner ya requiere
     // organizacionActiva !== null, que solo existe para un superadmin).
     await supabaseClient.rpc('salir_de_organizacion')
-    navigate('/organizaciones')
+    // Recarga completa, no navigate() (mismo motivo que "Ingresar" en
+    // organizaciones/list.tsx): el Sider cachea accessControlProvider.can
+    // vía react-query y no se entera solo con una navegación de cliente.
+    window.location.assign('/organizaciones')
   }
 
   return (
