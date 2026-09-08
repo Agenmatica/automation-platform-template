@@ -82,9 +82,9 @@ historia es demostrable.
 
 - [X] T013 [P] [US2] Crear la Edge Function en `supabase/functions/crear-organizacion/index.ts`: valida superadmin, crea la organización, invita por email (Auth Admin API), vincula al invitado como administrador, revierte la organización si falla la invitación (contrato: `contracts/crear-organizacion.md`)
 - [X] T014 [US2] Desplegar la función localmente (`supabase functions serve` o equivalente) y probarla manualmente una vez contra el Supabase local (depende de T013) — probada de punta a punta (201, membresía `administrador` creada); de paso salió a la luz que `service_role` también necesita GRANT explícito de tabla (ver commit de fix) y que agregar una función nueva exige `supabase stop && supabase start` (el contenedor de edge runtime no tiene hot-reload de archivos nuevos, solo de los ya montados)
-- [ ] T015 [P] [US2] Crear `apps/web/src/pages/organizaciones/list.tsx`: listado de organizaciones, visible solo si `private.is_superadmin()` (verificar perfil vía una consulta a `superadmins` en el `authProvider` o un hook propio)
-- [ ] T016 [P] [US2] Crear `apps/web/src/pages/organizaciones/create.tsx`: formulario (nombre, email del fundador) que llama a la Edge Function de T013
-- [ ] T017 [US2] Registrar el recurso `organizaciones` en `apps/web/src/App.tsx` (rutas `/organizaciones`, `/organizaciones/create`), visibles solo para superadmin (depende de T010, T015, T016)
+- [X] T015 [P] [US2] Crear `apps/web/src/pages/organizaciones/list.tsx`: listado de organizaciones, visible solo si `private.is_superadmin()` (verificar perfil vía una consulta a `superadmins` en el `authProvider` o un hook propio) — hook propio en `apps/web/src/hooks/useIsSuperadmin.ts`; tabla MUI simple, no `@mui/x-data-grid` (no es dependencia directa de `apps/web`, pnpm strict lo bloquearía)
+- [X] T016 [P] [US2] Crear `apps/web/src/pages/organizaciones/create.tsx`: formulario (nombre, email del fundador) que llama a la Edge Function de T013
+- [X] T017 [US2] Registrar el recurso `organizaciones` en `apps/web/src/App.tsx` (rutas `/organizaciones`, `/organizaciones/create`), visibles solo para superadmin (depende de T010, T015, T016)
 
 **Checkpoint**: el superadmin puede crear y ver organizaciones desde Refine, de punta a punta.
 

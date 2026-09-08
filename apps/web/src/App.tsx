@@ -11,6 +11,8 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router'
 import { authProvider } from './providers/authProvider'
 import { supabaseClient } from './lib/supabase'
 import { LoginPage } from './pages/login'
+import { OrganizacionCreate } from './pages/organizaciones/create'
+import { OrganizacionList } from './pages/organizaciones/list'
 import './App.css'
 
 const theme = createTheme({
@@ -68,7 +70,14 @@ function App() {
             authProvider={authProvider}
             routerProvider={routerProvider}
             notificationProvider={useNotificationProvider}
-            resources={[]}
+            resources={[
+              {
+                name: 'organizaciones',
+                list: '/organizaciones',
+                create: '/organizaciones/create',
+                meta: { label: 'Organizaciones' },
+              },
+            ]}
             options={{
               syncWithLocation: true,
               warnWhenUnsavedChanges: true,
@@ -86,6 +95,8 @@ function App() {
                 }
               >
                 <Route index element={<Home />} />
+                <Route path="/organizaciones" element={<OrganizacionList />} />
+                <Route path="/organizaciones/create" element={<OrganizacionCreate />} />
               </Route>
 
               <Route
