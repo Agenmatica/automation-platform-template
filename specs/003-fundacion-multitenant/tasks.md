@@ -98,14 +98,14 @@ historia es demostrable.
 
 ### Tests for User Story 3
 
-- [ ] T018 [US3] Extender `supabase/tests/database/aislamiento_organizaciones.test.sql` (o un archivo nuevo `permisos_clientes.test.sql`) con casos de escritura: administrador puede insertar/editar, miembro no puede (falla, no solo se oculta en UI) (depende de T006)
-- [ ] T019 [US3] Correr `pnpm test:db` y confirmar que pasa (depende de T018)
+- [X] T018 [US3] Extender `supabase/tests/database/aislamiento_organizaciones.test.sql` (o un archivo nuevo `permisos_clientes.test.sql`) con casos de escritura: administrador puede insertar/editar, miembro no puede (falla, no solo se oculta en UI) (depende de T006)
+- [X] T019 [US3] Correr `pnpm test:db` y confirmar que pasa (depende de T018)
 
 ### Implementation for User Story 3
 
-- [ ] T020 [P] [US3] Crear `apps/web/src/pages/clientes/list.tsx`: listado visible para administrador y miembro, acciones de crear/editar visibles solo si el rol es administrador
-- [ ] T021 [P] [US3] Crear `apps/web/src/pages/clientes/create.tsx` y `apps/web/src/pages/clientes/edit.tsx` (solo alcanzables desde la UI si administrador; RLS rechaza igual si alguien llega por otra vía)
-- [ ] T022 [US3] Registrar el recurso `clientes` en `apps/web/src/App.tsx` (rutas `/clientes`, `/clientes/create`, `/clientes/edit/:id`) (depende de T010, T020, T021)
+- [X] T020 [P] [US3] Crear `apps/web/src/pages/clientes/list.tsx`: listado visible para administrador y miembro, acciones de crear/editar visibles solo si el rol es administrador — gate con `apps/web/src/hooks/usePuedeEscribir.ts` (espejo cliente de `private.puede_escribir()`, solo para UI)
+- [X] T021 [P] [US3] Crear `apps/web/src/pages/clientes/create.tsx` y `apps/web/src/pages/clientes/edit.tsx` (solo alcanzables desde la UI si administrador; RLS rechaza igual si alguien llega por otra vía)
+- [X] T022 [US3] Registrar el recurso `clientes` en `apps/web/src/App.tsx` (rutas `/clientes`, `/clientes/create`, `/clientes/edit/:id`) (depende de T010, T020, T021)
 
 **Checkpoint**: la primera entidad de negocio real funciona, aislada y con permisos de escritura correctos.
 

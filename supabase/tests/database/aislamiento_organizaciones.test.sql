@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(10);
+select plan(14);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -137,6 +137,59 @@ select is(
 );
 
 reset role;
+
+-- ============================================================================
+-- Permisos de escritura en clientes (US3, FR-011): administrador puede
+-- crear/editar en su propia organización, miembro no puede (solo lee).
+-- ============================================================================
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+insert into clientes (id, organizacion_id, nombre) values
+  ('c1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Cliente nuevo del admin');
+
+select is(
+  (select count(*) from clientes where organizacion_id = '11111111-1111-1111-1111-111111111111')::int, 2,
+  'admin de la organización 1 puede insertar un cliente en su propia organización'
+);
+
+update clientes set nombre = 'Cliente nuevo del admin (editado)' where id = 'c1000000-0000-0000-0000-000000000002';
+
+select is(
+  (select nombre from clientes where id = 'c1000000-0000-0000-0000-000000000002'),
+  'Cliente nuevo del admin (editado)',
+  'admin de la organización 1 puede editar un cliente de su propia organización'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'a1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select throws_ok(
+  $$insert into clientes (organizacion_id, nombre) values ('11111111-1111-1111-1111-111111111111', 'Intento de miembro')$$,
+  '42501',
+  null,
+  'miembro de la organización 1 no puede insertar clientes (solo lectura, FR-011)'
+);
+
+update clientes set nombre = 'Editado por miembro' where id = 'c1000000-0000-0000-0000-000000000001';
+
+reset role;
+
+select is(
+  (select nombre from clientes where id = 'c1000000-0000-0000-0000-000000000001'), 'Cliente de la Uno',
+  'el intento de edición del miembro de la organización 1 no afectó ninguna fila (solo lectura, FR-011)'
+);
 
 select * from finish();
 

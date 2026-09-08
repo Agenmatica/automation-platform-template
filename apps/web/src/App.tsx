@@ -13,6 +13,9 @@ import { supabaseClient } from './lib/supabase'
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
 import { OrganizacionList } from './pages/organizaciones/list'
+import { ClienteCreate } from './pages/clientes/create'
+import { ClienteEdit } from './pages/clientes/edit'
+import { ClienteList } from './pages/clientes/list'
 import './App.css'
 
 const theme = createTheme({
@@ -77,6 +80,13 @@ function App() {
                 create: '/organizaciones/create',
                 meta: { label: 'Organizaciones' },
               },
+              {
+                name: 'clientes',
+                list: '/clientes',
+                create: '/clientes/create',
+                edit: '/clientes/edit/:id',
+                meta: { label: 'Clientes' },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -97,6 +107,9 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="/organizaciones" element={<OrganizacionList />} />
                 <Route path="/organizaciones/create" element={<OrganizacionCreate />} />
+                <Route path="/clientes" element={<ClienteList />} />
+                <Route path="/clientes/create" element={<ClienteCreate />} />
+                <Route path="/clientes/edit/:id" element={<ClienteEdit />} />
               </Route>
 
               <Route
