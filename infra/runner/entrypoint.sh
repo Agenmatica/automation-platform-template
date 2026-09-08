@@ -20,6 +20,16 @@ fetch_token() {
     | jq -r .token
 }
 
+# Si el contenedor murió sin pasar por el trap de cleanup de más abajo
+# (crash, Docker Desktop/WSL reiniciando), queda un registro local de una
+# corrida anterior que bloquea un config.sh nuevo ("already configured").
+# Se limpia antes de reconfigurar en vez de dejar que el contenedor loopee.
+if [ -f .runner ]; then
+  echo "Registro previo sin desregistrar, limpiando..."
+  ./config.sh remove --token "$(fetch_token)" || true
+  rm -f .runner .credentials .credentials_rsaparams
+fi
+
 ./config.sh --url "https://github.com/${RUNNER_REPO}" \
   --token "$(fetch_token)" \
   --name "$RUNNER_NAME" \
