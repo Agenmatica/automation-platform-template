@@ -132,9 +132,9 @@ historia es demostrable.
 
 ## Phase Final: Polish & Cross-Cutting Concerns
 
-- [ ] T026 [P] Correr los 5 bloques de `quickstart.md` completos, con dos organizaciones reales
-- [ ] T027 Correr `pnpm lint && pnpm build && pnpm test && pnpm infra:config` y confirmar que los 4 pasan
-- [ ] T028 Marcar todas las tareas de este archivo como completas y anotar cualquier desvío respecto al plan
+- [X] T026 [P] Correr los 5 bloques de `quickstart.md` completos, con dos organizaciones reales — validado de punta a punta contra los mismos endpoints que usa la UI (Edge Function, RPC, PostgREST bajo RLS): 2 organizaciones, invitaciones confirmadas en Mailpit, admin crea cliente, miembro lee pero no puede crear (403), superadmin entra a la organización 1 y opera, entra a la 2 y no ve nada de la 1, `superadmin_entradas` con 2 filas. No se hizo clickeando la UI en un navegador (no se usó Playwright en esta sesión) — script de validación descartado tras la corrida, no forma parte del repo.
+- [X] T027 Correr `pnpm lint && pnpm build && pnpm test && pnpm infra:config` y confirmar que los 4 pasan — los 4 en verde
+- [X] T028 Marcar todas las tareas de este archivo como completas y anotar cualquier desvío respecto al plan — ver notas en T003/T014 (schema `private` en vez de `auth`; hace falta `supabase stop && supabase start` al agregar una función nueva) y T015 (sin `@mui/x-data-grid`, tabla MUI simple)
 
 ---
 
