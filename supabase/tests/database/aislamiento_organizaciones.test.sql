@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(14);
+select plan(19);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -20,7 +20,11 @@ insert into auth.users (id, email) values
   ('a1000000-0000-0000-0000-000000000001', 'admin1@example.com'),
   ('a1000000-0000-0000-0000-000000000002', 'miembro1@example.com'),
   ('a2000000-0000-0000-0000-000000000001', 'admin2@example.com'),
-  ('a9000000-0000-0000-0000-000000000009', 'sin-organizacion@example.com');
+  ('a9000000-0000-0000-0000-000000000009', 'sin-organizacion@example.com'),
+  ('a5000000-0000-0000-0000-000000000005', 'superadmin@example.com');
+
+insert into superadmins (user_id) values
+  ('a5000000-0000-0000-0000-000000000005');
 
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('a1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'administrador'),
@@ -189,6 +193,52 @@ reset role;
 select is(
   (select nombre from clientes where id = 'c1000000-0000-0000-0000-000000000001'), 'Cliente de la Uno',
   'el intento de edición del miembro de la organización 1 no afectó ninguna fila (solo lectura, FR-011)'
+);
+
+-- ============================================================================
+-- Superadmin "entra" a una organización a la vez (US4, FR-006, FR-013).
+-- En este punto la organización 1 tiene 2 clientes y la 2 tiene 1 (ver
+-- secciones anteriores).
+-- ============================================================================
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select is(
+  (select count(*) from clientes)::int, 0,
+  'el superadmin sin ninguna organización activa no ve ningún cliente (fail-closed)'
+);
+
+select entrar_a_organizacion('11111111-1111-1111-1111-111111111111');
+
+select is(
+  (select count(*) from clientes)::int, 2,
+  'tras entrar a la organización 1, el superadmin ve exactamente sus 2 clientes'
+);
+
+update clientes set nombre = 'Editado por el superadmin' where id = 'c1000000-0000-0000-0000-000000000001';
+
+select is(
+  (select nombre from clientes where id = 'c1000000-0000-0000-0000-000000000001'), 'Editado por el superadmin',
+  'con la organización 1 activa, el superadmin puede editar sus clientes (como su administrador)'
+);
+
+select entrar_a_organizacion('22222222-2222-2222-2222-222222222222');
+
+select is(
+  (select count(*) from clientes)::int, 1,
+  'tras entrar a la organización 2, el superadmin ve solo el cliente de esa organización (el contexto cambió, no se mezclan)'
+);
+
+reset role;
+
+select is(
+  (select count(*) from superadmin_entradas where user_id = 'a5000000-0000-0000-0000-000000000005')::int, 2,
+  'cada entrada del superadmin quedó registrada en el historial de auditoría (FR-013)'
 );
 
 select * from finish();

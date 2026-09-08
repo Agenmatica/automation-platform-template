@@ -119,12 +119,12 @@ historia es demostrable.
 
 ### Tests for User Story 4
 
-- [ ] T023 [US4] Extender el test pgTAP con el caso superadmin: sin haber entrado a ninguna organización no ve `clientes`; tras llamar `entrar_a_organizacion`, ve/edita solo la organización activa; entrar a otra organización cambia el contexto sin mezclar datos (depende de T005, T006)
-- [ ] T024 [US4] Correr `pnpm test:db` y confirmar que pasa (depende de T023)
+- [X] T023 [US4] Extender el test pgTAP con el caso superadmin: sin haber entrado a ninguna organización no ve `clientes`; tras llamar `entrar_a_organizacion`, ve/edita solo la organización activa; entrar a otra organización cambia el contexto sin mezclar datos (depende de T005, T006) — incluye también el chequeo de auditoría (FR-013): 2 entradas en `superadmin_entradas`
+- [X] T024 [US4] Correr `pnpm test:db` y confirmar que pasa (depende de T023)
 
 ### Implementation for User Story 4
 
-- [ ] T025 [US4] Agregar la acción "Ingresar" a cada fila de `apps/web/src/pages/organizaciones/list.tsx`: llama al RPC `entrar_a_organizacion` (contrato: `contracts/entrar-a-organizacion.md`) y redirige a `/clientes` (depende de T015, T005)
+- [X] T025 [US4] Agregar la acción "Ingresar" a cada fila de `apps/web/src/pages/organizaciones/list.tsx`: llama al RPC `entrar_a_organizacion` (contrato: `contracts/entrar-a-organizacion.md`) y redirige a `/clientes` (depende de T015, T005)
 
 **Checkpoint**: el conjunto completo es operable de punta a punta para el superadmin, no solo un listado sin acción.
 
