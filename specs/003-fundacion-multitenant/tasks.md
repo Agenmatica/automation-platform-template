@@ -65,8 +65,8 @@ historia es demostrable.
 
 ### Tests for User Story 1
 
-- [ ] T011 [US1] Escribir `supabase/tests/database/aislamiento_organizaciones.test.sql`: crear 2 organizaciones + usuarios de prueba (admin y miembro en cada una) + clientes en cada una; verificar que ningún usuario ve/edita filas de la otra organización; verificar que un usuario sin fila en `usuarios_organizacion` no ve nada (depende de T006)
-- [ ] T012 [US1] Correr `pnpm test:db` y confirmar que el test pasa (depende de T011)
+- [X] T011 [US1] Escribir `supabase/tests/database/aislamiento_organizaciones.test.sql`: crear 2 organizaciones + usuarios de prueba (admin y miembro en cada una) + clientes en cada una; verificar que ningún usuario ve/edita filas de la otra organización; verificar que un usuario sin fila en `usuarios_organizacion` no ve nada (depende de T006)
+- [X] T012 [US1] Correr `pnpm test:db` y confirmar que el test pasa (depende de T011)
 
 **Checkpoint**: el aislamiento está probado automáticamente — Principio I de la constitución, verificado.
 
