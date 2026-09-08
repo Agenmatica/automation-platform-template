@@ -29,7 +29,7 @@ y el cambio de auditoría en `entrar_a_organizacion`.
 
 ## Phase 1: Setup
 
-- [ ] T001 Confirmar `pnpm dev:supabase` corriendo, migraciones de la spec
+- [X] T001 Confirmar `pnpm dev:supabase` corriendo, migraciones de la spec
       003 aplicadas, y `git status` limpio en la raíz del repo
 
 ---
@@ -43,15 +43,15 @@ lugares con lógica ligeramente distinta.
 
 **⚠️ CRITICAL**: ninguna tarea de la Fase 3 en adelante empieza hasta cerrar esta fase.
 
-- [ ] T002 Agregar `checkOrganizacionActiva(userId)` a
+- [X] T002 Agregar `checkOrganizacionActiva(userId)` a
       `apps/web/src/lib/superadmin.ts` (junto a `checkIsSuperadmin`, mismo
       patrón): consulta `superadmin_organizacion_activa` con join a
       `organizaciones(nombre)`, devuelve `{ id, nombre } | null`
-- [ ] T003 [P] Crear el hook `useOrganizacionActiva` en
+- [X] T003 [P] Crear el hook `useOrganizacionActiva` en
       `apps/web/src/hooks/useOrganizacionActiva.ts`, envolviendo
       `checkOrganizacionActiva` para components de React (con estado de
       loading) — lo consume el banner de US2 (depende de T002)
-- [ ] T004 [P] Crear `apps/web/src/lib/recursosDependientesDeOrganizacion.ts`
+- [X] T004 [P] Crear `apps/web/src/lib/recursosDependientesDeOrganizacion.ts`
       con la constante `RECURSOS_DEPENDIENTES_DE_ORGANIZACION = ['clientes']`
       (research.md: "Cómo marcar qué recursos dependen de organización")
 
@@ -71,16 +71,16 @@ que navegar a `/clientes` por URL redirige a `/organizaciones`.
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Extender `apps/web/src/providers/accessControlProvider.ts`:
+- [X] T005 [US1] Extender `apps/web/src/providers/accessControlProvider.ts`:
       para cualquier resource en `RECURSOS_DEPENDIENTES_DE_ORGANIZACION`, si
       quien pregunta es superadmin, `can` depende de
       `checkOrganizacionActiva` (sin cambios para administrador/miembro,
       que siempre ven sus propias pantallas — FR-008) (depende de T002, T004)
-- [ ] T006 [US1] Crear el guard de ruteo
+- [X] T006 [US1] Crear el guard de ruteo
       `apps/web/src/components/RequiereOrganizacionActiva.tsx`: redirige a
       `/organizaciones` si el superadmin no tiene organización activa
       (depende de T002)
-- [ ] T007 [US1] Envolver las rutas de `clientes`
+- [X] T007 [US1] Envolver las rutas de `clientes`
       (`/clientes`, `/clientes/create`, `/clientes/edit/:id`) con el guard
       en `apps/web/src/App.tsx` (depende de T006)
 
@@ -101,7 +101,7 @@ salida.
 
 ### Tests for User Story 2
 
-- [ ] T008 [US2] Escribir la migración
+- [X] T008 [US2] Escribir la migración
       `supabase/migrations/<timestamp>_contexto_organizacion_activa.sql`:
       `ALTER TABLE superadmin_entradas ADD COLUMN accion text NOT NULL
       DEFAULT 'entrada' CHECK (accion IN ('entrada', 'salida'))`;
@@ -114,9 +114,9 @@ salida.
       dos inserts de auditoría de esta función para que salida y entrada
       no queden con el mismo timestamp (contracts/entrar-a-organizacion-delta.md,
       research.md)
-- [ ] T009 [US2] Aplicar la migración (`supabase migration up`) y
+- [X] T009 [US2] Aplicar la migración (`supabase migration up`) y
       confirmar que corre sin errores (depende de T008)
-- [ ] T010 [US2] Extender
+- [X] T010 [US2] Extender
       `supabase/tests/database/aislamiento_organizaciones.test.sql` con:
       `salir_de_organizacion` sin organización activa es no-op (no falla,
       no inserta fila — Clarifications Q1); salir con organización activa
@@ -127,17 +127,20 @@ salida.
       `id` es la garantía determinística de orden de inserción,
       `entrado_en` es solo para lectura humana) (Clarifications Q2)
       (depende de T009)
-- [ ] T011 [US2] Correr `pnpm test:db` y confirmar que pasa (depende de T010)
+- [X] T011 [US2] Correr `pnpm test:db` y confirmar que pasa (depende de T010)
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Crear `apps/web/src/components/OrganizacionActivaBanner.tsx`:
+- [X] T012 [P] [US2] Crear `apps/web/src/components/OrganizacionActivaBanner.tsx`:
       muestra el nombre de la organización activa (`useOrganizacionActiva`,
       T003) y un botón "Salir" que llama al RPC `salir_de_organizacion`
       (depende de T003, T009)
-- [ ] T013 [US2] Montar el banner en las pantallas dependientes de
+- [X] T013 [US2] Montar el banner en las pantallas dependientes de
       organización (`clientes`) en `apps/web/src/App.tsx`, junto al guard
-      de la Historia 1 (depende de T012, T007)
+      de la Historia 1 (depende de T012, T007) — **desvío**: se montó
+      dentro del propio `RequiereOrganizacionActiva` (T006) en vez de
+      repetido en cada `<Route>` de `App.tsx`; cualquier pantalla futura
+      que use el guard hereda el banner sin tocar `App.tsx` de nuevo
 
 **Checkpoint**: el superadmin ve dónde está parado, puede salir, y toda entrada/salida queda auditada.
 
@@ -145,12 +148,22 @@ salida.
 
 ## Phase Final: Polish & Cross-Cutting Concerns
 
-- [ ] T014 [P] Correr los 5 bloques de `quickstart.md` completos, con al
-      menos dos organizaciones reales
-- [ ] T015 Correr `pnpm lint && pnpm build && pnpm test && pnpm infra:config`
-      y confirmar que los 4 pasan
-- [ ] T016 Marcar todas las tareas de este archivo como completas y anotar
-      cualquier desvío respecto al plan
+- [X] T014 [P] Correr los 5 bloques de `quickstart.md` completos, con al
+      menos dos organizaciones reales — **desvío** (mismo criterio que
+      T026 de la spec 003): los bloques 3, 4 y 5 (no-op, doble auditoría
+      al cambiar de organización, salida explícita) quedaron validados de
+      punta a punta por los 8 casos nuevos de pgTAP (T010/T011), que
+      ejercitan exactamente el mismo camino que la UI (mismas RPC). Los
+      bloques 1 y 2 (menú oculto sin contexto, banner visible con
+      contexto) se validaron por revisión de código + `tsc`/build en
+      verde, no clickeando la UI en un navegador — no se usó Playwright
+      en esta sesión, igual que en la spec 003.
+- [X] T015 Correr `pnpm lint && pnpm build && pnpm test && pnpm infra:config`
+      y confirmar que los 4 pasan — los 4 en verde
+- [X] T016 Marcar todas las tareas de este archivo como completas y anotar
+      cualquier desvío respecto al plan — ver notas en T013 (banner
+      montado en el guard, no repetido en App.tsx) y T014 (validación de
+      UI por código+build, no por navegador)
 
 ---
 

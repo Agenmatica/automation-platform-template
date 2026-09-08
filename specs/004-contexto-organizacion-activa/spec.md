@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-08
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Contexto de organización activa del superadmin:
 hoy el superadmin puede entrar a una organización puntual
