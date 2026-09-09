@@ -58,7 +58,10 @@ jobs:
       # "relation eventos_membresia does not exist" / función inexistente,
       # pese a que la migración sí estaba en el repo). `db reset` reaplica
       # todas las migraciones + seed.sql antes de cada corrida.
-      - run: pnpm supabase db reset
+      # --db-url: igual que test:db:ci, 127.0.0.1 en el runner self-hosted
+      # en Docker apunta al propio contenedor del job, no al host donde
+      # corre Supabase — hay que resolverlo por host.docker.internal.
+      - run: pnpm supabase db reset --db-url "postgresql://postgres:postgres@host.docker.internal:5434/postgres"
       # test:db (no test:db:ci) usa 127.0.0.1, que en el runner self-hosted
       # en Docker apunta al propio contenedor, no al host donde corre
       # Supabase. test:db:ci se conecta por host.docker.internal en su
