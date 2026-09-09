@@ -18,6 +18,7 @@ import { OrganizacionList } from './pages/organizaciones/list'
 import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
+import { AnaliticaAdministrar } from './pages/analitica/administrar'
 import './App.css'
 
 const theme = createTheme({
@@ -90,6 +91,11 @@ function App() {
                 edit: '/clientes/edit/:id',
                 meta: { label: 'Clientes' },
               },
+              {
+                name: 'analitica-administrar',
+                list: '/analitica/administrar',
+                meta: { label: 'Analítica (administrar)' },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -134,6 +140,7 @@ function App() {
                     </RequiereOrganizacionActiva>
                   }
                 />
+                <Route path="/analitica/administrar" element={<AnaliticaAdministrar />} />
               </Route>
 
               <Route

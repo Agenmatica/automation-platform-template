@@ -71,9 +71,9 @@ correctamente (quickstart.md, sección 1).
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Crear `apps/web/src/components/GrillaPermisosPorRol.tsx` — componente reutilizable (filas = reportes o un solo reporte, columnas = `roles_organizacion` excepto `administrador`, que se muestra siempre tildado y deshabilitado; checkbox por intersección; `onChange(rolesSeleccionados: string[])`)
-- [ ] T011 [US1] Crear `apps/web/src/pages/analitica/administrar.tsx`: lista el catálogo (`reportes` + `reportes_roles_default`), formulario para `registrar_reporte` (UUID de embedding + nombre + `GrillaPermisosPorRol` para el default), acción `establecer_roles_default_reporte` para editar el default de uno ya existente, selector de organizaciones con `asignar_reporte`/`desasignar_reporte`
-- [ ] T012 [US1] Registrar el resource `analitica-administrar` y la ruta `/analitica/administrar` en `apps/web/src/App.tsx`; restringir su acceso a superadmin en `apps/web/src/providers/accessControlProvider.ts` (mismo criterio que ya usa el resource `organizaciones`)
+- [X] T010 [P] [US1] Crear `apps/web/src/components/GrillaPermisosPorRol.tsx` — componente reutilizable (filas = reportes o un solo reporte, columnas = `roles_organizacion` excepto `administrador`, que se muestra siempre tildado y deshabilitado; checkbox por intersección; `onChange(rolesSeleccionados: string[])`)
+- [X] T011 [US1] Crear `apps/web/src/pages/analitica/administrar.tsx`: lista el catálogo (`reportes` + `reportes_roles_default`), formulario para `registrar_reporte` (UUID de embedding + nombre + `GrillaPermisosPorRol` para el default), acción `establecer_roles_default_reporte` para editar el default de uno ya existente, selector de organizaciones con `asignar_reporte`/`desasignar_reporte`
+- [X] T012 [US1] Registrar el resource `analitica-administrar` y la ruta `/analitica/administrar` en `apps/web/src/App.tsx`; restringir su acceso a superadmin en `apps/web/src/providers/accessControlProvider.ts` (mismo criterio que ya usa el resource `organizaciones`)
 
 **Checkpoint**: el superadmin puede registrar, definir default, asignar y
 desasignar reportes de punta a punta (quickstart.md, secciones 1 y 4).

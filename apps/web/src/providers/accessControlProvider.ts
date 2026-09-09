@@ -4,7 +4,9 @@ import { supabaseClient } from '../lib/supabase'
 import { RECURSOS_DEPENDIENTES_DE_ORGANIZACION } from '../lib/recursosDependientesDeOrganizacion'
 
 // Gatea dos categorías de recurso:
-// - "organizaciones" (spec 003, US2/AC2, FR-008, FR-010): solo superadmin.
+// - "organizaciones" (spec 003, US2/AC2, FR-008, FR-010) y
+//   "analitica-administrar" (spec 007, US1, FR-001/FR-013): solo superadmin,
+//   sin importar organización activa — el catálogo de reportes es global.
 // - RECURSOS_DEPENDIENTES_DE_ORGANIZACION (spec 004, FR-001/FR-002): para
 //   administrador/miembro no cambia nada (siempre los ven); para
 //   superadmin, solo si tiene una organización activa — si no, ni
@@ -15,7 +17,7 @@ import { RECURSOS_DEPENDIENTES_DE_ORGANIZACION } from '../lib/recursosDependient
 // bloqueada — el navegar no debería ni ofrecer la opción.
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ resource }) => {
-    if (resource === 'organizaciones') {
+    if (resource === 'organizaciones' || resource === 'analitica-administrar') {
       const { data } = await supabaseClient.auth.getUser()
       if (!data?.user) {
         return { can: false }
