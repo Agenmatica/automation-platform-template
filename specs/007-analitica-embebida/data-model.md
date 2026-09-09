@@ -102,6 +102,14 @@ después de insertarla (FR-012, SC-004).
   activa. Misma lógica que `private.puede_gestionar_membresias` de la spec
   005, redefinida acá porque esta spec parte de `main` sin ese PR mergeado
   todavía (research.md #7).
+- **`private.puede_ver_reporte(p_reporte_id uuid) returns boolean`** —
+  agregada durante la implementación (no estaba en el diseño original de
+  este documento): encapsula el `exists` contra
+  `reportes_organizaciones_roles` que necesita la policy de `select` de
+  `reportes`. Sin esto, esa policy consultaría directamente otra tabla con
+  RLS propia desde dentro de su propio `using` — el mismo riesgo de
+  recursión de policies que ya motivó que `private.organizacion_id()` e
+  `is_superadmin()` fueran `security definer` en la spec 003.
 
 ## RPCs (`public`, `security definer`, `search_path = ''`)
 
@@ -118,9 +126,9 @@ puede llamar cada una:
 
 ## RLS
 
-- `reportes`: `select` — `private.is_superadmin()` o existe una fila en
-  `reportes_organizaciones_roles` para ese reporte con la organización y
-  rol de quien consulta (o el rol es `administrador`). Esto es lo que da a
+- `reportes`: `select` — `private.is_superadmin()` o
+  `private.puede_ver_reporte(reportes.id)` (organización y rol de quien
+  consulta habilitados, o el rol es `administrador`). Esto es lo que da a
   `administrador` su acceso incondicional (FR-006) sin necesitar una fila
   propia en ninguna tabla de roles.
 - `reportes_roles_default`: `select` — solo `private.is_superadmin()`.
