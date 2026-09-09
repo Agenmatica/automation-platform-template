@@ -45,6 +45,15 @@ organización puede ajustar para la suya."
 - Q: ¿Qué ve una organización sin ningún reporte asignado? → A: Un mensaje
   explícito indicando que no tiene reportes configurados, no una pantalla
   vacía sin explicación.
+- Q: ¿Qué debe ver una persona si intenta abrir un reporte y el servicio de
+  analítica no responde en ese momento? → A: Un mensaje específico
+  ("Analítica no disponible en este momento"), sin detalles técnicos del
+  fallo — no un error genérico ni un reintento automático.
+- Q: Si se desasigna un reporte de una organización y luego se le vuelve a
+  asignar, ¿conserva la personalización de roles que tenía antes? → A: No —
+  arranca de cero, copiando el default vigente del reporte en ese momento,
+  igual que cualquier asignación nueva (FR-004). No se conserva ningún
+  estado de una relación ya desasignada.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -80,6 +89,11 @@ y con la visibilidad heredada correctamente.
    superadmin cambia el default a "solo administrador" después de que X ya
    estaba asignada, **Then** la visibilidad de X no cambia — el ajuste solo
    aplica a asignaciones nuevas.
+5. **Given** un reporte asignado a X, **When** el superadmin lo desasigna y
+   luego lo vuelve a asignar, **Then** la visibilidad por rol de X se
+   inicializa nuevamente desde el default vigente del reporte en ese
+   momento, sin conservar la personalización que X tenía antes de ser
+   desasignada.
 
 ---
 
@@ -120,6 +134,10 @@ puede acceder a los datos de X por ningún medio.
 5. **Given** un reporte asignado a X pero cuyo default de rol no incluye al
    rol de quien consulta (y esa persona no es administrador), **When**
    intenta acceder, **Then** el acceso es rechazado.
+6. **Given** el servicio de analítica no responde, **When** una persona
+   intenta abrir un reporte, **Then** ve un mensaje específico indicando que
+   la analítica no está disponible en este momento, sin detalles técnicos
+   del fallo.
 
 ---
 
@@ -170,6 +188,9 @@ mientras que otra organización con el mismo reporte no se ve afectada.
   reflejar ese cambio en el catálogo interno deja una entrada inconsistente;
   mantenerlas sincronizadas es responsabilidad de quien administra Superset,
   no una validación automática de esta funcionalidad.
+- Si el servicio de analítica no responde al abrir un reporte, el sistema
+  muestra un mensaje específico de no disponibilidad en vez de un error
+  genérico, una pantalla rota, o un reintento automático silencioso.
 
 ## Requirements *(mandatory)*
 
@@ -181,8 +202,9 @@ mientras que otra organización con el mismo reporte no se ve afectada.
 - **FR-002**: El sistema DEBE permitir al superadmin definir, por reporte,
   qué roles de organización lo ven por defecto, además de administrador
   (que queda cubierto por FR-006, no por esta configuración).
-- **FR-003**: El sistema DEBE permitir al superadmin asignar un reporte
-  registrado a una, varias, o todas las organizaciones.
+- **FR-003**: El sistema DEBE permitir al superadmin asignar, y también
+  desasignar, un reporte registrado de una, varias, o todas las
+  organizaciones.
 - **FR-004**: Al asignarse un reporte a una organización, el sistema DEBE
   copiar en ese momento la visibilidad por rol definida como default en ese
   reporte. Cambios posteriores al default global NO DEBEN alterar
@@ -220,6 +242,14 @@ mientras que otra organización con el mismo reporte no se ve afectada.
 - **FR-014**: Un rol de organización agregado al catálogo de roles después
   de que un reporte ya tenga visibilidad definida DEBE arrancar sin acceso a
   ese reporte hasta que se lo habilite explícitamente.
+- **FR-015**: El sistema DEBE mostrar un mensaje específico indicando que la
+  analítica no está disponible en este momento cuando el servicio de
+  analítica no responde a un pedido de reporte, sin exponer detalles
+  técnicos del fallo.
+- **FR-016**: Al reasignarse un reporte previamente desasignado de una
+  organización, el sistema DEBE inicializar su visibilidad por rol desde el
+  default vigente del reporte en ese momento (mismo comportamiento que
+  FR-004), sin conservar ninguna personalización previa de esa organización.
 
 ### Key Entities
 
@@ -227,7 +257,9 @@ mientras que otra organización con el mismo reporte no se ve afectada.
   de Superset, con un nombre para mostrar y su visibilidad por rol por
   defecto.
 - **Asignación de reporte a organización**: qué organizaciones tienen acceso
-  a un reporte determinado.
+  a un reporte determinado; puede crearse y quitarse. Quitarla no conserva
+  la personalización de roles que la organización tenía — una reasignación
+  posterior arranca desde el default vigente del reporte.
 - **Visibilidad por rol de una organización**: qué roles internos de una
   organización puntual pueden ver un reporte que le fue asignado; se
   inicializa desde el default del reporte al momento de la asignación y
