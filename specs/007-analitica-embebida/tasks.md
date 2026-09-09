@@ -218,7 +218,7 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
 
 - CSRF de Superset bloqueaba `/security/guest_token/` (Bearer
   server-to-server sin sesión) — fix en `infra/superset/superset_config.py`
-  (`WTF_CSRF_EXEMPT_LIST`). Ver commit &lt;pendiente&gt;.
+  (`WTF_CSRF_EXEMPT_LIST`). Ver commit 3ad76a9.
 - FR-006 (acceso incondicional de administrador) fallaba con cero roles
   habilitados para una organización — fix en
   `private.puede_ver_reporte()` y la policy de `reportes_organizaciones`
@@ -226,12 +226,12 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   pasaron de leer `reportes_organizaciones_roles` a
   `reportes_organizaciones`. Caso nuevo en pgTAP (T009,
   `analitica_embebida.test.sql`, ahora 33 assertions). Ver commit
-  &lt;pendiente&gt;.
+  3ad76a9.
 - La Edge Function devolvía `SUPERSET_URL` (interno, server-to-server) al
   navegador para montar el SDK — no lo puede resolver ("server IP address
   could not be found"). Fix: variable nueva `SUPERSET_PUBLIC_URL`, la
   función sigue usando `SUPERSET_URL` puertas adentro pero responde con
-  `SUPERSET_PUBLIC_URL`. Ver commit &lt;pendiente&gt;.
+  `SUPERSET_PUBLIC_URL`. Ver commit 3ad76a9.
 - Faltaba crear el rol `Guest` en Superset y el CORS solo permitía
   `http://localhost:3100`, no `http://127.0.0.1:3100` — ninguno de los
   dos alcanzó a explicar el error solo; la causa real de "Something went
@@ -249,7 +249,7 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   `superset.config` y la extiende (research.md #10.3). Verificado contra
   la API real de punta a punta: `/me/roles` → `/dashboard/1` →
   `/chart/data` devuelven 200, con los datos ya filtrados por
-  organización. Ver commit &lt;pendiente&gt;.
+  organización. Ver commit 3ad76a9.
 - **Bug de aislamiento multi-tenant real** (reportado por el usuario, no
   por el guion del quickstart): con un reporte asignado a dos
   organizaciones, la policy de `reportes_organizaciones` dejaba ver la
@@ -260,7 +260,7 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   organización**, sin comparar el `organizacion_id` de la fila contra el
   de quien consulta. Fix: función nueva `private.puede_ver_asignacion()`.
   Caso nuevo en pgTAP (mismo reporte, dos organizaciones, cada una ve
-  solo la suya — 37 assertions ahora). Ver commit &lt;pendiente&gt;.
+  solo la suya — 37 assertions ahora). Ver commit 3ad76a9.
 - **Segundo bug de aislamiento** (también reportado por el usuario, tras
   el anterior): con el superadmin, `emitir-acceso-reporte` mostraba datos
   de una organización distinta a la que tenía activa. Causa: la RLS de
@@ -271,7 +271,7 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   `private.organizacion_id()` en vez de inferir la organización de qué
   filas devuelve una tabla. Caso nuevo en pgTAP (superadmin entra a X,
   después a Y, confirma que el resultado cambia — 39 assertions ahora).
-  Ver commit &lt;pendiente&gt;.
+  Ver commit 3ad76a9.
 - **Tercer bug, encadenado con el anterior**: el dropdown de "Analítica"
   ofrecía reportes que después se rechazaban al seleccionarlos — mismo
   patrón, `useReportesAsignados` hacía `select * from reportes`, que le
@@ -281,7 +281,7 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   `reportes_visibles_para_mi()`, sin ese bypass — un superadmin con
   organización activa se trata igual que su administrador.
   `useReportesAsignados.ts` actualizado para usarla. Caso nuevo en pgTAP
-  (41 assertions ahora). Ver commit &lt;pendiente&gt;.
+  (41 assertions ahora). Ver commit 3ad76a9.
 - Sin resolver: en local, Edge Functions de Supabase y Superset quedan en
   redes Docker separadas — requiere un `docker network connect` manual
   que no sobrevive a `supabase stop && supabase start` (detalle en
@@ -292,4 +292,4 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   `@superset-ui/embedded-sdk`: sin TTY, `pnpm install` no podía confirmar
   el purge de `node_modules` (volumen con estado propio) al detectarlo
   desalineado del lockfile. Fix: `CI: "true"` en el `environment` de
-  `infra/refine/compose.yaml`. Ver commit &lt;pendiente&gt;.
+  `infra/refine/compose.yaml`. Ver commit 3ad76a9.
