@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(19);
+select plan(27);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -196,7 +196,10 @@ select is(
 );
 
 -- ============================================================================
--- Superadmin "entra" a una organización a la vez (US4, FR-006, FR-013).
+-- Superadmin "entra" a una organización a la vez (spec 003, US4, FR-006,
+-- FR-013) y contexto de organización activa (spec 004: no-op al salir sin
+-- nada activo, salida explícita, auditoría de salida automática al
+-- cambiar de organización).
 -- En este punto la organización 1 tiene 2 clientes y la 2 tiene 1 (ver
 -- secciones anteriores).
 -- ============================================================================
@@ -212,6 +215,27 @@ select is(
   (select count(*) from clientes)::int, 0,
   'el superadmin sin ninguna organización activa no ve ningún cliente (fail-closed)'
 );
+
+-- Salir sin tener ninguna organización activa es un no-op (spec 004,
+-- Clarifications Q1): no falla, no agrega fila de auditoría.
+select lives_ok(
+  $$select salir_de_organizacion()$$,
+  'salir_de_organizacion() sin organización activa no falla (no-op)'
+);
+
+reset role;
+
+select is(
+  (select count(*) from superadmin_entradas where user_id = 'a5000000-0000-0000-0000-000000000005')::int, 0,
+  'el no-op de salir_de_organizacion no agregó ninguna fila de auditoría'
+);
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
 
 select entrar_a_organizacion('11111111-1111-1111-1111-111111111111');
 
@@ -237,8 +261,60 @@ select is(
 reset role;
 
 select is(
-  (select count(*) from superadmin_entradas where user_id = 'a5000000-0000-0000-0000-000000000005')::int, 2,
-  'cada entrada del superadmin quedó registrada en el historial de auditoría (FR-013)'
+  (select count(*) from superadmin_entradas where user_id = 'a5000000-0000-0000-0000-000000000005')::int, 3,
+  'quedaron 3 filas de auditoría: entrada a la 1, salida automática de la 1, entrada a la 2 (spec 004, FR-007)'
+);
+
+select is(
+  (select accion from superadmin_entradas
+     where user_id = 'a5000000-0000-0000-0000-000000000005'
+     order by id asc limit 1),
+  'entrada',
+  'la primera fila de auditoría es la entrada a la organización 1'
+);
+
+select is(
+  (select array_agg(accion order by id asc) from superadmin_entradas
+     where user_id = 'a5000000-0000-0000-0000-000000000005'),
+  array['entrada', 'salida', 'entrada'],
+  'el orden de acciones es entrada (org 1), salida automática (org 1), entrada (org 2) — verificado por id, no por entrado_en (spec 004, research.md)'
+);
+
+select is(
+  (select organizacion_id from superadmin_entradas
+     where user_id = 'a5000000-0000-0000-0000-000000000005' and accion = 'salida'),
+  '11111111-1111-1111-1111-111111111111',
+  'la fila de salida automática corresponde a la organización que dejó (la 1), no a la nueva activa'
+);
+
+-- Salir explícitamente de la organización activa (spec 004, FR-005/FR-006).
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select salir_de_organizacion();
+
+select is(
+  (select count(*) from clientes)::int, 0,
+  'tras salir, el superadmin vuelve a no ver ningún cliente (fail-closed, igual que antes de haber entrado)'
+);
+
+reset role;
+
+select is(
+  (select count(*) from superadmin_entradas where user_id = 'a5000000-0000-0000-0000-000000000005')::int, 4,
+  'la salida explícita agregó una cuarta fila de auditoría'
+);
+
+select is(
+  (select accion from superadmin_entradas
+     where user_id = 'a5000000-0000-0000-0000-000000000005'
+     order by id desc limit 1),
+  'salida',
+  'la última fila de auditoría es la salida explícita de la organización 2'
 );
 
 select * from finish();

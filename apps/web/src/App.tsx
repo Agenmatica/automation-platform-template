@@ -11,6 +11,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router'
 import { authProvider } from './providers/authProvider'
 import { accessControlProvider } from './providers/accessControlProvider'
 import { supabaseClient } from './lib/supabase'
+import { RequiereOrganizacionActiva } from './components/RequiereOrganizacionActiva'
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
 import { OrganizacionList } from './pages/organizaciones/list'
@@ -109,9 +110,30 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="/organizaciones" element={<OrganizacionList />} />
                 <Route path="/organizaciones/create" element={<OrganizacionCreate />} />
-                <Route path="/clientes" element={<ClienteList />} />
-                <Route path="/clientes/create" element={<ClienteCreate />} />
-                <Route path="/clientes/edit/:id" element={<ClienteEdit />} />
+                <Route
+                  path="/clientes"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <ClienteList />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
+                <Route
+                  path="/clientes/create"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <ClienteCreate />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
+                <Route
+                  path="/clientes/edit/:id"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <ClienteEdit />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
               </Route>
 
               <Route
