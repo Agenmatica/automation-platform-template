@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+const appUrl = (Deno.env.get('APP_URL') ?? 'http://127.0.0.1:3100').replace(/\/$/, '')
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -26,7 +27,9 @@ Deno.serve(async (req) => {
   }
   let userId = existing?.id; let usuarioInvitadoId: string | undefined; let accion = 'miembro_agregado'
   if (!userId) {
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(email)
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${appUrl}/acceso/definir-contrasena?origen=invitacion`,
+    })
     if (error || !data.user) return response({ error: `No se pudo invitar a ${email}.` }, 502)
     userId = data.user.id; usuarioInvitadoId = data.user.id; accion = 'invitacion_enviada'
   }
