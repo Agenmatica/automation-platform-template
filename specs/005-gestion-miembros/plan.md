@@ -57,11 +57,10 @@ exportan sus eventos si la entrega hubiera llegado a un entorno compartido. No
 se eliminan ni alteran las tablas existentes `usuarios_organizacion` ni
 `auth.users`.
 
-**Resolución de cuentas existentes**: la migración expone
-`public.resolver_usuario_por_email(email text)` como wrapper `security definer`
-de la búsqueda en `auth.users`, con `execute` concedido únicamente a
-`service_role`. La Edge Function la invoca con su cliente de servidor; el
-navegador no recibe grant ni puede enumerar cuentas.
+**Resolución de cuentas existentes**: la Edge Function busca la cuenta mediante
+la API administrativa de Auth con su cliente de servidor. No se expone una
+función `security definer` en `public` para consultar `auth.users`; el
+navegador no recibe capacidad de enumerar cuentas.
 
 ## Project Structure
 

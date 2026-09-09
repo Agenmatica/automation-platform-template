@@ -19,9 +19,9 @@ Reglas nuevas:
 ### `auth.users`
 
 Es la fuente de identidad y correo. No se expone al navegador. La Edge Function
-resuelve una cuenta existente a través de un wrapper de servidor concedido solo
-a `service_role`, para decidir entre invitar una cuenta nueva o asociar una
-cuenta ya existente sin membresía.
+usa la API administrativa de Auth en su entorno de servidor para resolver una
+cuenta existente y decidir entre invitar una cuenta nueva o asociar una cuenta
+ya existente sin membresía.
 
 ## Nueva entidad: `eventos_membresia`
 

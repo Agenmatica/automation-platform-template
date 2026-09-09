@@ -12,7 +12,7 @@
 
 ## Decisión: Cuenta nueva invitada; cuenta existente sin membresía vinculada directamente
 
-**Rationale**: `inviteUserByEmail` rechaza cuentas existentes. Para que una persona removida pueda incorporarse a otra organización —regla explícita de la spec—, la función primero resuelve mediante una RPC `security definer` concedida solo a `service_role` si ya existe una cuenta. Si existe y no tiene membresía, registra la membresía sin reenviar correo; ya puede acceder con sus credenciales. Si no existe, envía la invitación y luego registra la membresía con el rol elegido.
+**Rationale**: `inviteUserByEmail` rechaza cuentas existentes. Para que una persona removida pueda incorporarse a otra organización —regla explícita de la spec—, la función primero busca mediante la API administrativa de Auth si ya existe una cuenta. Si existe y no tiene membresía, registra la membresía sin reenviar correo; ya puede acceder con sus credenciales. Si no existe, envía la invitación y luego registra la membresía con el rol elegido. No se expone una función `security definer` en `public` para buscar en `auth.users`.
 
 **Alternatives considered**:
 

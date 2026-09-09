@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(27);
+select plan(30);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -316,6 +316,23 @@ select is(
   'salida',
   'la última fila de auditoría es la salida explícita de la organización 2'
 );
+
+-- Membresías (spec 005, US1): administrador lista su organización, miembro
+-- conserva solo su propia fila y superadmin sin contexto no recibe el listado.
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 2, 'administrador lista las dos membresías de su organización');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 1, 'miembro solo conserva lectura de su propia membresía');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 0, 'superadmin sin organización activa no lista membresías');
+reset role;
 
 select * from finish();
 
