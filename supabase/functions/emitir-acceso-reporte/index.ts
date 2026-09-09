@@ -58,20 +58,24 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Falta "reporte_id".' }, 400)
   }
 
-  // Cliente autenticado como el propio usuario que llama — la RLS de
-  // reportes_organizaciones_roles (organización activa + rol) decide si
-  // hay algo que ver, sin duplicar esa regla acá (research.md #6).
+  // Cliente autenticado como el propio usuario que llama — nunca la
+  // service-role (research.md #6). La organización con la que arma la
+  // cláusula `rls` la resuelve la RPC resolver_organizacion_reporte, NO
+  // un select con `limit 1` sobre reportes_organizaciones: para un
+  // miembro/administrador normal la RLS de esa tabla ya deja ver una sola
+  // fila, pero un superadmin ve TODAS (su policy tiene un
+  // `is_superadmin() or ...`) sin importar cuál organización tiene
+  // activa — un `limit 1` ahí agarraba cualquiera, no la que
+  // corresponde. La RPC usa private.organizacion_id(), que sí resuelve
+  // bien ese caso (bug real, encontrado por el usuario probando la app).
   const asUser = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${jwt}` } },
   })
 
-  const { data: filasAutorizacion } = await asUser
-    .from('reportes_organizaciones_roles')
-    .select('organizacion_id')
-    .eq('reporte_id', reporteId)
-    .limit(1)
+  const { data: organizacionId } = await asUser.rpc('resolver_organizacion_reporte', {
+    p_reporte_id: reporteId,
+  })
 
-  const organizacionId = filasAutorizacion?.[0]?.organizacion_id
   if (!organizacionId) {
     // Ni siquiera se revela si el reporte existe (FR-007).
     return jsonResponse({ error: 'No autorizado' }, 403)
@@ -87,7 +91,15 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'No autorizado' }, 403)
   }
 
+  // SUPERSET_URL es server-to-server (esta función corre en el contenedor
+  // de Edge Functions — en local, un nombre de contenedor Docker; en
+  // producción, la URL interna que sea). SUPERSET_PUBLIC_URL es la que
+  // termina en el navegador de quien mira el reporte, para que el SDK
+  // pueda cargar el iframe: nunca la misma en local (encontrado corriendo
+  // el quickstart de la spec 007, T023 — el navegador no resuelve el
+  // nombre del contenedor).
   const supersetUrl = Deno.env.get('SUPERSET_URL')!
+  const supersetPublicUrl = Deno.env.get('SUPERSET_PUBLIC_URL')!
   const username = Deno.env.get('SUPERSET_GUEST_TOKEN_USERNAME')!
   const password = Deno.env.get('SUPERSET_GUEST_TOKEN_PASSWORD')!
 
@@ -131,7 +143,7 @@ Deno.serve(async (req) => {
     return jsonResponse(
       {
         guest_token: guestToken,
-        superset_url: supersetUrl,
+        superset_url: supersetPublicUrl,
         dashboard_uuid: reporte.superset_dashboard_uuid,
       },
       200,

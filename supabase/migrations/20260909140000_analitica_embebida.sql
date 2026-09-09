@@ -142,21 +142,64 @@ security definer
 set search_path = ''
 as $$
   select exists (
-    select 1 from public.reportes_organizaciones_roles ror
-    where ror.reporte_id = p_reporte_id
-      and ror.organizacion_id = (select private.organizacion_id())
+    select 1 from public.reportes_organizaciones ro
+    where ro.reporte_id = p_reporte_id
+      and ro.organizacion_id = (select private.organizacion_id())
       and (
-        ror.rol_id = (select private.rol_id())
-        or (select private.rol_id()) = 'administrador'
+        (select private.rol_id()) = 'administrador'
+        or exists (
+          select 1 from public.reportes_organizaciones_roles ror
+          where ror.reporte_id = ro.reporte_id
+            and ror.organizacion_id = ro.organizacion_id
+            and ror.rol_id = (select private.rol_id())
+        )
       )
   );
 $$;
 
 comment on function private.puede_ver_reporte(uuid) is
-  'Usada por la policy de select de reportes: evita que esa policy consulte reportes_organizaciones_roles directamente (RLS-sobre-RLS), mismo motivo por el que private.organizacion_id()/is_superadmin() son security definer.';
+  'Usada por la policy de select de reportes: evita que esa policy consulte otras tablas con RLS propia directamente (RLS-sobre-RLS), mismo motivo por el que private.organizacion_id()/is_superadmin() son security definer. Se apoya en reportes_organizaciones (la asignación en sí, que siempre tiene una fila mientras el reporte esté asignado) en vez de en reportes_organizaciones_roles — quickstart.md sección 3 encontró que administrador quedaba sin acceso cuando esa segunda tabla quedaba con cero filas para la organización (ningún rol habilitado), porque "administrador" nunca tiene fila propia ahí (FR-006) y por lo tanto ninguna fila coincidía, ni siquiera para él. OJO: responde "¿mi organización puede ver ESTE reporte, en general?" — sirve para reportes (una fila por reporte), NO para reportes_organizaciones (una fila POR ORGANIZACIÓN asignada a un reporte) — ver private.puede_ver_asignacion() para esa.';
 
 revoke execute on function private.puede_ver_reporte(uuid) from public;
 grant execute on function private.puede_ver_reporte(uuid) to authenticated;
+
+-- private.puede_ver_asignacion(reporte, organizacion): ¿puedo ver ESTA
+-- fila puntual de reportes_organizaciones (este reporte para ESTA
+-- organización)? Bug real encontrado corriendo el quickstart (T023,
+-- sección "isolation" fuera del guion original): la policy de
+-- reportes_organizaciones usaba private.puede_ver_reporte(reporte_id),
+-- que solo mira "¿mi organización tiene ALGUNA fila para este reporte?" —
+-- cuando el mismo reporte está asignado a dos organizaciones, esa función
+-- da true para las DOS filas (la mía y la ajena), no solo la mía, porque
+-- nunca compara organizacion_id de la fila evaluada contra la mía. La
+-- Edge Function emitir-acceso-reporte confía en que RLS ya filtró y hace
+-- `select ... limit 1` sin `where organizacion_id = ...` — con la policy
+-- vieja, a veces devolvía la organización de OTRO, filtrando sus datos.
+create or replace function private.puede_ver_asignacion(p_reporte_id uuid, p_organizacion_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    p_organizacion_id = (select private.organizacion_id())
+    and (
+      (select private.rol_id()) = 'administrador'
+      or exists (
+        select 1 from public.reportes_organizaciones_roles ror
+        where ror.reporte_id = p_reporte_id
+          and ror.organizacion_id = p_organizacion_id
+          and ror.rol_id = (select private.rol_id())
+      )
+    );
+$$;
+
+comment on function private.puede_ver_asignacion(uuid, uuid) is
+  'Para la policy de select de reportes_organizaciones: a diferencia de puede_ver_reporte(), compara el organizacion_id de la fila puntual contra la organización de quien consulta — sin esto, alguien con acceso a un reporte asignado a varias organizaciones veía las filas de todas, no solo la suya (bug encontrado en quickstart.md, T023).';
+
+revoke execute on function private.puede_ver_asignacion(uuid, uuid) from public;
+grant execute on function private.puede_ver_asignacion(uuid, uuid) to authenticated;
 
 -- ============================================================================
 -- Trigger: herencia congelada del default al asignar (FR-004/FR-016)
@@ -413,6 +456,92 @@ revoke execute on function public.establecer_roles_reporte_organizacion(uuid, uu
 grant execute on function public.establecer_roles_reporte_organizacion(uuid, uuid, text[]) to authenticated;
 
 -- ============================================================================
+-- RPC: resolver_organizacion_reporte (usada por emitir-acceso-reporte)
+-- ============================================================================
+-- Bug real encontrado por el usuario probando la app (T023, fuera de
+-- cualquier sección del guion): con un superadmin que entró a una
+-- organización, emitir-acceso-reporte seguía devolviendo la cláusula
+-- `rls` de OTRA organización, sin importar a cuál había entrado. Causa:
+-- la Edge Function resolvía la organización con
+-- `select organizacion_id from reportes_organizaciones where reporte_id
+-- = ... limit 1` confiando en que RLS ya había filtrado a una sola fila
+-- — cierto para un miembro/administrador normal (con la RLS corregida
+-- arriba), pero NO para un superadmin: su policy tiene un
+-- `is_superadmin() or ...` que lo deja ver TODAS las filas de
+-- reportes_organizaciones sin importar cuál organización tiene activa,
+-- así que el `limit 1` agarraba cualquiera (en la práctica, siempre la
+-- primera insertada) en vez de la que private.organizacion_id() ya sabía
+-- resolver correctamente.
+--
+-- Esta RPC es la única fuente de verdad para "¿qué organización debería
+-- ver este reporte, siendo yo quien soy ahora mismo?" — usa
+-- private.organizacion_id() (que ya resuelve bien el caso superadmin) en
+-- vez de que la Edge Function intente inferirlo de qué filas devuelve una
+-- tabla. Devuelve null si no hay acceso (mismo comportamiento externo que
+-- antes: 403 sin revelar nada del reporte).
+create or replace function public.resolver_organizacion_reporte(p_reporte_id uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case
+    when private.puede_ver_asignacion(p_reporte_id, private.organizacion_id())
+      then private.organizacion_id()
+    else null
+  end;
+$$;
+
+comment on function public.resolver_organizacion_reporte(uuid) is
+  'Contrato: specs/007-analitica-embebida/contracts/acceso-reporte.md. Resuelve la organización con la que emitir-acceso-reporte arma la cláusula rls del guest token — respeta la organización activa del superadmin, a diferencia de inferirla de un select con limit 1 (bug real, ver comentario arriba).';
+
+revoke execute on function public.resolver_organizacion_reporte(uuid) from public;
+grant execute on function public.resolver_organizacion_reporte(uuid) to authenticated;
+
+-- ============================================================================
+-- RPC: reportes_visibles_para_mi (usada por useReportesAsignados, US2)
+-- ============================================================================
+-- Tercer bug real, reportado por el usuario tras los dos anteriores: con
+-- el superadmin, el dropdown de "Analítica" (useReportesAsignados,
+-- `select * from reportes`) ofrecía reportes que después
+-- resolver_organizacion_reporte rechazaba (403) — confuso ("si no tengo
+-- acceso, no debería ni poder seleccionarlo"). Causa: la policy de
+-- `reportes` tiene `is_superadmin() or ...` — necesario para que
+-- administrar.tsx (US1) vea el catálogo COMPLETO, incluyendo reportes sin
+-- asignar a ninguna organización — pero ese mismo bypass hacía que el
+-- superadmin, mirando "Analítica" con una organización activa, viera
+-- reportes de CUALQUIER organización, no solo los asignados a la que
+-- tiene activa.
+--
+-- Esta función es la lista "lo que YO veo ahora, actuando en mi
+-- organización activa" — a propósito NO tiene el `is_superadmin() or`:
+-- un superadmin con una organización activa se trata igual que su
+-- administrador (mismo criterio que private.puede_escribir()), ni más ni
+-- menos. Sin organización activa, devuelve cero filas (mismo criterio que
+-- el resto del producto — spec 004, RECURSOS_DEPENDIENTES_DE_ORGANIZACION
+-- ya exige una organización activa antes de llegar acá).
+create or replace function public.reportes_visibles_para_mi()
+returns table (id uuid, nombre text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select r.id, r.nombre
+  from public.reportes r
+  join public.reportes_organizaciones ro on ro.reporte_id = r.id
+  where ro.organizacion_id = (select private.organizacion_id())
+    and private.puede_ver_asignacion(ro.reporte_id, ro.organizacion_id);
+$$;
+
+comment on function public.reportes_visibles_para_mi() is
+  'Usada por apps/web/src/hooks/useReportesAsignados.ts (US2) en vez de un select directo a reportes — ese select le daba al superadmin el bypass de is_superadmin() pensado para el catálogo completo de administrar.tsx (US1), mostrando reportes de organizaciones que no tenía activa (bug real, ver comentario arriba).';
+
+revoke execute on function public.reportes_visibles_para_mi() from public;
+grant execute on function public.reportes_visibles_para_mi() to authenticated;
+
+-- ============================================================================
 -- RLS
 -- ============================================================================
 
@@ -433,11 +562,21 @@ create policy reportes_roles_default_select on reportes_roles_default
   for select to authenticated
   using ((select private.is_superadmin()));
 
+-- Antes era simplemente "organizacion_id = mi organización" — cualquier
+-- miembro veía que el reporte estaba asignado, sin importar si su rol
+-- tenía visibilidad habilitada. Usa private.puede_ver_asignacion(), NO
+-- puede_ver_reporte() — esta tabla tiene una fila por organización
+-- asignada a un reporte, así que la policy tiene que comparar el
+-- organizacion_id de CADA FILA contra el de quien consulta; reusar la
+-- función pensada para "reportes" (una fila por reporte) hacía que,
+-- con el mismo reporte asignado a dos organizaciones, cualquiera de las
+-- dos viera las filas de ambas — bug real de aislamiento multi-tenant
+-- encontrado en quickstart.md (T023), no solo un detalle de estilo.
 create policy reportes_organizaciones_select on reportes_organizaciones
   for select to authenticated
   using (
     (select private.is_superadmin())
-    or organizacion_id = (select private.organizacion_id())
+    or (select private.puede_ver_asignacion(reportes_organizaciones.reporte_id, reportes_organizaciones.organizacion_id))
   );
 
 create policy reportes_organizaciones_roles_select on reportes_organizaciones_roles

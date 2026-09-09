@@ -132,3 +132,131 @@ necesitar.
 **Rationale**: son los únicos cambios documentados como requisito del SDK
 oficial; cualquier ajuste adicional de cabeceras se resuelve si el
 quickstart lo detecta, no de antemano.
+
+## 10. Hallazgos de correr el quickstart de punta a punta (T023)
+
+Corriendo las 6 secciones contra Postgres/Superset/Edge Function reales
+(no mockeados) aparecieron dos problemas que ninguno de los tests
+automatizados (pgTAP, Vitest) podía haber detectado por su propio alcance
+documentado (#8):
+
+1. **CSRF bloqueaba `/security/guest_token/`**: `WTF_CSRF_ENABLED = True`
+   sin excepción hace que Superset exija sesión CSRF también en ese
+   endpoint, incompatible con el login Bearer server-to-server que este
+   mismo research.md (#3) diseñó. Fix: `WTF_CSRF_EXEMPT_LIST =
+   ["superset.security.api.guest_token"]` en `superset_config.py` — el
+   valor es `<módulo>.<nombre de función>` de la vista real (lo que
+   `flask_wtf.csrf.CSRFProtect.exempt()` compara), no una ruta ni una
+   regex; `/security/login` ya viene exento por Flask-AppBuilder.
+2. **`superset_url` en la response era la URL interna, no la pública**:
+   la Edge Function devolvía el mismo `SUPERSET_URL` que usa para hablarle
+   a Superset server-to-server (en local, el nombre del contenedor
+   Docker) — el navegador que monta el SDK no puede resolver ese nombre
+   ("server IP address could not be found"). Fix: variable nueva
+   `SUPERSET_PUBLIC_URL` (browser-reachable, en local
+   `http://localhost:8088`), la función sigue usando `SUPERSET_URL` para
+   sus propias llamadas pero devuelve `SUPERSET_PUBLIC_URL` en la
+   response — ver `contracts/acceso-reporte.md` y
+   `supabase/functions/.env.example`.
+3. **Sobreescribir `WTF_CSRF_EXEMPT_LIST` en vez de extenderla rompió
+   `/api/v1/chart/data`**: el fix del punto 1 (arriba) asignó
+   `WTF_CSRF_EXEMPT_LIST = ["superset.security.api.guest_token"]`
+   directo, pisando la lista default de Superset
+   (`superset.config.WTF_CSRF_EXEMPT_LIST`), que ya trae de fábrica
+   `superset.charts.data.api.data` — el POST que efectivamente pinta un
+   chart. Sin esa exención, cualquier request de datos del SDK embebido
+   fallaba con el mismo "The CSRF token is missing" que el punto 1 ya
+   había arreglado para `guest_token`. Fix: `superset_config.py` importa
+   `WTF_CSRF_EXEMPT_LIST` de `superset.config` y lo extiende con `+`, en
+   vez de reemplazarlo — evita que un futuro cambio a esa lista default
+   (con una versión nueva de Superset) se pierda silenciosamente acá.
+4. **El rol `Guest` necesita un permiso propio, no cero permisos**: el
+   comentario original de `superset_config.py` decía "sin permisos
+   propios" — cierto para Dashboard/Chart/Dataset (eso lo resuelve el
+   guest token vía `resources`/`rls`, no el RBAC del rol), pero el
+   bootstrap del SDK llama a `GET /api/v1/me/roles/` apenas monta el
+   iframe (`superset/views/users/api.py`, `CurrentUserRestApi.get_my_roles`,
+   protegido con `@protect()` + `permission_name("read")`) — sin
+   `can_read` sobre `CurrentUserRestApi` esa llamada da `403` y el
+   navegador solo muestra el genérico "Something went wrong with embedded
+   authentication". Es un paso manual en Superset (Settings > List Roles,
+   o `POST /api/v1/security/roles/{id}/permissions` con
+   `permission_view_menu_ids` apuntando a ese permiso) — comentario
+   actualizado en `superset_config.py`.
+5. **CORS solo permitía un origen**: `CORS_OPTIONS.origins` tomaba
+   únicamente `REFINE_ORIGIN` — entrar por `http://127.0.0.1:3100` en vez
+   de `http://localhost:3100` (mismo servidor, origen distinto para CORS)
+   rompía el embedding. Fix: `superset_config.py` agrega siempre las dos
+   variantes de loopback además de `REFINE_ORIGIN`.
+6. **Bug real de aislamiento: una organización podía ver los datos de
+   otra** (el más serio de los seis — reportado directamente por el
+   usuario probando la app, no por una sección puntual del guion del
+   quickstart). La policy de `reportes_organizaciones` reusaba
+   `private.puede_ver_reporte(reporte_id)` (pensada para `reportes`, una
+   fila por reporte) — esa función solo responde "¿mi organización tiene
+   ALGUNA fila para este reporte?", sin comparar el `organizacion_id` de
+   la fila que la RLS está evaluando contra el de quien consulta. Con el
+   mismo reporte asignado a dos organizaciones, eso hacía visibles las
+   filas de **ambas** para cualquiera de las dos. La Edge Function
+   `emitir-acceso-reporte` confía en que RLS ya filtró
+   (`select ... limit 1` sin `where organizacion_id = ...`, research.md
+   #6 original) — con la policy rota, a veces devolvía la cláusula `rls`
+   de la organización ajena, y Superset terminaba mostrando datos de la
+   organización equivocada. Fix: función nueva
+   `private.puede_ver_asignacion(reporte_id, organizacion_id)` que sí
+   compara ambos — ver data-model.md. Caso nuevo en pgTAP (mismo reporte
+   asignado a dos organizaciones, cada una ve solo su propia fila) — el
+   suite anterior no lo detectaba porque ningún test previo asignaba el
+   mismo reporte a dos organizaciones a la vez.
+7. **El superadmin veía datos de la organización equivocada según cuál
+   tenía activa** (segundo bug de aislamiento, distinto del anterior —
+   también reportado directamente por el usuario). La policy de
+   `reportes_organizaciones` tiene un `is_superadmin() or ...`: un
+   superadmin ve TODAS las filas de esa tabla, de cualquier organización,
+   sin importar cuál entró. El `select ... limit 1` que hacía
+   `emitir-acceso-reporte` confiaba en que RLS ya había dejado una sola
+   fila visible — cierto para un miembro/administrador normal (con el fix
+   del punto 6), pero no para un superadmin: el `limit 1` agarraba
+   cualquier fila (en la práctica, siempre la primera insertada),
+   ignorando la organización activa. Fix: RPC nueva
+   `resolver_organizacion_reporte(reporte_id)` que usa
+   `private.organizacion_id()` (ya resuelve bien el caso superadmin,
+   desde la spec 003/004) en vez de que la Edge Function intente
+   inferirlo de qué filas devuelve una tabla — ver `data-model.md` y
+   `contracts/acceso-reporte.md`. Caso nuevo en pgTAP: superadmin entra a
+   X, confirma que resuelve X; entra a Y, confirma que cambia a Y.
+8. **El dropdown ofrecía reportes que después se rechazaban** (tercer bug,
+   reportado por el usuario justo después del anterior — "si no tengo
+   acceso no debería ni poder seleccionarlo"). `useReportesAsignados`
+   hacía `select * from reportes`, apoyado en la RLS de esa tabla
+   (`is_superadmin() or puede_ver_reporte()`). Ese bypass de
+   `is_superadmin()` es necesario para que `administrar.tsx` (US1) vea el
+   catálogo completo — pero el mismo bypass hacía que el superadmin, en
+   "Analítica" (US2), viera reportes de organizaciones que no tenía
+   activa: el dropdown los ofrecía, y `resolver_organizacion_reporte` (el
+   punto anterior) los rechazaba correctamente al seleccionarlos — dos
+   fuentes de verdad desalineadas. Fix: RPC nueva
+   `reportes_visibles_para_mi()`, sin el bypass de superadmin — un
+   superadmin con organización activa se trata igual que su
+   administrador, ni más ni menos (mismo criterio que
+   `private.puede_escribir()`). `useReportesAsignados.ts` la usa en vez
+   del `select` directo. Caso nuevo en pgTAP: organización sin nada
+   asignado → lista vacía; con el reporte asignado → aparece.
+9. **FR-006 se rompía con cero roles habilitados**: ver data-model.md,
+   sección de `private.puede_ver_reporte()` ("Corrección post-quickstart")
+   — el diseño original chequeaba `reportes_organizaciones_roles`
+   directo, tabla que queda vacía para una organización sin ningún rol
+   no-administrador habilitado, y `administrador` nunca tiene fila propia
+   ahí. Fix: apoyarse en `reportes_organizaciones` (la asignación, que
+   siempre tiene una fila mientras el reporte esté asignado) en vez de en
+   la tabla de roles.
+
+Un hallazgo más quedó **sin resolver dentro de esta spec** (ver
+quickstart.md, Prerrequisitos): en local, el contenedor de Edge Functions
+de Supabase y el de Superset viven en redes Docker separadas (dos
+`compose.yaml` independientes, regla de `CLAUDE.md`) — hace falta un
+`docker network connect` manual, que no sobrevive a `supabase stop &&
+supabase start`. No se resuelve acá porque toca la topología de red de dos
+productos a la vez y merece su propia decisión (¿red externa compartida
+declarada en ambos compose?, ¿depender de `host.docker.internal`?), no un
+parche apurado dentro de una spec de analítica.

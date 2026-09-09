@@ -8,7 +8,19 @@
   habilitado para el origen de Refine (research.md #9).
 - Secretos de la Edge Function configurados (`SUPERSET_URL`,
   `SUPERSET_GUEST_TOKEN_USERNAME`, `SUPERSET_GUEST_TOKEN_PASSWORD`) —
-  ver `supabase/functions/.env.example`.
+  ver `supabase/functions/.env.example`. **En local hace falta además que
+  el contenedor de Edge Functions de Supabase pueda resolver el contenedor
+  de Superset por nombre** — son dos stacks de `docker compose`
+  independientes (regla de `CLAUDE.md`, "nunca un Compose raíz"), en redes
+  Docker separadas por defecto:
+  ```powershell
+  docker network connect automation-platform-template-superset-dev_default supabase_edge_runtime_automation-platform-template-supabase-de
+  ```
+  No sobrevive a `supabase stop && supabase start` (recrea el contenedor) —
+  hay que repetirlo. Encontrado corriendo este mismo quickstart (sección
+  2); pendiente resolverlo de forma declarativa en los compose de
+  `infra/supabase/` e `infra/superset/` en vez de a mano — no forma parte
+  de esta spec, ver Notas de `tasks.md`.
 - Al menos un dashboard creado en Superset y habilitado para embedding
   (Dashboard → Embed dashboard), con un dataset que tenga columna
   `organizacion_id` (research.md #4) y al menos una fila por cada

@@ -104,12 +104,47 @@ después de insertarla (FR-012, SC-004).
   todavía (research.md #7).
 - **`private.puede_ver_reporte(p_reporte_id uuid) returns boolean`** —
   agregada durante la implementación (no estaba en el diseño original de
-  este documento): encapsula el `exists` contra
-  `reportes_organizaciones_roles` que necesita la policy de `select` de
-  `reportes`. Sin esto, esa policy consultaría directamente otra tabla con
-  RLS propia desde dentro de su propio `using` — el mismo riesgo de
-  recursión de policies que ya motivó que `private.organizacion_id()` e
-  `is_superadmin()` fueran `security definer` en la spec 003.
+  este documento): `exists` contra `reportes_organizaciones` (la
+  asignación) con `organizacion_id = private.organizacion_id()`, y
+  `private.rol_id() = 'administrador'` o una fila propia en
+  `reportes_organizaciones_roles`. Encapsularlo evita que la policy de
+  `select` de `reportes` (y la de `reportes_organizaciones`, que también la
+  reusa) consulte otra tabla con RLS propia desde dentro de su propio
+  `using` — el mismo riesgo de recursión de policies que ya motivó que
+  `private.organizacion_id()` e `is_superadmin()` fueran `security
+  definer` en la spec 003.
+  - **Corrección post-quickstart**: la primera versión chequeaba
+    `reportes_organizaciones_roles` directo (existía una fila con ese
+    `rol_id`, o el caller era administrador). Se rompía en un caso real:
+    una organización con **cero** roles habilitados para un reporte (p.
+    ej. tras destildar el único rol) no tiene ninguna fila ahí — ni
+    siquiera para `administrador`, que nunca tiene fila propia (FR-006) —
+    así que el `exists` daba `false` también para el administrador,
+    violando su acceso incondicional. Apoyarse en
+    `reportes_organizaciones` en cambio funciona porque esa fila existe
+    mientras el reporte esté asignado, sin importar cuántos roles tenga
+    habilitados (quickstart.md sección 3).
+  - **Responde "¿mi organización puede ver ESTE reporte, en general?"** —
+    correcto para `reportes` (una fila por reporte), pero NO sirve para la
+    policy de `reportes_organizaciones` (una fila **por organización**
+    asignada a un reporte) — ver `private.puede_ver_asignacion()` más
+    abajo, agregada para corregir un bug de aislamiento real que reusar
+    esta función ahí causó.
+- **`private.puede_ver_asignacion(p_reporte_id uuid, p_organizacion_id uuid) returns boolean`**
+  — agregada para corregir un **bug de aislamiento multi-tenant real**
+  encontrado corriendo el quickstart (T023, sección fuera del guion
+  original — "¿cada organización ve solo lo suyo?"): la policy de
+  `reportes_organizaciones` usaba `puede_ver_reporte(reporte_id)`, que
+  solo comprueba "¿mi organización tiene ALGUNA fila para este reporte?",
+  sin comparar el `organizacion_id` de la fila evaluada contra el de quien
+  consulta. Con el mismo reporte asignado a dos organizaciones, esa
+  función daba `true` para las filas de **las dos**, no solo la propia —
+  la Edge Function `emitir-acceso-reporte` (que confía en que RLS ya
+  filtró y hace `select ... limit 1` sin `where organizacion_id = ...`) a
+  veces devolvía la cláusula `rls` de la organización **ajena**, filtrando
+  datos de Superset con el `organizacion_id` equivocado. `exists` contra
+  `reportes_organizaciones_roles` con `p_organizacion_id = ro.organizacion_id`
+  explícito en el `where` — la comparación que faltaba.
 
 ## RPCs (`public`, `security definer`, `search_path = ''`)
 
@@ -123,6 +158,8 @@ puede llamar cada una:
 | `asignar_reporte(p_reporte_id uuid, p_organizacion_id uuid)` | superadmin | inserta en `reportes_organizaciones` (`on conflict do nothing`, idempotente); dispara la herencia |
 | `desasignar_reporte(p_reporte_id uuid, p_organizacion_id uuid)` | superadmin | borra de `reportes_organizaciones`; cascada limpia la visibilidad por rol de esa organización |
 | `establecer_roles_reporte_organizacion(p_reporte_id uuid, p_organizacion_id uuid, p_roles_id text[])` | admin de esa organización (o superadmin con esa activa) | reemplaza el conjunto de roles visibles de esa organización para ese reporte; exige que la asignación ya exista |
+| `resolver_organizacion_reporte(p_reporte_id uuid) returns uuid` | cualquier autenticado | agregada post-quickstart (contrato: `contracts/acceso-reporte.md`) — resuelve con qué `organizacion_id` `emitir-acceso-reporte` arma la cláusula `rls` del guest token; `null` si no hay acceso. Reemplaza un `select ... from reportes_organizaciones limit 1` que la Edge Function hacía antes, confiando en que RLS ya había filtrado a una sola fila — cierto para un miembro/administrador normal, pero no para un superadmin, que ve todas las filas de esa tabla sin importar cuál organización tiene activa (bug real, ver abajo) |
+| `reportes_visibles_para_mi() returns table (id uuid, nombre text)` | cualquier autenticado | agregada post-quickstart, usada por `apps/web/src/hooks/useReportesAsignados.ts` (US2) — reportes visibles para quien consulta, en SU organización activa. A propósito no tiene el bypass de `is_superadmin()` que sí tiene la policy de `reportes` (ese bypass es para que `administrar.tsx`, US1, vea el catálogo completo) — un superadmin acá se trata igual que su administrador. Sin esto, el dropdown de Analítica ofrecía reportes que `resolver_organizacion_reporte` después rechazaba (bug real, ver abajo) |
 
 ## RLS
 
@@ -133,12 +170,20 @@ puede llamar cada una:
   propia en ninguna tabla de roles.
 - `reportes_roles_default`: `select` — solo `private.is_superadmin()`.
 - `reportes_organizaciones`: `select` — `private.is_superadmin()` o
-  `organizacion_id = private.organizacion_id()`.
+  `private.puede_ver_asignacion(reporte_id, organizacion_id)` — **no**
+  `puede_ver_reporte()` (bug de aislamiento real corregido, ver arriba):
+  esta tabla tiene una fila por organización asignada, así que la policy
+  tiene que comparar el `organizacion_id` de cada fila contra el de quien
+  consulta, no solo "mi organización tiene alguna fila para este
+  reporte".
 - `reportes_organizaciones_roles`: `select` — `private.is_superadmin()` o
   (`organizacion_id = private.organizacion_id()` y
   (`rol_id = private.rol_id()` o `private.rol_id() = 'administrador'`)).
-  Esta policy es, además, el mecanismo de autorización que usa la Edge
-  Function (research.md #6).
+  Esta tabla ya **no** es el mecanismo de autorización que usa la Edge
+  Function — ese rol lo tiene ahora `reportes_organizaciones` (ver arriba,
+  corrección post-quickstart); esta policy sigue existiendo para que la UI
+  (`GrillaPermisosPorRol`, `administrar.tsx`, `permisos.tsx`) pueda leer qué
+  roles están habilitados hoy.
 - `eventos_reportes`: `select` — `private.is_superadmin()` o
   (`organizacion_id = private.organizacion_id()` y
   `private.puede_escribir()`).

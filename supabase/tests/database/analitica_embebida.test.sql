@@ -6,7 +6,7 @@
 -- usuario vía request.jwt.claims — igual que PostgREST.
 begin;
 
-select plan(30);
+select plan(41);
 
 -- ============================================================================
 -- Fixture
@@ -14,7 +14,11 @@ select plan(30);
 
 insert into organizaciones (id, nombre) values
   ('b1111111-1111-1111-1111-111111111111', 'Organización X'),
-  ('b2222222-2222-2222-2222-222222222222', 'Organización Y');
+  ('b2222222-2222-2222-2222-222222222222', 'Organización Y'),
+  -- Sin ningún reporte asignado nunca — usada para probar
+  -- reportes_visibles_para_mi() cuando el superadmin entra a una
+  -- organización que no tiene nada (bug real, ver más abajo).
+  ('b3333333-3333-3333-3333-333333333333', 'Organización Z');
 
 insert into auth.users (id, email) values
   ('b5000000-0000-0000-0000-000000000005', 'superadmin-analitica@example.com'),
@@ -423,6 +427,211 @@ select is(
   (select count(*)::int from reportes where id = (select val from t_ids where key = 'reporte1')),
   1,
   'miembro de X vuelve a ver el reporte tras el ajuste de su propio administrador'
+);
+
+reset role;
+
+-- ============================================================================
+-- FR-006 con CERO roles habilitados: acceso incondicional del administrador
+-- ============================================================================
+-- Encontrado en quickstart.md sección 3: la primera implementación de
+-- private.puede_ver_reporte() (y de las policies que la usan) chequeaba
+-- reportes_organizaciones_roles directo — con esa tabla vacía para X (sin
+-- ningún rol no-administrador habilitado), ni siquiera el administrador
+-- encontraba una fila, porque 'administrador' nunca tiene fila propia ahí
+-- (el check que la excluye). El fix se apoya en reportes_organizaciones
+-- (la asignación en sí, que existe sin importar cuántos roles tenga
+-- habilitados) — ver data-model.md.
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select public.establecer_roles_reporte_organizacion(
+  (select val from t_ids where key = 'reporte1'), 'b1111111-1111-1111-1111-111111111111', array[]::text[]
+);
+
+select is(
+  (select count(*)::int from reportes_organizaciones_roles
+     where reporte_id = (select val from t_ids where key = 'reporte1')
+       and organizacion_id = 'b1111111-1111-1111-1111-111111111111'),
+  0,
+  'establecer_roles_reporte_organizacion con array vacío deja la tabla sin ninguna fila para X'
+);
+
+select is(
+  (select count(*)::int from reportes where id = (select val from t_ids where key = 'reporte1')),
+  1,
+  'administrador de X sigue viendo el reporte con CERO roles habilitados (FR-006, acceso incondicional real)'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select is(
+  (select count(*)::int from reportes where id = (select val from t_ids where key = 'reporte1')),
+  0,
+  'miembro de X, en cambio, no ve nada con cero roles habilitados'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select public.establecer_roles_reporte_organizacion(
+  (select val from t_ids where key = 'reporte1'), 'b1111111-1111-1111-1111-111111111111', array['miembro']
+);
+
+reset role;
+
+-- ============================================================================
+-- Aislamiento de reportes_organizaciones cuando el MISMO reporte está
+-- asignado a dos organizaciones (FR-007/FR-010)
+-- ============================================================================
+-- Bug real encontrado corriendo el quickstart (T023, fuera del guion
+-- original): la policy de reportes_organizaciones usaba
+-- private.puede_ver_reporte(reporte_id) — pensada para "reportes" (una
+-- fila por reporte) — que solo responde "¿mi organización tiene ALGUNA
+-- fila para este reporte?", sin comparar el organizacion_id de la FILA
+-- evaluada contra el de quien consulta. Con el mismo reporte asignado a
+-- dos organizaciones, esa función daba true para las dos filas: cualquiera
+-- de las dos organizaciones veía la fila de la otra, no solo la suya — y
+-- emitir-acceso-reporte (que confía en que RLS ya filtró y hace
+-- `select ... limit 1` sin filtrar por organización) a veces devolvía la
+-- cláusula `rls` de la organización ajena, filtrando datos de la
+-- organización equivocada. El test de más arriba (con reporte1 asignado
+-- solo a X) no lo detectaba porque nunca había dos filas entre las que
+-- confundirse.
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select public.asignar_reporte(
+  (select val from t_ids where key = 'reporte1'),
+  'b2222222-2222-2222-2222-222222222222'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select is(
+  (select count(*)::int from reportes_organizaciones where reporte_id = (select val from t_ids where key = 'reporte1')),
+  1,
+  'administrador de X ve exactamente 1 fila en reportes_organizaciones (la suya) aunque el reporte esté asignado también a Y'
+);
+
+select is(
+  (select organizacion_id from reportes_organizaciones where reporte_id = (select val from t_ids where key = 'reporte1')),
+  'b1111111-1111-1111-1111-111111111111',
+  'y esa fila es la de X, no la de Y'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b2000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select is(
+  (select count(*)::int from reportes_organizaciones where reporte_id = (select val from t_ids where key = 'reporte1')),
+  1,
+  'administrador de Y ve exactamente 1 fila en reportes_organizaciones (la suya), no la de X'
+);
+
+select is(
+  (select organizacion_id from reportes_organizaciones where reporte_id = (select val from t_ids where key = 'reporte1')),
+  'b2222222-2222-2222-2222-222222222222',
+  'y esa fila es la de Y, no la de X'
+);
+
+reset role;
+
+-- ============================================================================
+-- resolver_organizacion_reporte respeta la organización activa del
+-- superadmin (no el bug de "siempre la primera fila")
+-- ============================================================================
+-- Segundo bug real, distinto del anterior, encontrado por el usuario
+-- probando la app: el superadmin bypassa la RLS de reportes_organizaciones
+-- por completo (su policy es "is_superadmin() or ..."), así que un
+-- `select ... limit 1` sobre esa tabla no respeta ninguna organización en
+-- particular — devuelve la primera fila que encuentre, sin importar a
+-- cuál entró el superadmin. resolver_organizacion_reporte() en cambio usa
+-- private.organizacion_id(), que sí resuelve bien el caso superadmin.
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'b5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select entrar_a_organizacion('b1111111-1111-1111-1111-111111111111');
+
+select is(
+  (select public.resolver_organizacion_reporte((select val from t_ids where key = 'reporte1'))),
+  'b1111111-1111-1111-1111-111111111111'::uuid,
+  'con X activa, resolver_organizacion_reporte devuelve X (no una fila cualquiera)'
+);
+
+select entrar_a_organizacion('b2222222-2222-2222-2222-222222222222');
+
+select is(
+  (select public.resolver_organizacion_reporte((select val from t_ids where key = 'reporte1'))),
+  'b2222222-2222-2222-2222-222222222222'::uuid,
+  'tras entrar a Y, resolver_organizacion_reporte cambia a Y — el contexto activo, no la primera fila insertada'
+);
+
+-- ============================================================================
+-- reportes_visibles_para_mi() no ofrece lo que después se rechaza
+-- ============================================================================
+-- Tercer bug real, reportado por el usuario: el dropdown de "Analítica"
+-- (useReportesAsignados) hacía `select * from reportes`, que al
+-- superadmin le da TODO el catálogo (is_superadmin() bypass, pensado para
+-- administrar.tsx) — confuso, porque el reporte aparecía seleccionable
+-- aunque no estuviera asignado a la organización activa. Esta función no
+-- tiene ese bypass: mismo criterio que un administrador normal.
+
+select entrar_a_organizacion('b3333333-3333-3333-3333-333333333333');
+
+select is(
+  (select count(*)::int from public.reportes_visibles_para_mi()),
+  0,
+  'con Z activa (sin nada asignado), reportes_visibles_para_mi() no ofrece el reporte — antes el superadmin lo veía igual (bug real)'
+);
+
+select entrar_a_organizacion('b1111111-1111-1111-1111-111111111111');
+
+select is(
+  (select count(*)::int from public.reportes_visibles_para_mi()),
+  1,
+  'con X activa (sí asignado), reportes_visibles_para_mi() lo vuelve a ofrecer'
 );
 
 reset role;

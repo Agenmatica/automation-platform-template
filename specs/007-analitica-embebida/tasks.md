@@ -120,9 +120,9 @@ ve afectada (quickstart.md, sección 3).
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Crear `apps/web/src/pages/analitica/permisos.tsx`: para cada reporte asignado a la organización activa del usuario, reutiliza `GrillaPermisosPorRol` (T010) mostrando `reportes_organizaciones_roles` de esa organización, y llama `establecer_roles_reporte_organizacion` al guardar
-- [ ] T020 [US3] Registrar la ruta `/analitica/permisos` en `apps/web/src/App.tsx`, visible solo para quien `usePuedeEscribir()` resuelve en `true` (mismo hook que ya gatea escritura en Clientes)
-- [ ] T021 [P] [US3] Vitest para `GrillaPermisosPorRol.tsx`: togglear un checkbox dispara `onChange` con el conjunto correcto, y la columna `administrador` se renderiza siempre tildada y deshabilitada
+- [X] T019 [US3] Crear `apps/web/src/pages/analitica/permisos.tsx`: para cada reporte asignado a la organización activa del usuario, reutiliza `GrillaPermisosPorRol` (T010) mostrando `reportes_organizaciones_roles` de esa organización, y llama `establecer_roles_reporte_organizacion` al guardar
+- [X] T020 [US3] Registrar la ruta `/analitica/permisos` en `apps/web/src/App.tsx`, visible solo para quien `usePuedeEscribir()` resuelve en `true` (mismo hook que ya gatea escritura en Clientes)
+- [X] T021 [P] [US3] Vitest para `GrillaPermisosPorRol.tsx`: togglear un checkbox dispara `onChange` con el conjunto correcto, y la columna `administrador` se renderiza siempre tildada y deshabilitada
 
 **Checkpoint**: las tres historias de usuario funcionan de punta a punta,
 de forma independiente entre sí.
@@ -131,8 +131,8 @@ de forma independiente entre sí.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T022 Correr `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (comandos de validación de `CLAUDE.md`) con todo lo anterior aplicado
-- [ ] T023 Ejecutar manualmente las 6 secciones de `quickstart.md` de punta a punta y anotar cualquier desvío en `tasks.md` con referencia al commit que lo resuelve
+- [X] T022 Correr `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (comandos de validación de `CLAUDE.md`) con todo lo anterior aplicado
+- [X] T023 Ejecutar manualmente las 6 secciones de `quickstart.md` de punta a punta y anotar cualquier desvío en `tasks.md` con referencia al commit que lo resuelve
 
 ---
 
@@ -213,3 +213,83 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
 - Las notas de desvío respecto a este plan van en este archivo, cortas, con
   referencia al commit (`ver commit <hash>`) — no se repite acá la razón
   completa, esa vive en el mensaje de commit (regla de `CLAUDE.md`).
+
+## Desvíos encontrados en T023 (quickstart de punta a punta)
+
+- CSRF de Superset bloqueaba `/security/guest_token/` (Bearer
+  server-to-server sin sesión) — fix en `infra/superset/superset_config.py`
+  (`WTF_CSRF_EXEMPT_LIST`). Ver commit &lt;pendiente&gt;.
+- FR-006 (acceso incondicional de administrador) fallaba con cero roles
+  habilitados para una organización — fix en
+  `private.puede_ver_reporte()` y la policy de `reportes_organizaciones`
+  (migración), más el query de `emitir-acceso-reporte/index.ts` — ambos
+  pasaron de leer `reportes_organizaciones_roles` a
+  `reportes_organizaciones`. Caso nuevo en pgTAP (T009,
+  `analitica_embebida.test.sql`, ahora 33 assertions). Ver commit
+  &lt;pendiente&gt;.
+- La Edge Function devolvía `SUPERSET_URL` (interno, server-to-server) al
+  navegador para montar el SDK — no lo puede resolver ("server IP address
+  could not be found"). Fix: variable nueva `SUPERSET_PUBLIC_URL`, la
+  función sigue usando `SUPERSET_URL` puertas adentro pero responde con
+  `SUPERSET_PUBLIC_URL`. Ver commit &lt;pendiente&gt;.
+- Faltaba crear el rol `Guest` en Superset y el CORS solo permitía
+  `http://localhost:3100`, no `http://127.0.0.1:3100` — ninguno de los
+  dos alcanzó a explicar el error solo; la causa real de "Something went
+  wrong with embedded authentication" era que el rol `Guest`, con cero
+  permisos, no podía llamar `GET /api/v1/me/roles/` (403) — parte del
+  bootstrap del SDK. Le di `can_read` sobre `CurrentUserRestApi` y sobre
+  `Dashboard` (el siguiente 403, "SupersetApiError: Forbidden", en
+  `GET /api/v1/dashboard/<id>`). Comentarios de `superset_config.py`
+  actualizados (research.md #10.4).
+- El fix de CSRF de `guest_token` (punto anterior) reemplazó
+  `WTF_CSRF_EXEMPT_LIST` en vez de extenderla, pisando la exención
+  default de Superset para `/api/v1/chart/data` — el SDK volvía a fallar
+  con "The CSRF token is missing", esta vez al pedir los datos del chart.
+  Fix: `superset_config.py` ahora importa la lista default de
+  `superset.config` y la extiende (research.md #10.3). Verificado contra
+  la API real de punta a punta: `/me/roles` → `/dashboard/1` →
+  `/chart/data` devuelven 200, con los datos ya filtrados por
+  organización. Ver commit &lt;pendiente&gt;.
+- **Bug de aislamiento multi-tenant real** (reportado por el usuario, no
+  por el guion del quickstart): con un reporte asignado a dos
+  organizaciones, la policy de `reportes_organizaciones` dejaba ver la
+  fila de la organización ajena — la Edge Function a veces devolvía la
+  cláusula `rls` equivocada y Superset mostraba datos de otra
+  organización. Causa: reusar `puede_ver_reporte()` (pensada para
+  `reportes`, una fila por reporte) en una tabla con una fila **por
+  organización**, sin comparar el `organizacion_id` de la fila contra el
+  de quien consulta. Fix: función nueva `private.puede_ver_asignacion()`.
+  Caso nuevo en pgTAP (mismo reporte, dos organizaciones, cada una ve
+  solo la suya — 37 assertions ahora). Ver commit &lt;pendiente&gt;.
+- **Segundo bug de aislamiento** (también reportado por el usuario, tras
+  el anterior): con el superadmin, `emitir-acceso-reporte` mostraba datos
+  de una organización distinta a la que tenía activa. Causa: la RLS de
+  `reportes_organizaciones` deja ver TODAS las filas a un superadmin
+  (`is_superadmin() or ...`), así que un `select ... limit 1` sin filtrar
+  por organización agarraba cualquier fila, no la de la organización
+  activa. Fix: RPC nueva `resolver_organizacion_reporte()`, que usa
+  `private.organizacion_id()` en vez de inferir la organización de qué
+  filas devuelve una tabla. Caso nuevo en pgTAP (superadmin entra a X,
+  después a Y, confirma que el resultado cambia — 39 assertions ahora).
+  Ver commit &lt;pendiente&gt;.
+- **Tercer bug, encadenado con el anterior**: el dropdown de "Analítica"
+  ofrecía reportes que después se rechazaban al seleccionarlos — mismo
+  patrón, `useReportesAsignados` hacía `select * from reportes`, que le
+  da al superadmin el bypass de `is_superadmin()` (pensado para el
+  catálogo completo de `administrar.tsx`, US1), mostrando reportes de
+  organizaciones que no tenía activa. Fix: RPC nueva
+  `reportes_visibles_para_mi()`, sin ese bypass — un superadmin con
+  organización activa se trata igual que su administrador.
+  `useReportesAsignados.ts` actualizado para usarla. Caso nuevo en pgTAP
+  (41 assertions ahora). Ver commit &lt;pendiente&gt;.
+- Sin resolver: en local, Edge Functions de Supabase y Superset quedan en
+  redes Docker separadas — requiere un `docker network connect` manual
+  que no sobrevive a `supabase stop && supabase start` (detalle en
+  `quickstart.md`, Prerrequisitos, y `research.md` #10). Queda pendiente
+  para una spec de infra aparte, no se parchea acá.
+- `dev:refine` entraba en crash-loop
+  (`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`) al agregar
+  `@superset-ui/embedded-sdk`: sin TTY, `pnpm install` no podía confirmar
+  el purge de `node_modules` (volumen con estado propio) al detectarlo
+  desalineado del lockfile. Fix: `CI: "true"` en el `environment` de
+  `infra/refine/compose.yaml`. Ver commit &lt;pendiente&gt;.

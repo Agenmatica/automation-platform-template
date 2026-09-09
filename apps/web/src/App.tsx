@@ -20,6 +20,7 @@ import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
 import { AnaliticaAdministrar } from './pages/analitica/administrar'
 import { AnaliticaList } from './pages/analitica/list'
+import { AnaliticaPermisos } from './pages/analitica/permisos'
 import './App.css'
 
 const theme = createTheme({
@@ -152,6 +153,14 @@ function App() {
                   element={
                     <RequiereOrganizacionActiva>
                       <AnaliticaList />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
+                <Route
+                  path="/analitica/permisos"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <AnaliticaPermisos />
                     </RequiereOrganizacionActiva>
                   }
                 />

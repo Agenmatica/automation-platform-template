@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useReportesAsignados } from '../../hooks/useReportesAsignados'
 import { AnaliticaList } from './list'
@@ -27,7 +27,7 @@ describe('AnaliticaList', () => {
     ).toBeInTheDocument()
   })
 
-  it('lista los reportes asignados cuando hay al menos uno', () => {
+  it('ofrece los reportes asignados como opciones del dropdown', () => {
     vi.mocked(useReportesAsignados).mockReturnValue({
       reportes: [{ id: 'r1', nombre: 'Ventas mensuales' }],
       isLoading: false,
@@ -35,6 +35,11 @@ describe('AnaliticaList', () => {
 
     render(<AnaliticaList />)
 
-    expect(screen.getByText('Ventas mensuales')).toBeInTheDocument()
+    // MUI Select renderiza las opciones en un Menu que solo existe en el
+    // DOM una vez abierto — mismo patrón que el resto del repo para
+    // interactuar con este componente en tests.
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Reporte' }))
+
+    expect(within(screen.getByRole('listbox')).getByText('Ventas mensuales')).toBeInTheDocument()
   })
 })
