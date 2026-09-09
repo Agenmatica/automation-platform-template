@@ -18,6 +18,9 @@ import { OrganizacionList } from './pages/organizaciones/list'
 import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
+import { AnaliticaAdministrar } from './pages/analitica/administrar'
+import { AnaliticaList } from './pages/analitica/list'
+import { AnaliticaPermisos } from './pages/analitica/permisos'
 import { MiembroCreate } from './pages/miembros/create'
 import { MiembroList } from './pages/miembros/list'
 import { DefinirContrasenaPage } from './pages/acceso/definir-contrasena'
@@ -95,6 +98,16 @@ function App() {
                 edit: '/clientes/edit/:id',
                 meta: { label: 'Clientes' },
               },
+              {
+                name: 'analitica-administrar',
+                list: '/analitica/administrar',
+                meta: { label: 'Analítica (administrar)' },
+              },
+              {
+                name: 'analitica',
+                list: '/analitica',
+                meta: { label: 'Analítica' },
+              },
               { name: 'miembros', list: '/miembros', create: '/miembros/create', meta: { label: 'Miembros' } },
               { name: 'cuenta', list: '/cuenta/cambiar-contrasena', meta: { label: 'Mi cuenta' } },
             ]}
@@ -143,6 +156,23 @@ function App() {
                   element={
                     <RequiereOrganizacionActiva>
                       <ClienteEdit />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
+                <Route path="/analitica/administrar" element={<AnaliticaAdministrar />} />
+                <Route
+                  path="/analitica"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <AnaliticaList />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
+                <Route
+                  path="/analitica/permisos"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <AnaliticaPermisos />
                     </RequiereOrganizacionActiva>
                   }
                 />
