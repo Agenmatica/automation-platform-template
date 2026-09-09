@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(27);
+select plan(61);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -19,8 +19,10 @@ insert into organizaciones (id, nombre) values
 insert into auth.users (id, email) values
   ('a1000000-0000-0000-0000-000000000001', 'admin1@example.com'),
   ('a1000000-0000-0000-0000-000000000002', 'miembro1@example.com'),
+  ('a1000000-0000-0000-0000-000000000003', 'admin1b@example.com'),
   ('a2000000-0000-0000-0000-000000000001', 'admin2@example.com'),
   ('a9000000-0000-0000-0000-000000000009', 'sin-organizacion@example.com'),
+  ('a9000000-0000-0000-0000-000000000010', 'existente-sin-membresia@example.com'),
   ('a5000000-0000-0000-0000-000000000005', 'superadmin@example.com');
 
 insert into superadmins (user_id) values
@@ -28,6 +30,7 @@ insert into superadmins (user_id) values
 
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('a1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'administrador'),
+  ('a1000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'administrador'),
   ('a1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'miembro'),
   ('a2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'administrador');
 
@@ -316,6 +319,123 @@ select is(
   'salida',
   'la última fila de auditoría es la salida explícita de la organización 2'
 );
+
+-- Membresías (spec 005, US1): administrador lista su organización, miembro
+-- conserva solo su propia fila y superadmin sin contexto no recibe el listado.
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 3, 'administrador lista las tres membresías de su organización');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 1, 'miembro solo conserva lectura de su propia membresía');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 0, 'superadmin sin organización activa no lista membresías');
+reset role;
+
+-- Incorporación y auditoría (spec 005, US1).
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000010', 'miembro', 'miembro_agregado')$$, 'administrador puede incorporar una cuenta existente sin membresía');
+select is((select rol_id from usuarios_organizacion where user_id = 'a9000000-0000-0000-0000-000000000010'), 'miembro', 'la cuenta existente queda vinculada con el rol solicitado');
+reset role;
+select is((select accion from eventos_membresia order by id desc limit 1), 'miembro_agregado', 'la incorporación existente queda auditada');
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000010', 'miembro', 'miembro_agregado')$$, '23505', null, 'una incorporación duplicada se rechaza');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select entrar_a_organizacion('22222222-2222-2222-2222-222222222222');
+select lives_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000009', 'miembro', 'miembro_agregado')$$, 'superadmin incorpora dentro de su organización activa');
+reset role;
+
+select is(
+  (select count(*) from eventos_membresia
+   where organizacion_id in (
+     '11111111-1111-1111-1111-111111111111',
+     '22222222-2222-2222-2222-222222222222'
+   ))::int,
+  2,
+  'solo las incorporaciones efectivas del fixture generan auditoría'
+);
+
+-- Cambio de rol (spec 005, US2): promoción, degradación, autorización,
+-- último administrador y auditoría de las operaciones efectivas.
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'administrador')$$, 'administrador puede promover un miembro de su organización');
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000002'), 'administrador', 'el miembro promovido adquiere rol administrador');
+reset role;
+select is((select accion from eventos_membresia where target_user_id = 'a1000000-0000-0000-0000-000000000002' order by id desc limit 1), 'rol_cambiado', 'la promoción queda auditada como cambio de rol');
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000003', 'miembro')$$, 'administrador puede degradar a otro administrador mientras queda otro');
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000003'), 'miembro', 'el administrador degradado conserva la membresía con rol miembro');
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000001', 'miembro')$$, '22023', null, 'un administrador no puede cambiar su propio rol');
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'propietario')$$, '22023', null, 'un rol no permitido se rechaza');
+select throws_ok($$select cambiar_rol_miembro('a2000000-0000-0000-0000-000000000001', 'miembro')$$, '42501', null, 'un administrador no puede cambiar el rol de otra organización');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000003', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'miembro')$$, '42501', null, 'un miembro no puede cambiar roles');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'miembro')$$, 'administrador puede degradar a otro administrador cuando conserva su propio rol');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select entrar_a_organizacion('11111111-1111-1111-1111-111111111111');
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000001', 'miembro')$$, null, null, 'el superadmin no puede degradar al último administrador');
+reset role;
+
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000001'), 'administrador', 'el último administrador conserva su rol tras el rechazo');
+select is((select count(*) from eventos_membresia where organizacion_id = '11111111-1111-1111-1111-111111111111' and accion = 'rol_cambiado')::int, 3, 'solo los tres cambios de rol efectivos generan auditoría');
+
+-- Remoción (spec 005, US3): autorización, pérdida de acceso, último
+-- administrador y auditoría de las operaciones efectivas.
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000002')$$, 'administrador puede remover un miembro de su organización');
+reset role;
+select is((select accion from eventos_membresia where target_user_id = 'a1000000-0000-0000-0000-000000000002' order by id desc limit 1), 'miembro_removido', 'la remoción queda auditada');
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 0, 'la persona removida pierde acceso a su membresía');
+select is((select count(*) from clientes)::int, 0, 'la persona removida pierde acceso a los datos de la organización');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select remover_miembro('a2000000-0000-0000-0000-000000000001')$$, '42501', null, 'un administrador no puede remover un miembro de otra organización');
+select throws_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000001')$$, '22023', null, 'un administrador no puede removerse a sí mismo');
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000003', 'administrador')$$, 'se puede promover otro administrador antes de removerlo');
+select lives_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000003')$$, 'administrador puede remover a otro administrador cuando queda uno');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000003', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000001')$$, '42501', null, 'un miembro no puede remover personas');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select entrar_a_organizacion('11111111-1111-1111-1111-111111111111');
+select throws_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000001')$$, null, null, 'el superadmin no puede remover al último administrador');
+reset role;
+
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000001'), 'administrador', 'el último administrador conserva su membresía tras el rechazo');
+select is((select count(*) from eventos_membresia where organizacion_id = '11111111-1111-1111-1111-111111111111' and accion = 'miembro_removido')::int, 2, 'solo las dos remociones efectivas generan auditoría');
 
 select * from finish();
 

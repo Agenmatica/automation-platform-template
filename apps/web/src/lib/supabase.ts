@@ -12,4 +12,32 @@ export const supabaseConfigured = Boolean(
   import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
 )
 
-export const supabaseClient = createClient(supabaseUrl, supabaseKey)
+export const passwordDefinitionPath = '/acceso/definir-contrasena'
+
+export type PasswordFlowOrigin = 'invitacion' | 'recuperacion'
+
+export function passwordDefinitionRedirectUrl(origin: PasswordFlowOrigin, appUrl: string) {
+  const url = new URL(passwordDefinitionPath, appUrl)
+  url.searchParams.set('origen', origin)
+  return url.toString()
+}
+
+export const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+  auth: { detectSessionInUrl: true },
+})
+
+export function closeOtherSessions() {
+  return supabaseClient.auth.signOut({ scope: 'others' })
+}
+
+export function verifyCurrentPassword(email: string, password: string) {
+  const verificationClient = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  })
+
+  return verificationClient.auth.signInWithPassword({ email, password })
+}

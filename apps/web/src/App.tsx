@@ -21,6 +21,11 @@ import { ClienteList } from './pages/clientes/list'
 import { AnaliticaAdministrar } from './pages/analitica/administrar'
 import { AnaliticaList } from './pages/analitica/list'
 import { AnaliticaPermisos } from './pages/analitica/permisos'
+import { MiembroCreate } from './pages/miembros/create'
+import { MiembroList } from './pages/miembros/list'
+import { DefinirContrasenaPage } from './pages/acceso/definir-contrasena'
+import { SolicitarRecuperacionPage } from './pages/acceso/solicitar-recuperacion'
+import { CambiarContrasenaPage } from './pages/cuenta/cambiar-contrasena'
 import './App.css'
 
 const theme = createTheme({
@@ -103,6 +108,8 @@ function App() {
                 list: '/analitica',
                 meta: { label: 'Analítica' },
               },
+              { name: 'miembros', list: '/miembros', create: '/miembros/create', meta: { label: 'Miembros' } },
+              { name: 'cuenta', list: '/cuenta/cambiar-contrasena', meta: { label: 'Mi cuenta' } },
             ]}
             options={{
               syncWithLocation: true,
@@ -111,6 +118,8 @@ function App() {
             }}
           >
             <Routes>
+              <Route path="/acceso/definir-contrasena" element={<DefinirContrasenaPage />} />
+              <Route path="/acceso/solicitar-recuperacion" element={<SolicitarRecuperacionPage />} />
               <Route
                 element={
                   <Authenticated key="protegido" fallback={<CatchAllNavigate to="/login" />}>
@@ -131,6 +140,9 @@ function App() {
                     </RequiereOrganizacionActiva>
                   }
                 />
+                <Route path="/miembros" element={<RequiereOrganizacionActiva><MiembroList /></RequiereOrganizacionActiva>} />
+                <Route path="/miembros/create" element={<RequiereOrganizacionActiva><MiembroCreate /></RequiereOrganizacionActiva>} />
+                <Route path="/cuenta/cambiar-contrasena" element={<CambiarContrasenaPage />} />
                 <Route
                   path="/clientes/create"
                   element={

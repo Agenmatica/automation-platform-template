@@ -34,6 +34,14 @@ export const accessControlProvider: AccessControlProvider = {
 
       const esSuperadmin = await checkIsSuperadmin(data.user.id)
       if (!esSuperadmin) {
+        if (resource === 'miembros') {
+          const { data: membresia } = await supabaseClient
+            .from('usuarios_organizacion')
+            .select('rol_id')
+            .eq('user_id', data.user.id)
+            .maybeSingle()
+          return { can: membresia?.rol_id === 'administrador' }
+        }
         return { can: true }
       }
 
