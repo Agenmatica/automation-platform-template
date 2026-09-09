@@ -31,6 +31,7 @@ export function MiembroList() {
   const [cambioPendiente, setCambioPendiente] = useState<CambioPendiente | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [removiendo, setRemoviendo] = useState<string | null>(null)
   const miembros = tableQuery.data?.data ?? []
 
   const confirmarCambio = async () => {
@@ -56,6 +57,25 @@ export function MiembroList() {
     })
     setCambioPendiente(null)
     setGuardando(false)
+    await tableQuery.refetch()
+  }
+
+  const removerMiembro = async (miembro: Miembro) => {
+    if (!window.confirm('¿Remover a esta persona de la organización?')) return
+
+    setRemoviendo(miembro.user_id)
+    setError(null)
+    const { error: rpcError } = await supabaseClient.rpc('remover_miembro', {
+      p_target_user_id: miembro.user_id,
+    })
+
+    if (rpcError) {
+      setError(rpcError.message)
+      setRemoviendo(null)
+      return
+    }
+
+    setRemoviendo(null)
     await tableQuery.refetch()
   }
 
@@ -104,6 +124,14 @@ export function MiembroList() {
                         onClick={() => setCambioPendiente({ miembro, nuevoRol })}
                       >
                         Cambiar rol
+                      </Button>
+                      <Button
+                        color="error"
+                        size="small"
+                        disabled={checkingPermiso || removiendo === miembro.user_id}
+                        onClick={() => removerMiembro(miembro)}
+                      >
+                        {removiendo === miembro.user_id ? 'Removiendo…' : 'Remover'}
                       </Button>
                     </TableCell>
                   )}

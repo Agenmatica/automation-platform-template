@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(49);
+select plan(61);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -400,6 +400,42 @@ reset role;
 
 select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000001'), 'administrador', 'el último administrador conserva su rol tras el rechazo');
 select is((select count(*) from eventos_membresia where organizacion_id = '11111111-1111-1111-1111-111111111111' and accion = 'rol_cambiado')::int, 3, 'solo los tres cambios de rol efectivos generan auditoría');
+
+-- Remoción (spec 005, US3): autorización, pérdida de acceso, último
+-- administrador y auditoría de las operaciones efectivas.
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000002')$$, 'administrador puede remover un miembro de su organización');
+reset role;
+select is((select accion from eventos_membresia where target_user_id = 'a1000000-0000-0000-0000-000000000002' order by id desc limit 1), 'miembro_removido', 'la remoción queda auditada');
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select is((select count(*) from usuarios_organizacion)::int, 0, 'la persona removida pierde acceso a su membresía');
+select is((select count(*) from clientes)::int, 0, 'la persona removida pierde acceso a los datos de la organización');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select remover_miembro('a2000000-0000-0000-0000-000000000001')$$, '42501', null, 'un administrador no puede remover un miembro de otra organización');
+select throws_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000001')$$, '22023', null, 'un administrador no puede removerse a sí mismo');
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000003', 'administrador')$$, 'se puede promover otro administrador antes de removerlo');
+select lives_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000003')$$, 'administrador puede remover a otro administrador cuando queda uno');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000003', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000001')$$, '42501', null, 'un miembro no puede remover personas');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select entrar_a_organizacion('11111111-1111-1111-1111-111111111111');
+select throws_ok($$select remover_miembro('a1000000-0000-0000-0000-000000000001')$$, null, null, 'el superadmin no puede remover al último administrador');
+reset role;
+
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000001'), 'administrador', 'el último administrador conserva su membresía tras el rechazo');
+select is((select count(*) from eventos_membresia where organizacion_id = '11111111-1111-1111-1111-111111111111' and accion = 'miembro_removido')::int, 2, 'solo las dos remociones efectivas generan auditoría');
 
 select * from finish();
 

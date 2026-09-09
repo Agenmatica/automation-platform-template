@@ -88,13 +88,13 @@ description: "Task list for management of organization members"
 
 ### Tests for User Story 3
 
-- [ ] T016 [US3] Agregar antes las aserciones pgTAP de remoción autorizada, intento cruzado, auto-remoción, último administrador, pérdida de acceso y evento `miembro_removido` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-005, FR-006, FR-007, FR-010).
+- [X] T016 [US3] Agregar antes las aserciones pgTAP de remoción autorizada, intento cruzado, auto-remoción, último administrador, pérdida de acceso y evento `miembro_removido` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-005, FR-006, FR-007, FR-010).
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Completar `supabase/migrations/<timestamp>_gestion_miembros.sql` con `remover_miembro(target_user_id uuid)`, que bloquea la organización, impide auto-remoción/último administrador, elimina solo la membresía y audita en la misma transacción; otorgar solo `execute` a `authenticated` (depende de T016).
-- [ ] T018 [US3] Extender `apps/web/src/pages/miembros/list.tsx` con la acción de remoción, confirmación, mensajes de rechazo y actualización del listado según `contracts/remover-miembro.md` (depende de T017).
-- [ ] T019 [US3] Aplicar la versión final de la migración, correr `pnpm test:db` y repetir el bloque 4 de `specs/005-gestion-miembros/quickstart.md` para confirmar pérdida de acceso y protección del último administrador (depende de T018).
+- [X] T017 [US3] Completar `supabase/migrations/<timestamp>_gestion_miembros.sql` con `remover_miembro(target_user_id uuid)`, que bloquea la organización, impide auto-remoción/último administrador, elimina solo la membresía y audita en la misma transacción; otorgar solo `execute` a `authenticated` (depende de T016).
+- [X] T018 [US3] Extender `apps/web/src/pages/miembros/list.tsx` con la acción de remoción, confirmación, mensajes de rechazo y actualización del listado según `contracts/remover-miembro.md` (depende de T017).
+- [X] T019 [US3] Aplicar la versión final de la migración, correr `pnpm test:db` y repetir el bloque 4 de `specs/005-gestion-miembros/quickstart.md` para confirmar pérdida de acceso y protección del último administrador (depende de T018).
 
 **Checkpoint**: todas las historias son funcionales e independientes; una remoción efectiva revoca acceso y deja auditoría.
 
