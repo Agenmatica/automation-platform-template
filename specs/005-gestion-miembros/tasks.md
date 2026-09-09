@@ -68,13 +68,13 @@ description: "Task list for management of organization members"
 
 ### Tests for User Story 2
 
-- [ ] T012 [US2] Agregar antes las aserciones pgTAP para promover/degradar dentro de la organización, rechazar actor/objetivo cruzado o auto-modificación, proteger el último administrador y registrar `rol_cambiado` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-004, FR-006, FR-007, FR-010).
+- [X] T012 [US2] Agregar antes las aserciones pgTAP para promover/degradar dentro de la organización, rechazar actor/objetivo cruzado o auto-modificación, proteger el último administrador y registrar `rol_cambiado` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-004, FR-006, FR-007, FR-010).
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Completar `supabase/migrations/<timestamp>_gestion_miembros.sql` con `cambiar_rol_miembro(target_user_id uuid, nuevo_rol text)`, que bloquea la organización antes de contar administradores, valida el helper y escribe el evento en la misma transacción; otorgar solo `execute` a `authenticated` (depende de T012).
-- [ ] T014 [US2] Extender `apps/web/src/pages/miembros/list.tsx` con control de cambio de rol, confirmación, estados de error y recarga del listado tras una respuesta exitosa según `contracts/cambiar-rol-miembro.md` (depende de T013).
-- [ ] T015 [US2] Aplicar la versión final de la migración, correr `pnpm test:db` y validar el bloque 4 de `specs/005-gestion-miembros/quickstart.md` para promoción, degradación y último administrador (depende de T014).
+- [X] T013 [US2] Completar `supabase/migrations/<timestamp>_gestion_miembros.sql` con `cambiar_rol_miembro(target_user_id uuid, nuevo_rol text)`, que bloquea la organización antes de contar administradores, valida el helper y escribe el evento en la misma transacción; otorgar solo `execute` a `authenticated` (depende de T012).
+- [X] T014 [US2] Extender `apps/web/src/pages/miembros/list.tsx` con control de cambio de rol, confirmación, estados de error y recarga del listado tras una respuesta exitosa según `contracts/cambiar-rol-miembro.md` (depende de T013).
+- [X] T015 [US2] Aplicar la versión final de la migración, correr `pnpm test:db` y validar el bloque 4 de `specs/005-gestion-miembros/quickstart.md` para promoción, degradación y último administrador (depende de T014).
 
 **Checkpoint**: US1 y US2 funcionan; los administradores delegan o revocan rol sin vulnerar aislamiento ni perder el último administrador.
 

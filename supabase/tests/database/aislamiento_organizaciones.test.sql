@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(36);
+select plan(49);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -364,6 +364,42 @@ select is(
   2,
   'solo las incorporaciones efectivas del fixture generan auditoría'
 );
+
+-- Cambio de rol (spec 005, US2): promoción, degradación, autorización,
+-- último administrador y auditoría de las operaciones efectivas.
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'administrador')$$, 'administrador puede promover un miembro de su organización');
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000002'), 'administrador', 'el miembro promovido adquiere rol administrador');
+reset role;
+select is((select accion from eventos_membresia where target_user_id = 'a1000000-0000-0000-0000-000000000002' order by id desc limit 1), 'rol_cambiado', 'la promoción queda auditada como cambio de rol');
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000003', 'miembro')$$, 'administrador puede degradar a otro administrador mientras queda otro');
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000003'), 'miembro', 'el administrador degradado conserva la membresía con rol miembro');
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000001', 'miembro')$$, '22023', null, 'un administrador no puede cambiar su propio rol');
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'propietario')$$, '22023', null, 'un rol no permitido se rechaza');
+select throws_ok($$select cambiar_rol_miembro('a2000000-0000-0000-0000-000000000001', 'miembro')$$, '42501', null, 'un administrador no puede cambiar el rol de otra organización');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000003', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'miembro')$$, '42501', null, 'un miembro no puede cambiar roles');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000002', 'miembro')$$, 'administrador puede degradar a otro administrador cuando conserva su propio rol');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select entrar_a_organizacion('11111111-1111-1111-1111-111111111111');
+select throws_ok($$select cambiar_rol_miembro('a1000000-0000-0000-0000-000000000001', 'miembro')$$, null, null, 'el superadmin no puede degradar al último administrador');
+reset role;
+
+select is((select rol_id from usuarios_organizacion where user_id = 'a1000000-0000-0000-0000-000000000001'), 'administrador', 'el último administrador conserva su rol tras el rechazo');
+select is((select count(*) from eventos_membresia where organizacion_id = '11111111-1111-1111-1111-111111111111' and accion = 'rol_cambiado')::int, 3, 'solo los tres cambios de rol efectivos generan auditoría');
 
 select * from finish();
 
