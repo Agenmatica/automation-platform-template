@@ -220,8 +220,11 @@ mientras que otra organización con el mismo reporte no se ve afectada.
   asignados a su organización cuyo rol esté habilitado para verlos (o que
   sea administrador).
 - **FR-008**: El sistema DEBE mostrar cada reporte embebido dentro del
-  producto, sin redirigir a Superset ni exponer su URL o credenciales al
-  usuario final.
+  producto, sin redirigir a una pantalla de login de Superset ni exponer
+  sus credenciales al usuario final. El dominio de Superset puede ser
+  visible como parte del propio mecanismo de embebido (un iframe siempre
+  revela su origen) — lo que no debe existir es una ruta de acceso directo
+  y separada a Superset para el usuario final (eso ya lo cubre FR-013).
 - **FR-009**: El sistema DEBE limitar los datos visibles dentro de un
   reporte a los de la organización de quien lo consulta, incluso cuando el
   mismo reporte está asignado a más de una organización.
