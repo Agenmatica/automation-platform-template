@@ -29,7 +29,7 @@ description: "Task list for management of organization members"
 
 **⚠️ CRITICAL**: ninguna historia empieza hasta cerrar esta fase.
 
-- [ ] T002 Crear `supabase/migrations/<timestamp>_gestion_miembros.sql` con la tabla append-only `eventos_membresia`, sus índices, RLS y grants explícitos; agregar `private.puede_gestionar_membresias(organizacion_id uuid)` y una resolución privada de cuenta por email utilizable solo por la Edge Function (research.md, data-model.md).
+- [ ] T002 Crear `supabase/migrations/<timestamp>_gestion_miembros.sql` con la tabla append-only `eventos_membresia`, sus índices, RLS y grants explícitos; agregar `private.puede_gestionar_membresias(organizacion_id uuid)` y `public.resolver_usuario_por_email(email text)` como wrapper `security definer` ejecutable solo por `service_role` para la Edge Function (research.md, data-model.md).
 - [ ] T003 Extender el fixture base y el `plan()` de `supabase/tests/database/aislamiento_organizaciones.test.sql` con dos administradores en la organización Uno y cuentas existentes sin/ con membresía para las tres historias (depende de T002).
 - [ ] T004 [P] Crear `apps/web/src/hooks/usePuedeGestionarMembresias.ts` para resolver solo los controles de UI de administrador o superadmin con organización activa, sin sustituir la autorización del servidor (depende de T002).
 
@@ -46,7 +46,7 @@ description: "Task list for management of organization members"
 ### Tests for User Story 1
 
 - [ ] T005 [US1] Agregar primero aserciones pgTAP de lectura de `usuarios_organizacion` para administrador, miembro, otra organización y superadmin sin/con organización activa en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-001, FR-007, FR-008, FR-009).
-- [ ] T006 [US1] Agregar aserciones pgTAP de incorporación autorizada, duplicado, pertenencia cruzada y eventos `invitacion_enviada`/`miembro_agregado` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-002, FR-003, FR-010).
+- [ ] T006 [US1] Agregar aserciones pgTAP de incorporación autorizada por administrador y superadmin con organización activa, duplicado, pertenencia cruzada y eventos `invitacion_enviada`/`miembro_agregado` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-002, FR-003, FR-008, FR-010).
 
 ### Implementation for User Story 1
 
@@ -103,7 +103,7 @@ description: "Task list for management of organization members"
 ## Phase Final: Polish & Cross-Cutting Concerns
 
 - [ ] T020 [P] Revisar `supabase/functions/invitar-miembro/index.ts` y `supabase/migrations/<timestamp>_gestion_miembros.sql` para que no haya service-role en el navegador, grants implícitos ni escritura directa de auditoría; documentar cualquier desvío en `specs/005-gestion-miembros/tasks.md` con el commit correspondiente.
-- [ ] T021 Ejecutar los cinco bloques de `specs/005-gestion-miembros/quickstart.md` completos con al menos dos organizaciones, Mailpit y una cuenta existente sin membresía.
+- [ ] T021 Ejecutar los cinco bloques de `specs/005-gestion-miembros/quickstart.md` completos con al menos dos organizaciones, Mailpit y una cuenta existente sin membresía; cronometrar la incorporación nueva y confirmar que tarda menos de 2 minutos (SC-002).
 - [ ] T022 Ejecutar `pnpm lint`, `pnpm build`, `pnpm test` y `pnpm infra:config`, y registrar resultados en `specs/005-gestion-miembros/tasks.md`.
 - [ ] T023 Marcar las tareas completadas y anotar en `specs/005-gestion-miembros/tasks.md` únicamente desvíos concisos con referencia al commit que los justifica.
 

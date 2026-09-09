@@ -27,6 +27,8 @@ contexto vuelve a Organizaciones.
 2. Verificar que el listado muestra la membresía con ese rol.
 3. Abrir Mailpit y comprobar la invitación.
 4. Confirmar un evento `invitacion_enviada` con actor, objetivo y organización.
+5. Medir desde la confirmación del formulario hasta ver el resultado: debe ser
+   menor a 2 minutos.
 
 **Resultado esperado**: la persona no accede a datos antes de completar el
 acceso; repetir la misma solicitud no crea otra membresía ni otro evento.
