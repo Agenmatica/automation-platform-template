@@ -31,9 +31,9 @@ orden de prioridad P1 → P3.
 **Purpose**: dependencias y configuración compartida, sin lógica de negocio
 todavía.
 
-- [ ] T001 [P] Agregar la dependencia `@superset-ui/embedded-sdk` en `apps/web/package.json`
-- [ ] T002 [P] Agregar a `infra/superset/superset_config.py`: `FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True}`, `GUEST_TOKEN_JWT_SECRET` (desde variable de entorno), `ENABLE_CORS`/`CORS_OPTIONS` para el origen de Refine (research.md #9)
-- [ ] T003 [P] Documentar variables nuevas en `.env.example` (`SUPERSET_GUEST_TOKEN_JWT_SECRET`, `REFINE_ORIGIN`) y crear `supabase/functions/.env.example` (`SUPERSET_URL`, `SUPERSET_GUEST_TOKEN_USERNAME`, `SUPERSET_GUEST_TOKEN_PASSWORD`) — sin valores reales, solo el molde (regla de secretos de `CLAUDE.md`)
+- [X] T001 [P] Agregar la dependencia `@superset-ui/embedded-sdk` en `apps/web/package.json`
+- [X] T002 [P] Agregar a `infra/superset/superset_config.py`: `FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True}`, `GUEST_TOKEN_JWT_SECRET` (desde variable de entorno), `ENABLE_CORS`/`CORS_OPTIONS` para el origen de Refine (research.md #9) — de paso hizo falta reenviar las dos variables nuevas en `infra/superset/compose.yaml` (no estaba previsto en la tarea original; sin eso el contenedor no arranca)
+- [X] T003 [P] Documentar variables nuevas en `.env.example` (`SUPERSET_GUEST_TOKEN_JWT_SECRET`, `REFINE_ORIGIN`) y crear `supabase/functions/.env.example` (`SUPERSET_URL`, `SUPERSET_GUEST_TOKEN_USERNAME`, `SUPERSET_GUEST_TOKEN_PASSWORD`) — sin valores reales, solo el molde (regla de secretos de `CLAUDE.md`)
 
 **Checkpoint**: dependencias y configuración listas, sin tocar todavía
 esquema ni código de negocio.
