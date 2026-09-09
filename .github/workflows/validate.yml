@@ -61,7 +61,10 @@ jobs:
       # --db-url: igual que test:db:ci, 127.0.0.1 en el runner self-hosted
       # en Docker apunta al propio contenedor del job, no al host donde
       # corre Supabase — hay que resolverlo por host.docker.internal.
-      - run: pnpm supabase db reset --db-url "postgresql://postgres:postgres@host.docker.internal:5434/postgres"
+      # --yes: con --db-url el CLI trata el destino como una base remota y
+      # pide confirmación interactiva ("¿reiniciar la base remota?"), que en
+      # CI no hay quién conteste.
+      - run: pnpm supabase db reset --db-url "postgresql://postgres:postgres@host.docker.internal:5434/postgres" --yes
       # test:db (no test:db:ci) usa 127.0.0.1, que en el runner self-hosted
       # en Docker apunta al propio contenedor, no al host donde corre
       # Supabase. test:db:ci se conecta por host.docker.internal en su
