@@ -5,7 +5,7 @@
 -- cada policy realmente filtra.
 begin;
 
-select plan(30);
+select plan(36);
 
 -- ============================================================================
 -- Fixture: 2 organizaciones, 1 admin + 1 miembro por organización, 1 usuario
@@ -19,8 +19,10 @@ insert into organizaciones (id, nombre) values
 insert into auth.users (id, email) values
   ('a1000000-0000-0000-0000-000000000001', 'admin1@example.com'),
   ('a1000000-0000-0000-0000-000000000002', 'miembro1@example.com'),
+  ('a1000000-0000-0000-0000-000000000003', 'admin1b@example.com'),
   ('a2000000-0000-0000-0000-000000000001', 'admin2@example.com'),
   ('a9000000-0000-0000-0000-000000000009', 'sin-organizacion@example.com'),
+  ('a9000000-0000-0000-0000-000000000010', 'existente-sin-membresia@example.com'),
   ('a5000000-0000-0000-0000-000000000005', 'superadmin@example.com');
 
 insert into superadmins (user_id) values
@@ -28,6 +30,7 @@ insert into superadmins (user_id) values
 
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('a1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'administrador'),
+  ('a1000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'administrador'),
   ('a1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'miembro'),
   ('a2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'administrador');
 
@@ -321,7 +324,7 @@ select is(
 -- conserva solo su propia fila y superadmin sin contexto no recibe el listado.
 select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
 set local role authenticated;
-select is((select count(*) from usuarios_organizacion)::int, 2, 'administrador lista las dos membresías de su organización');
+select is((select count(*) from usuarios_organizacion)::int, 3, 'administrador lista las tres membresías de su organización');
 reset role;
 
 select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000002', 'role', 'authenticated')::text, true);
@@ -333,6 +336,26 @@ select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-
 set local role authenticated;
 select is((select count(*) from usuarios_organizacion)::int, 0, 'superadmin sin organización activa no lista membresías');
 reset role;
+
+-- Incorporación y auditoría (spec 005, US1).
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select lives_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000010', 'miembro', 'miembro_agregado')$$, 'administrador puede incorporar una cuenta existente sin membresía');
+select is((select rol_id from usuarios_organizacion where user_id = 'a9000000-0000-0000-0000-000000000010'), 'miembro', 'la cuenta existente queda vinculada con el rol solicitado');
+reset role;
+select is((select accion from eventos_membresia order by id desc limit 1), 'miembro_agregado', 'la incorporación existente queda auditada');
+select set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select throws_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000010', 'miembro', 'miembro_agregado')$$, '23505', null, 'una incorporación duplicada se rechaza');
+reset role;
+
+select set_config('request.jwt.claims', json_build_object('sub', 'a5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select entrar_a_organizacion('22222222-2222-2222-2222-222222222222');
+select lives_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000009', 'miembro', 'miembro_agregado')$$, 'superadmin incorpora dentro de su organización activa');
+reset role;
+
+select is((select count(*) from eventos_membresia)::int, 2, 'solo las incorporaciones efectivas generan auditoría');
 
 select * from finish();
 

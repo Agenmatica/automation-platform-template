@@ -30,7 +30,7 @@ description: "Task list for management of organization members"
 **⚠️ CRITICAL**: ninguna historia empieza hasta cerrar esta fase.
 
 - [X] T002 Crear `supabase/migrations/<timestamp>_gestion_miembros.sql` con la tabla append-only `eventos_membresia`, sus índices, RLS y grants explícitos; agregar `private.puede_gestionar_membresias(organizacion_id uuid)` sin exponer funciones `security definer` de búsqueda de `auth.users` (research.md, data-model.md).
-- [ ] T003 Extender el fixture base y el `plan()` de `supabase/tests/database/aislamiento_organizaciones.test.sql` con dos administradores en la organización Uno y cuentas existentes sin/ con membresía para las tres historias (depende de T002).
+- [X] T003 Extender el fixture base y el `plan()` de `supabase/tests/database/aislamiento_organizaciones.test.sql` con dos administradores en la organización Uno y cuentas existentes sin/ con membresía para las tres historias (depende de T002).
 - [X] T004 [P] Crear `apps/web/src/hooks/usePuedeGestionarMembresias.ts` para resolver solo los controles de UI de administrador o superadmin con organización activa, sin sustituir la autorización del servidor (depende de T002).
 
 **Checkpoint**: existe auditoría, helper de autorización por organización y fixture determinístico; aún no hay pantalla ni mutaciones disponibles.
@@ -45,8 +45,8 @@ description: "Task list for management of organization members"
 
 ### Tests for User Story 1
 
-- [ ] T005 [US1] Agregar primero aserciones pgTAP de lectura de `usuarios_organizacion` para administrador, miembro, otra organización y superadmin sin/con organización activa en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-001, FR-007, FR-008, FR-009).
-- [ ] T006 [US1] Agregar aserciones pgTAP de incorporación autorizada por administrador y superadmin con organización activa, duplicado, pertenencia cruzada y eventos `invitacion_enviada`/`miembro_agregado` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-002, FR-003, FR-008, FR-010).
+- [X] T005 [US1] Agregar primero aserciones pgTAP de lectura de `usuarios_organizacion` para administrador, miembro, otra organización y superadmin sin/con organización activa en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-001, FR-007, FR-008, FR-009).
+- [X] T006 [US1] Agregar aserciones pgTAP de incorporación autorizada por administrador y superadmin con organización activa, duplicado, pertenencia cruzada y eventos `invitacion_enviada`/`miembro_agregado` en `supabase/tests/database/aislamiento_organizaciones.test.sql` (FR-002, FR-003, FR-008, FR-010).
 
 ### Implementation for User Story 1
 
