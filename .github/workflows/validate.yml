@@ -64,7 +64,9 @@ jobs:
       # --yes: con --db-url el CLI trata el destino como una base remota y
       # pide confirmación interactiva ("¿reiniciar la base remota?"), que en
       # CI no hay quién conteste.
-      - run: pnpm supabase db reset --db-url "postgresql://postgres:postgres@host.docker.internal:5434/postgres" --yes
+      # sslmode=disable: igual que PGSSLMODE=disable en test:db:ci, la
+      # instancia local de Supabase no ofrece TLS.
+      - run: pnpm supabase db reset --db-url "postgresql://postgres:postgres@host.docker.internal:5434/postgres?sslmode=disable" --yes
       # test:db (no test:db:ci) usa 127.0.0.1, que en el runner self-hosted
       # en Docker apunta al propio contenedor, no al host donde corre
       # Supabase. test:db:ci se conecta por host.docker.internal en su
