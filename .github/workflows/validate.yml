@@ -49,6 +49,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm supabase start
       # El runner self-hosted mantiene el stack de Supabase corriendo entre
       # ejecuciones (no es efímero como un runner de GitHub). `supabase
       # start` sobre un stack ya iniciado no vuelve a aplicar migraciones
@@ -57,21 +58,20 @@ jobs:
       # "relation eventos_membresia does not exist" / función inexistente,
       # pese a que la migración sí estaba en el repo).
       #
-      # `supabase db reset` no sirve acá: reutiliza la conexión de red al
-      # postgres ya arrancado, y desde el contenedor del job 127.0.0.1 no
-      # llega a los contenedores de Supabase (hay que pasar por
-      # host.docker.internal, igual que en test:db:ci). Probarlo con
-      # --db-url apuntando a host.docker.internal sí conecta, pero ese modo
-      # "remoto" no reinicializa roles/esquema igual que un start en frío y
-      # dejó políticas de RLS mal resueltas (visibilidad de `clientes`
-      # incorrecta) — un fallo distinto y más sutil que el original.
+      # `supabase db reset`/`stop --no-backup` + `start` no sirven acá:
+      # necesitan conectarse por 127.0.0.1 para reaplicar migraciones, y
+      # desde el contenedor del job eso no llega a los contenedores de
+      # Supabase (hay que pasar por host.docker.internal, igual que en
+      # test:db:ci). Apuntar `db reset --db-url` a host.docker.internal sí
+      # conecta, pero el CLI lo trata como una base "remota" — probado a
+      # mano, ese modo no reinicializa el esquema con la misma
+      # confiabilidad y dejó políticas de RLS mal resueltas (visibilidad de
+      # `clientes` incorrecta).
       #
-      # `stop --no-backup` + `start` fuerza en cambio el mismo camino de
-      # arranque en frío que corre en un runner nuevo (recrea contenedores y
-      # volúmenes, reaplica todas las migraciones + seed.sql), sin depender
-      # de una conexión de red directa desde el paso del job.
-      - run: pnpm supabase stop --no-backup
-      - run: pnpm supabase start
+      # db:reset:ci (scripts/reset-db-ci.sh) hace lo mismo a mano con psql
+      # por host.docker.internal: dropea `public`/`private` y reaplica cada
+      # migración + seed.sql, sin pasar por el CLI para esta parte.
+      - run: pnpm db:reset:ci
       # test:db (no test:db:ci) usa 127.0.0.1, que en el runner self-hosted
       # en Docker apunta al propio contenedor, no al host donde corre
       # Supabase. test:db:ci se conecta por host.docker.internal en su
