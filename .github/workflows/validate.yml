@@ -50,6 +50,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm supabase start
+      # El runner self-hosted mantiene el stack de Supabase corriendo entre
+      # ejecuciones (no es efímero como un runner de GitHub). `supabase
+      # start` sobre un stack ya iniciado no vuelve a aplicar migraciones
+      # nuevas, así que sin este reset los tests corren contra un esquema
+      # desactualizado (main quedó roto tras mergear los PR #4 y #5 por
+      # "relation eventos_membresia does not exist" / función inexistente,
+      # pese a que la migración sí estaba en el repo). `db reset` reaplica
+      # todas las migraciones + seed.sql antes de cada corrida.
+      - run: pnpm supabase db reset
       # test:db (no test:db:ci) usa 127.0.0.1, que en el runner self-hosted
       # en Docker apunta al propio contenedor, no al host donde corre
       # Supabase. test:db:ci se conecta por host.docker.internal en su
