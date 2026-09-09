@@ -54,7 +54,7 @@ description: "Task list for management of organization members"
 - [X] T008 [US1] Crear `supabase/functions/invitar-miembro/index.ts` según `contracts/invitar-miembro.md`: validar JWT y contexto, invitar cuentas nuevas con service-role, vincular cuentas existentes sin membresía sin correo, y compensar cualquier alta incompleta sin registrar auditoría efectiva (depende de T007).
 - [X] T009 [P] [US1] Crear `apps/web/src/pages/miembros/list.tsx` y `apps/web/src/pages/miembros/create.tsx` con listado aislado, formulario email/rol, estados de carga/error y mensajes de rechazo del contrato (depende de T004, T008).
 - [X] T010 [US1] Agregar `miembros` a `apps/web/src/lib/recursosDependientesDeOrganizacion.ts`, registrar recurso/rutas protegidas en `apps/web/src/App.tsx` y extender `apps/web/src/providers/accessControlProvider.ts` para que miembro no vea la gestión aunque conserve su lectura propia (depende de T009).
-- [ ] T011 [US1] Aplicar la migración y ejecutar `pnpm test:db`; validar la invitación nueva en Mailpit y la vinculación de cuenta existente con los bloques 1 a 3 de `specs/005-gestion-miembros/quickstart.md` (depende de T010).
+- [X] T011 [US1] Aplicar la migración y ejecutar `pnpm test:db`; validar la invitación nueva en Mailpit y la vinculación de cuenta existente con los bloques 1 a 3 de `specs/005-gestion-miembros/quickstart.md` (depende de T010).
 
 **Checkpoint**: US1 es usable y verificable de forma independiente; una organización puede consultar e incorporar miembros sin intervención del superadmin.
 

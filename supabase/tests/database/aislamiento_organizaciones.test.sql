@@ -355,7 +355,15 @@ select entrar_a_organizacion('22222222-2222-2222-2222-222222222222');
 select lives_ok($$select agregar_miembro('a9000000-0000-0000-0000-000000000009', 'miembro', 'miembro_agregado')$$, 'superadmin incorpora dentro de su organización activa');
 reset role;
 
-select is((select count(*) from eventos_membresia)::int, 2, 'solo las incorporaciones efectivas generan auditoría');
+select is(
+  (select count(*) from eventos_membresia
+   where organizacion_id in (
+     '11111111-1111-1111-1111-111111111111',
+     '22222222-2222-2222-2222-222222222222'
+   ))::int,
+  2,
+  'solo las incorporaciones efectivas del fixture generan auditoría'
+);
 
 select * from finish();
 
