@@ -94,12 +94,12 @@ autorizado es rechazado sin filtrar información (quickstart.md, sección 2).
 
 ### Implementation for User Story 2
 
-- [ ] T013 [P] [US2] Crear `supabase/functions/emitir-acceso-reporte/index.ts` según `contracts/acceso-reporte.md`: valida el JWT de quien llama, resuelve autorización con un cliente Supabase scoped al usuario (nunca service-role) contra `reportes_organizaciones_roles`, y si autorizado pide el guest token a Superset (login + `guest_token/` con `rls` forzada); `403` si no autorizado, `503` con `{"error":"analitica_no_disponible"}` si Superset no responde (FR-015)
-- [ ] T014 [P] [US2] Crear `apps/web/src/hooks/useReportesAsignados.ts` (mismo patrón que `useOrganizacionActiva.ts`): lista los reportes visibles para el usuario actual consultando `reportes` (la RLS ya filtra por organización y rol)
-- [ ] T015 [P] [US2] Crear `apps/web/src/components/ReporteEmbebido.tsx`: llama a `emitir-acceso-reporte`, monta `@superset-ui/embedded-sdk` con el guest token recibido, y muestra el mensaje "Analítica no disponible en este momento" tanto si la función devuelve `503` como si el propio SDK falla al montar (FR-015, sin exponer detalle técnico)
-- [ ] T016 [US2] Crear `apps/web/src/pages/analitica/list.tsx`: usa `useReportesAsignados`, muestra el mensaje de "no tenés reportes configurados" si la lista viene vacía (FR-011), y abre `ReporteEmbebido` al seleccionar uno
-- [ ] T017 [US2] Agregar `'analitica'` a `RECURSOS_DEPENDIENTES_DE_ORGANIZACION` en `apps/web/src/lib/recursosDependientesDeOrganizacion.ts`, y registrar el resource `analitica` + ruta `/analitica` en `apps/web/src/App.tsx`
-- [ ] T018 [P] [US2] Vitest para `apps/web/src/pages/analitica/list.tsx` (o `ReporteEmbebido.tsx`): estado vacío sin reportes asignados, y mensaje de fallback cuando la Edge Function devuelve `503`
+- [X] T013 [P] [US2] Crear `supabase/functions/emitir-acceso-reporte/index.ts` según `contracts/acceso-reporte.md`: valida el JWT de quien llama, resuelve autorización con un cliente Supabase scoped al usuario (nunca service-role) contra `reportes_organizaciones_roles`, y si autorizado pide el guest token a Superset (login + `guest_token/` con `rls` forzada); `403` si no autorizado, `503` con `{"error":"analitica_no_disponible"}` si Superset no responde (FR-015)
+- [X] T014 [P] [US2] Crear `apps/web/src/hooks/useReportesAsignados.ts` (mismo patrón que `useOrganizacionActiva.ts`): lista los reportes visibles para el usuario actual consultando `reportes` (la RLS ya filtra por organización y rol)
+- [X] T015 [P] [US2] Crear `apps/web/src/components/ReporteEmbebido.tsx`: llama a `emitir-acceso-reporte`, monta `@superset-ui/embedded-sdk` con el guest token recibido, y muestra el mensaje "Analítica no disponible en este momento" tanto si la función devuelve `503` como si el propio SDK falla al montar (FR-015, sin exponer detalle técnico)
+- [X] T016 [US2] Crear `apps/web/src/pages/analitica/list.tsx`: usa `useReportesAsignados`, muestra el mensaje de "no tenés reportes configurados" si la lista viene vacía (FR-011), y abre `ReporteEmbebido` al seleccionar uno
+- [X] T017 [US2] Agregar `'analitica'` a `RECURSOS_DEPENDIENTES_DE_ORGANIZACION` en `apps/web/src/lib/recursosDependientesDeOrganizacion.ts`, y registrar el resource `analitica` + ruta `/analitica` en `apps/web/src/App.tsx`
+- [X] T018 [P] [US2] Vitest para `apps/web/src/pages/analitica/list.tsx` (o `ReporteEmbebido.tsx`): estado vacío sin reportes asignados, y mensaje de fallback cuando la Edge Function devuelve `503`
 
 **Checkpoint**: miembros y administradores ven sus reportes asignados con
 datos aislados; estado vacío y caída de Superset verificados

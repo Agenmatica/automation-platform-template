@@ -19,6 +19,7 @@ import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
 import { AnaliticaAdministrar } from './pages/analitica/administrar'
+import { AnaliticaList } from './pages/analitica/list'
 import './App.css'
 
 const theme = createTheme({
@@ -96,6 +97,11 @@ function App() {
                 list: '/analitica/administrar',
                 meta: { label: 'Analítica (administrar)' },
               },
+              {
+                name: 'analitica',
+                list: '/analitica',
+                meta: { label: 'Analítica' },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -141,6 +147,14 @@ function App() {
                   }
                 />
                 <Route path="/analitica/administrar" element={<AnaliticaAdministrar />} />
+                <Route
+                  path="/analitica"
+                  element={
+                    <RequiereOrganizacionActiva>
+                      <AnaliticaList />
+                    </RequiereOrganizacionActiva>
+                  }
+                />
               </Route>
 
               <Route
