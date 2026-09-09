@@ -24,13 +24,16 @@ Deno.serve(async (req) => {
     existing = data.users.find((user) => user.email?.toLowerCase() === email)
     if (data.users.length < 1000) break
   }
-  let userId = existing?.id; let accion = 'miembro_agregado'
+  let userId = existing?.id; let usuarioInvitadoId: string | undefined; let accion = 'miembro_agregado'
   if (!userId) {
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email)
     if (error || !data.user) return response({ error: `No se pudo invitar a ${email}.` }, 502)
-    userId = data.user.id; accion = 'invitacion_enviada'
+    userId = data.user.id; usuarioInvitadoId = data.user.id; accion = 'invitacion_enviada'
   }
   const { data, error } = await caller.rpc('agregar_miembro', { p_target_user_id: userId, p_rol_id: rol, p_accion: accion })
-  if (error) return response({ error: error.message }, error.code === '42501' ? 403 : 400)
+  if (error) {
+    if (usuarioInvitadoId) await admin.auth.admin.deleteUser(usuarioInvitadoId)
+    return response({ error: error.message }, error.code === '42501' ? 403 : 400)
+  }
   return response({ ...data, resultado: accion }, 201)
 })

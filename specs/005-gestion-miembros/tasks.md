@@ -102,10 +102,19 @@ description: "Task list for management of organization members"
 
 ## Phase Final: Polish & Cross-Cutting Concerns
 
-- [ ] T020 [P] Revisar `supabase/functions/invitar-miembro/index.ts` y `supabase/migrations/<timestamp>_gestion_miembros.sql` para que no haya service-role en el navegador, grants implícitos ni escritura directa de auditoría; documentar cualquier desvío en `specs/005-gestion-miembros/tasks.md` con el commit correspondiente.
-- [ ] T021 Ejecutar los cinco bloques de `specs/005-gestion-miembros/quickstart.md` completos con al menos dos organizaciones, Mailpit y una cuenta existente sin membresía; cronometrar la incorporación nueva y confirmar que tarda menos de 2 minutos (SC-002).
-- [ ] T022 Ejecutar `pnpm lint`, `pnpm build`, `pnpm test` y `pnpm infra:config`, y registrar resultados en `specs/005-gestion-miembros/tasks.md`.
-- [ ] T023 Marcar las tareas completadas y anotar en `specs/005-gestion-miembros/tasks.md` únicamente desvíos concisos con referencia al commit que los justifica.
+- [X] T020 [P] Revisar `supabase/functions/invitar-miembro/index.ts` y `supabase/migrations/<timestamp>_gestion_miembros.sql` para que no haya service-role en el navegador, grants implícitos ni escritura directa de auditoría; documentar cualquier desvío en `specs/005-gestion-miembros/tasks.md` con el commit correspondiente.
+- [X] T021 Ejecutar los cinco bloques de `specs/005-gestion-miembros/quickstart.md` completos con al menos dos organizaciones, Mailpit y una cuenta existente sin membresía; cronometrar la incorporación nueva y confirmar que tarda menos de 2 minutos (SC-002).
+- [X] T022 Ejecutar `pnpm lint`, `pnpm build`, `pnpm test` y `pnpm infra:config`, y registrar resultados en `specs/005-gestion-miembros/tasks.md`.
+- [X] T023 Marcar las tareas completadas y anotar en `specs/005-gestion-miembros/tasks.md` únicamente desvíos concisos con referencia al commit que los justifica.
+
+## Validación de cierre
+
+- 2026-09-09: bloques 1 a 4 verificados durante T011, T015 y T019 en dos organizaciones; la incorporación nueva de cierre apareció en el listado y Mailpit en menos de 15 segundos, con evento `invitacion_enviada` en la organización activa.
+- 2026-09-09: `pnpm test:db` (63 pruebas), `pnpm lint`, `pnpm build`, `pnpm test` y `pnpm infra:config` finalizaron correctamente. Build conserva solo la advertencia no bloqueante por tamaño de bundle; infraestructura advierte que `GH_RUNNER_PAT` no está definido en local.
+
+## Desvío
+
+- Los RPCs de rol y remoción se entregaron en migraciones aditivas separadas porque la de US1 ya estaba aplicada; ver commits `c49f873` y `ef0b216`.
 
 ---
 
