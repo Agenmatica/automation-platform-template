@@ -18,6 +18,8 @@ import { OrganizacionList } from './pages/organizaciones/list'
 import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
+import { MiembroCreate } from './pages/miembros/create'
+import { MiembroList } from './pages/miembros/list'
 import './App.css'
 
 const theme = createTheme({
@@ -90,6 +92,7 @@ function App() {
                 edit: '/clientes/edit/:id',
                 meta: { label: 'Clientes' },
               },
+              { name: 'miembros', list: '/miembros', create: '/miembros/create', meta: { label: 'Miembros' } },
             ]}
             options={{
               syncWithLocation: true,
@@ -118,6 +121,8 @@ function App() {
                     </RequiereOrganizacionActiva>
                   }
                 />
+                <Route path="/miembros" element={<RequiereOrganizacionActiva><MiembroList /></RequiereOrganizacionActiva>} />
+                <Route path="/miembros/create" element={<RequiereOrganizacionActiva><MiembroCreate /></RequiereOrganizacionActiva>} />
                 <Route
                   path="/clientes/create"
                   element={
