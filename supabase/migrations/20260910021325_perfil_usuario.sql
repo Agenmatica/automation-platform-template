@@ -32,6 +32,10 @@ create table public.eventos_seguridad_usuario (
 create index eventos_seguridad_usuario_user_id_created_at_idx
   on public.eventos_seguridad_usuario (user_id, created_at desc, id desc);
 
+-- on conflict do nothing: el runner self-hosted de CI resetea `public`/
+-- `private` entre corridas (scripts/reset-db-ci.sh) pero no `storage` — sin
+-- esto, reaplicar esta migración en una base donde el bucket ya existe
+-- rompe con "duplicate key value violates unique constraint buckets_pkey".
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'fotos-perfil',
@@ -39,7 +43,8 @@ values (
   false,
   2097152,
   array['image/jpeg', 'image/png', 'image/webp']
-);
+)
+on conflict (id) do nothing;
 
 alter table public.perfiles_usuario enable row level security;
 alter table public.eventos_seguridad_usuario enable row level security;
