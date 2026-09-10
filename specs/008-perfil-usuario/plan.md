@@ -24,7 +24,7 @@ Incorporar una pantalla de perfil y un acceso visible a ella desde la sesión ac
 
 **Performance Goals**: perfil y últimas 20 acciones visibles en menos de 2 segundos con conectividad normal; completar edición de nombre/apellido o foto en menos de 2 minutos
 
-**Constraints**: solo el titular modifica su perfil; foto visible solo dentro de su organización; fotos y eventos no cruzan organizaciones; 20 eventos por titular; no se exponen service-role, contraseñas, tokens, enlaces ni correos de terceros
+**Constraints**: solo el titular puede leer o modificar su fila de perfil y sus eventos; la foto visible solo dentro de su organización se obtiene desde Storage sin leer perfiles ajenos; fotos y eventos no cruzan organizaciones; 20 eventos por titular; no se exponen service-role, contraseñas, tokens, enlaces ni correos de terceros
 
 **Scale/Scope**: una nueva ruta autenticada, un bucket privado, dos tablas públicas expuestas con RLS, un hook de Auth y cambios de configuración de correo; sin preferencias, MFA, eliminación de cuenta ni gestión de sesiones
 
@@ -34,7 +34,7 @@ Incorporar una pantalla de perfil y un acceso visible a ella desde la sesión ac
 
 | Gate | Estado antes de diseño | Aplicación en esta entrega |
 |---|---|---|
-| Aislamiento multi-tenant y RLS | Pasa | Las tablas nuevas y \`storage.objects\` usan RLS: perfil/eventos propios; fotos propias o de personas cuya organización coincide con el contexto del lector. |
+| Aislamiento multi-tenant y RLS | Pasa | Las tablas nuevas usan RLS solo de titular para perfil/eventos; \`storage.objects\` habilita fotos propias o de personas cuya organización coincide con el contexto del lector. |
 | Secretos fuera del navegador | Pasa | El cliente usa la publishable key y su JWT; no hay service-role ni endpoint administrativo en el navegador. |
 | Especificar antes de implementar | Pasa | La spec aclaró visibilidad de fotos, contenido y límite del historial antes de crear el plan. |
 | Idempotencia y auditoría | Pasa | Las escrituras de perfil/foto se pueden repetir sin duplicar identidad; Auth y el trigger producen eventos de seguridad acotados por usuario. |
@@ -83,4 +83,3 @@ supabase/
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |---|---|---|
 | Ninguna | — | — |
-

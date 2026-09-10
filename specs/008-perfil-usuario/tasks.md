@@ -80,15 +80,17 @@
 
 ## Phase 6: User Story 4 - Personalizar la foto e identificar la cuenta (Priority: P2)
 
-**Goal**: gestionar una foto privada por organización y ver datos de cuenta no editables.
+**Goal**: gestionar una foto con visibilidad restringida a la organización y ver datos de cuenta no editables.
 
-**Independent Test**: cargar, reemplazar y quitar una foto; verla desde otra cuenta de la misma organización y rechazarla desde otra; comprobar correo, fecha, rol y organización de solo lectura.
+**Independent Test**: cargar, reemplazar y quitar una foto; verla en el listado de miembros desde otra cuenta de la misma organización y rechazarla desde otra; comprobar correo, fecha, rol y organización de solo lectura.
 
 - [ ] T020 [P] [US4] Agregar pruebas de carga válida/inválida, reemplazo, eliminación, fallback neutro y resumen de cuenta en apps/web/src/pages/cuenta/perfil.test.tsx.
 - [ ] T021 [US4] Implementar carga, reemplazo y eliminación en el bucket fotos-perfil, validando JPG/PNG/WebP y 2 MiB antes de enviar, en apps/web/src/pages/cuenta/perfil.tsx.
 - [ ] T022 [US4] Implementar la obtención y presentación de correo, fecha de creación, organización y rol como datos de solo lectura en apps/web/src/pages/cuenta/perfil.tsx.
 - [ ] T023 [US4] Incorporar foto o representación neutra en el indicador de sesión de apps/web/src/App.tsx sin abrir fotos de otra organización.
-- [ ] T024 [US4] Ejecutar pnpm test:web y el escenario de foto de specs/008-perfil-usuario/quickstart.md, completando las pruebas de Storage en supabase/tests/database/perfil_usuario.test.sql.
+- [ ] T024 [US4] Resolver desde Storage y presentar la foto autorizada o representación neutra de cada integrante en apps/web/src/pages/miembros/list.tsx, sin consultar perfiles_usuario ajenos ni datos personales adicionales.
+- [ ] T025 [US4] Agregar a apps/web/src/pages/miembros/list.test.tsx los casos de foto del mismo tenant, fallback neutro y ausencia de consulta a perfiles_usuario ajenos.
+- [ ] T026 [US4] Ejecutar pnpm test:web y el escenario de foto de specs/008-perfil-usuario/quickstart.md, completando las pruebas de Storage en supabase/tests/database/perfil_usuario.test.sql.
 
 **Checkpoint**: US4 permite al titular gestionar su foto y muestra datos de cuenta sin habilitar cambios de roles u organización.
 
@@ -100,10 +102,10 @@
 
 **Independent Test**: iniciar sesión, cambiar contraseña y correo; comprobar los tres tipos de evento y que otra cuenta ni acciones operativas aparecen.
 
-- [ ] T025 [P] [US5] Agregar pruebas de orden descendente, límite de 20, tipos permitidos y estado vacío en apps/web/src/pages/cuenta/perfil.test.tsx.
-- [ ] T026 [US5] Implementar la consulta y representación de eventos_seguridad_usuario limitada a 20, con tipo y momento, en apps/web/src/pages/cuenta/perfil.tsx.
-- [ ] T027 [US5] Agregar verificaciones de creación por login/cambio y exclusión de eventos operativos en supabase/tests/database/perfil_usuario.test.sql.
-- [ ] T028 [US5] Ejecutar los escenarios de actividad de specs/008-perfil-usuario/quickstart.md y revisar los logs de Auth sin registrar secretos en supabase/tests/database/perfil_usuario.test.sql.
+- [ ] T027 [P] [US5] Agregar pruebas de orden descendente, límite de 20, tipos permitidos y estado vacío en apps/web/src/pages/cuenta/perfil.test.tsx.
+- [ ] T028 [US5] Implementar la consulta y representación de eventos_seguridad_usuario limitada a 20, con tipo y momento, en apps/web/src/pages/cuenta/perfil.tsx.
+- [ ] T029 [US5] Agregar verificaciones de creación por login/cambio y exclusión de eventos operativos en supabase/tests/database/perfil_usuario.test.sql.
+- [ ] T030 [US5] Ejecutar los escenarios de actividad de specs/008-perfil-usuario/quickstart.md y revisar los logs de Auth sin registrar secretos en supabase/tests/database/perfil_usuario.test.sql.
 
 **Checkpoint**: US5 muestra solo actividad de seguridad propia, reciente y no administrable.
 
@@ -115,9 +117,9 @@
 
 **Independent Test**: desde perfil abrir cambio, cambiar contraseña válida y verificar que se mantiene la política, la sesión actual y el aviso existentes.
 
-- [ ] T029 [P] [US6] Agregar el caso de navegación desde perfil hacia el cambio de contraseña en apps/web/src/pages/cuenta/perfil.test.tsx.
-- [ ] T030 [US6] Enlazar la sección de contraseña del perfil a /cuenta/cambiar-contrasena en apps/web/src/pages/cuenta/perfil.tsx.
-- [ ] T031 [US6] Ejecutar apps/web/src/pages/cuenta/cambiar-contrasena.test.tsx y el escenario referenciado de specs/006-autogestion-contrasena/quickstart.md para confirmar que no se alteró el flujo existente.
+- [ ] T031 [P] [US6] Agregar el caso de navegación desde perfil hacia el cambio de contraseña en apps/web/src/pages/cuenta/perfil.test.tsx.
+- [ ] T032 [US6] Enlazar la sección de contraseña del perfil a /cuenta/cambiar-contrasena en apps/web/src/pages/cuenta/perfil.tsx.
+- [ ] T033 [US6] Ejecutar apps/web/src/pages/cuenta/cambiar-contrasena.test.tsx y el escenario referenciado de specs/006-autogestion-contrasena/quickstart.md para confirmar que no se alteró el flujo existente.
 
 **Checkpoint**: US6 integra el cambio de contraseña sin modificar sus garantías.
 
@@ -127,16 +129,16 @@
 
 **Purpose**: validar el flujo completo, accesibilidad, documentación y calidad de entrega.
 
-- [ ] T032 [P] Revisar mensajes, etiquetas, foco, estados de carga y errores accesibles en apps/web/src/pages/cuenta/perfil.tsx.
-- [ ] T033 [P] Actualizar los escenarios finales y resultados de validación en specs/008-perfil-usuario/quickstart.md.
-- [ ] T034 Ejecutar pnpm lint, pnpm build, pnpm infra:config, pnpm test:web y pnpm test:db; corregir solo archivos de apps/web/, supabase/ y specs/008-perfil-usuario/ afectados por la feature.
-- [ ] T035 Ejecutar de punta a punta specs/008-perfil-usuario/quickstart.md con Supabase local y Mailpit, y registrar el resultado en specs/008-perfil-usuario/quickstart.md.
+- [ ] T034 [P] Revisar mensajes, etiquetas, foco, estados de carga y errores accesibles en apps/web/src/pages/cuenta/perfil.tsx.
+- [ ] T035 [P] Actualizar los escenarios finales y resultados de validación en specs/008-perfil-usuario/quickstart.md.
+- [ ] T036 Ejecutar pnpm lint, pnpm build, pnpm infra:config, pnpm test:web y pnpm test:db; corregir solo archivos de apps/web/, supabase/ y specs/008-perfil-usuario/ afectados por la feature.
+- [ ] T037 Ejecutar de punta a punta specs/008-perfil-usuario/quickstart.md con Supabase local y Mailpit, y registrar el resultado en specs/008-perfil-usuario/quickstart.md.
 
 ---
 
 ## Dependencies & Execution Order
 
-Setup (T001-T002) → Foundational (T003-T007) → US1 (T008-T011) → US2 (T012-T015) → US3 (T016-T019) → US4 (T020-T024) → US5 (T025-T028) → US6 (T029-T031) → Polish (T032-T035).
+Setup (T001-T002) → Foundational (T003-T007) → US1 (T008-T011) → US2 (T012-T015) → US3 (T016-T019) → US4 (T020-T026) → US5 (T027-T030) → US6 (T031-T033) → Polish (T034-T037).
 
 US2 necesita que exista la ruta de US1. US3, US4, US5 y US6 reutilizan la pantalla de perfil creada en US1. Cada checkpoint es el corte obligatorio antes de invocar /speckit-implement para la siguiente fase.
 
@@ -145,7 +147,7 @@ US2 necesita que exista la ruta de US1. US3, US4, US5 y US6 reutilizan la pantal
 - T001 y T002 pueden iniciar en paralelo.
 - Tras T003-T005, T006 puede desarrollarse mientras se preparan casos Vitest de US1.
 - Las pruebas iniciales marcadas [P] se pueden preparar en paralelo; las tareas que editan perfil.tsx se mantienen secuenciales.
-- T032 y T033 pueden ejecutarse en paralelo tras completar todas las historias.
+- T034 y T035 pueden ejecutarse en paralelo tras completar todas las historias.
 
 ## Implementation Strategy
 
@@ -162,4 +164,3 @@ US2 necesita que exista la ruta de US1. US3, US4, US5 y US6 reutilizan la pantal
 3. US5 proyecta el historial de seguridad.
 4. US6 enlaza el flujo de contraseña ya existente.
 5. Finalizar con las validaciones transversales.
-

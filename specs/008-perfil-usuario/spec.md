@@ -77,7 +77,7 @@ Como persona autenticada, puedo elegir o quitar mi foto de perfil y consultar lo
 
 **Why this priority**: La foto hace reconocible la cuenta en la aplicación, mientras que los datos de cuenta aclaran el contexto personal sin abrir una vía para cambiar permisos o pertenencias por error.
 
-**Independent Test**: Iniciar sesión, cargar una imagen de perfil válida, confirmar que se muestra en el perfil y en el indicador de sesión, quitarla y comprobar que se reemplaza por una representación neutra; verificar además que el resumen muestra los datos de cuenta sin controles para editar rol u organización.
+**Independent Test**: Iniciar sesión, cargar una imagen de perfil válida, confirmar que se muestra en el perfil, el indicador de sesión y el listado de miembros de la misma organización, quitarla y comprobar que se reemplaza por una representación neutra; verificar además que el resumen muestra los datos de cuenta sin controles para editar rol u organización.
 
 **Acceptance Scenarios**:
 
@@ -86,6 +86,7 @@ Como persona autenticada, puedo elegir o quitar mi foto de perfil y consultar lo
 3. **Given** una persona autenticada, **When** consulta los datos de su cuenta, **Then** ve en modo de solo lectura su correo de acceso, fecha de creación de la cuenta, organización y rol vigentes cuando corresponden.
 4. **Given** una persona autenticada, **When** consulta su cuenta, **Then** no puede modificar desde esta sección su rol, organización, pertenencia ni datos de otra persona.
 5. **Given** una persona intenta cargar un archivo que no puede utilizarse como foto de perfil, **When** confirma la carga, **Then** recibe una explicación clara y su foto anterior se conserva.
+6. **Given** integrantes de una misma organización consultan el listado de miembros, **When** una persona tiene foto de perfil, **Then** pueden ver únicamente esa foto junto a su identificación existente, sin acceder a sus demás datos de perfil.
 
 ---
 
@@ -175,7 +176,7 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 
 - **SC-001**: Una persona autenticada puede localizar y actualizar su nombre y apellido en menos de 2 minutos, sin asistencia de un administrador.
 - **SC-002**: Una persona puede completar un cambio de correo confirmado y volver a iniciar sesión con la nueva dirección en menos de 5 minutos desde que inicia la solicitud.
-- **SC-003**: El 100 % de los intentos de consultar o modificar perfiles ajenos se rechaza y no expone datos personales de terceros.
+- **SC-003**: El 100 % de los intentos de consultar o modificar datos de perfil, cuenta o avisos de seguridad ajenos se rechaza y no expone datos personales de terceros, excepto la foto de perfil autorizada para integrantes de la misma organización.
 - **SC-004**: El 100 % de las solicitudes de cambio de correo sin revalidación de contraseña o sin confirmación válida conserva el correo de acceso anterior.
 - **SC-005**: El 100 % de los cambios efectivos de correo genera un aviso de seguridad a la dirección anterior y un evento de trazabilidad, sin incluir secretos.
 - **SC-006**: El 100 % de las personas autenticadas puede identificar la cuenta de su sesión activa y acceder a su perfil desde la pantalla general sin navegar por más de una opción.
@@ -190,6 +191,6 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 - El aviso al correo anterior se envía solo después de que el nuevo correo fue confirmado con éxito; si no se puede entregar, el cambio no se revierte automáticamente.
 - El cambio de contraseña ya está dentro de `006-autogestion-contrasena`; esta entrega solo lo incorpora como entrada desde el perfil, sin duplicar su lógica ni ampliar sus requisitos.
 - La pantalla general es la primera pantalla que ve una persona tras autenticarse y contiene el indicador “Logueado como” y el acceso al perfil; no se define una ubicación visual específica dentro de ella.
-- La foto de perfil sirve para representar a la persona dentro de su propia sesión y para identificarla ante integrantes de su misma organización; no es visible entre organizaciones.
+- La foto de perfil sirve para representar a la persona dentro de su propia sesión y para identificarla ante integrantes de su misma organización en el listado de miembros; no es visible entre organizaciones ni habilita el acceso a sus demás datos de perfil.
 - Los avisos de seguridad comprenden una vista de las 20 acciones de seguridad más recientes: inicios de sesión exitosos y cambios sensibles de la cuenta, además de las comunicaciones de seguridad ya requeridas; no incluyen acciones operativas, administración ni cierre de sesiones activas.
 - Quedan fuera de alcance la edición de roles, organización o pertenencias, preferencias, eliminación de cuenta, autenticación multifactor, historial general de actividad y modificación de datos por terceros.

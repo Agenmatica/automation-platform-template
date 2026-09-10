@@ -4,7 +4,7 @@
 
 **Decision**: crear \`public.perfiles_usuario\` en lugar de almacenar nombre, apellido o foto en \`auth.users.raw_user_meta_data\`.
 
-**Rationale**: la metadata de usuario puede cambiarla la propia persona y no es apta para decisiones de autorización. Una tabla pública permite RLS explícito, relacionar la foto con el titular y permitir su lectura acotada por organización sin exponer \`auth.users\`. La identidad, correo y creación de la cuenta siguen siendo responsabilidad de Supabase Auth.
+**Rationale**: la metadata de usuario puede cambiarla la propia persona y no es apta para decisiones de autorización. Una tabla pública permite RLS explícito y relacionar la foto con el titular sin exponer \`auth.users\`; su fila permanece legible solo por el titular. La foto se comparte de forma acotada por organización directamente mediante Storage. La identidad, correo y creación de la cuenta siguen siendo responsabilidad de Supabase Auth.
 
 **Alternatives considered**:
 
@@ -66,4 +66,3 @@
 - [Auth Hooks: modelo de seguridad](https://supabase.com/docs/guides/auth/auth-hooks)
 - [Storage Access Control](https://supabase.com/docs/guides/storage/security/access-control)
 - [Auth Audit Logs](https://supabase.com/docs/guides/auth/audit-logs)
-

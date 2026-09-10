@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Validated on 2026-09-09. The password flow remains owned by `006-autogestion-contrasena`; this specification only defines its profile entry point. The profile is a separate screen, and the general screen identifies the active account with “Logueado como” and links to that profile. Photo, account data and security notices are personal-only; preferences, account deletion, MFA and session management remain out of scope.
+- Validated on 2026-09-09. The password flow remains owned by `006-autogestion-contrasena`; this specification only defines its profile entry point. The profile is a separate screen, and the general screen identifies the active account with “Logueado como” and links to that profile. Account data and security notices are personal-only; the photo is the sole shared element and is limited to members of the same organization through the member list. Preferences, account deletion, MFA and session management remain out of scope.

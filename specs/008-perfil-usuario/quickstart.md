@@ -21,7 +21,7 @@
 
 1. Cargar una imagen válida, comprobar la foto en el perfil y en la identidad de sesión; reemplazarla y luego quitarla.
 2. Intentar cargar un tipo inválido o más de 2 MiB; confirmar que la foto anterior se conserva.
-3. Con otro usuario de A, comprobar que puede leer la foto; con uno de B, comprobar que no puede obtenerla por la aplicación ni mediante Storage.
+3. Con otro usuario de A, abrir el listado de miembros y comprobar que puede ver solo la foto; confirmar que no puede leer el perfil ajeno. Con uno de B, comprobar que no puede obtener la foto por la aplicación ni mediante Storage.
 4. Ejecutar el test pgTAP de esta feature para validar el mismo aislamiento sin depender de la interfaz.
 
 ### 3. Correo y contraseña
@@ -52,4 +52,3 @@ pnpm test:db
 \`\`\`
 
 Se espera que Vitest cubra rutas, estados y mensajes del perfil, y que pgTAP demuestre RLS para perfiles, eventos y \`storage.objects\`, incluidos los intentos entre organizaciones. Consultar [data-model.md](./data-model.md) y el [contrato](./contracts/perfil-personal.md) para las reglas verificadas.
-

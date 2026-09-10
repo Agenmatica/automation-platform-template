@@ -44,9 +44,13 @@ La vista muestra, de más reciente a más antigua, solo:
 
 Cada fila expone tipo y momento. No incluye eventos de clientes, usuarios, membresías u operación; tampoco permite listar, ubicar o cerrar sesiones.
 
+## Foto en el listado de miembros
+
+El listado de miembros usa el \`user_id\` de cada membresía ya autorizada para solicitar la ruta estable \`<user_id>/avatar\` del bucket privado. No consulta \`perfiles_usuario\` de otra persona ni muestra nombre, apellido, correo, cuenta o avisos ajenos. Si no hay foto o no puede obtenerse, muestra la representación neutra sin interrumpir el listado.
+
 ## Autorización verificable
 
-- Una petición directa por otro \`user_id\` a perfiles o eventos devuelve cero filas o se rechaza por RLS.
+- Una petición directa por otro \`user_id\` a perfiles o eventos devuelve cero filas o se rechaza por RLS; esto incluye integrantes de la misma organización.
 - Una persona de otra organización no puede obtener una foto por Storage.
+- Una persona de la misma organización solo puede obtener el objeto de foto autorizado; no puede obtener la fila de perfil de su integrante.
 - El titular conserva acceso a su foto aunque se quede temporalmente sin membresía; nadie más obtiene esa foto sin organización compartida.
-

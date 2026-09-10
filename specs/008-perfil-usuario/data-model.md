@@ -14,7 +14,7 @@
 
 - El titular puede seleccionar e insertar/actualizar solo su fila.
 - Una persona puede leer su propia fila aunque no pertenezca a una organización.
-- La foto de otro perfil solo se puede resolver si ese perfil pertenece a la organización que \`private.organizacion_id()\` resuelve para el lector; cubre miembros y al superadmin solo dentro de su organización activa.
+- Ninguna persona puede seleccionar la fila de perfil de otra, incluso si comparten organización; así nombre, apellido y la ruta de la foto permanecen privados.
 - Nombre, apellido y foto no se usan para decisiones de autorización.
 
 ## Storage \`fotos-perfil\`
@@ -27,7 +27,7 @@
 | Escritura | Solo el titular en su carpeta: INSERT, SELECT y UPDATE para reemplazo; DELETE para quitarla. |
 | Lectura | Titular o integrante de la misma organización que el titular; prohibida entre organizaciones. |
 
-La eliminación de la foto borra el objeto y establece \`foto_path\` en nulo. Una fallida de carga o eliminación no actualiza la referencia existente.
+La vista de miembros construye la ruta estable desde el \`user_id\` que ya puede consultar por su membresía y solicita únicamente el objeto de Storage; no lee la fila \`perfiles_usuario\` ajena. La eliminación de la foto borra el objeto y establece \`foto_path\` en nulo. Una fallida de carga o eliminación no actualiza la referencia existente.
 
 ## \`eventos_seguridad_usuario\`
 
@@ -54,4 +54,3 @@ No se duplica \`auth.users\`. La pantalla compone:
 - condición de superadmin y organización activa mediante los recursos ya protegidos por sus policies.
 
 Estos datos son de solo lectura y no habilitan modificación de rol, organización ni pertenencia.
-
