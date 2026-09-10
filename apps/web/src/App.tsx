@@ -1,4 +1,4 @@
-import { Authenticated, ErrorComponent, Refine } from '@refinedev/core'
+import { Authenticated, ErrorComponent, Refine, useGetIdentity } from '@refinedev/core'
 import { RefineSnackbarProvider, ThemedLayout, useNotificationProvider } from '@refinedev/mui'
 import { dataProvider as supabaseDataProvider } from '@refinedev/supabase'
 import routerProvider, {
@@ -6,12 +6,14 @@ import routerProvider, {
   DocumentTitleHandler,
   UnsavedChangesNotifier,
 } from '@refinedev/react-router'
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router'
+import { Avatar, CssBaseline, ThemeProvider, createTheme } from '@mui/material'
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router'
 import { authProvider } from './providers/authProvider'
 import { accessControlProvider } from './providers/accessControlProvider'
 import { supabaseClient } from './lib/supabase'
 import { RequiereOrganizacionActiva } from './components/RequiereOrganizacionActiva'
+import { SiderConSeccionesSuperadmin } from './components/SiderConSeccionesSuperadmin'
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
 import { OrganizacionList } from './pages/organizaciones/list'
@@ -26,6 +28,7 @@ import { MiembroList } from './pages/miembros/list'
 import { DefinirContrasenaPage } from './pages/acceso/definir-contrasena'
 import { SolicitarRecuperacionPage } from './pages/acceso/solicitar-recuperacion'
 import { CambiarContrasenaPage } from './pages/cuenta/cambiar-contrasena'
+import { PerfilPage } from './pages/cuenta/perfil'
 import './App.css'
 
 const theme = createTheme({
@@ -47,6 +50,57 @@ const services = [
 // Home de quien ya inició sesión, hasta que exista una pantalla de negocio
 // propia (organizaciones/clientes se agregan como recursos en las
 // siguientes historias de la spec 003).
+type Identity = { id: string; email?: string }
+
+type PerfilIdentidad = { nombre: string | null; apellido: string | null }
+
+export function IndicadorSesionActiva() {
+  const { data: identity, isLoading } = useGetIdentity<Identity>()
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null)
+  const [nombreCompleto, setNombreCompleto] = useState<string | null>(null)
+
+  useEffect(() => {
+    let activa = true
+    if (!identity?.id) {
+      setFotoUrl(null)
+      setNombreCompleto(null)
+      return () => { activa = false }
+    }
+    // La identidad solo solicita su propia fila; RLS impide leer perfiles ajenos.
+    const cargarNombreCompleto = async () => {
+      try {
+        const { data } = await supabaseClient
+          .from('perfiles_usuario')
+          .select('nombre, apellido')
+          .eq('user_id', identity.id)
+          .maybeSingle<PerfilIdentidad>()
+        if (activa) setNombreCompleto(data?.nombre && data?.apellido ? `${data.nombre} ${data.apellido}` : null)
+      } catch {
+        if (activa) setNombreCompleto(null)
+      }
+    }
+    void cargarNombreCompleto()
+    // La identidad solo solicita su propia ruta estable; Storage aplica RLS.
+    void supabaseClient.storage.from('fotos-perfil').createSignedUrl(`${identity.id}/avatar`, 60)
+      .then(({ data }) => { if (activa) setFotoUrl(data?.signedUrl ?? null) })
+      .catch(() => { if (activa) setFotoUrl(null) })
+    return () => { activa = false }
+  }, [identity?.id])
+
+  // Al cerrar la sesion Refine invalida la identidad y este componente deja de
+  // renderizarla; asi no queda el correo anterior visible durante la salida.
+  if (isLoading || !identity?.email) {
+    return null
+  }
+
+  return (
+    <p>
+      <Avatar src={fotoUrl ?? undefined} alt="Tu foto de perfil" sx={{ width: 28, height: 28, display: 'inline-flex', verticalAlign: 'middle', mr: 1 }}>?</Avatar>
+      Logueado como <strong>{nombreCompleto ?? identity.email}</strong>. <Link to="/cuenta/perfil">Ver mi perfil</Link>
+    </p>
+  )
+}
+
 function Home() {
   return (
     <main className="shell">
@@ -57,6 +111,7 @@ function Home() {
           Base técnica preparada para desarrollar con Claude Code o Codex usando
           el mismo flujo de especificaciones.
         </p>
+        <IndicadorSesionActiva />
       </header>
 
       <section className="grid" aria-label="Servicios del producto">
@@ -109,7 +164,7 @@ function App() {
                 meta: { label: 'Analítica' },
               },
               { name: 'miembros', list: '/miembros', create: '/miembros/create', meta: { label: 'Miembros' } },
-              { name: 'cuenta', list: '/cuenta/cambiar-contrasena', meta: { label: 'Mi cuenta' } },
+              { name: 'cuenta', list: '/cuenta/perfil', meta: { label: 'Mi cuenta' } },
             ]}
             options={{
               syncWithLocation: true,
@@ -123,7 +178,7 @@ function App() {
               <Route
                 element={
                   <Authenticated key="protegido" fallback={<CatchAllNavigate to="/login" />}>
-                    <ThemedLayout>
+                    <ThemedLayout Sider={SiderConSeccionesSuperadmin}>
                       <Outlet />
                     </ThemedLayout>
                   </Authenticated>
@@ -143,6 +198,7 @@ function App() {
                 <Route path="/miembros" element={<RequiereOrganizacionActiva><MiembroList /></RequiereOrganizacionActiva>} />
                 <Route path="/miembros/create" element={<RequiereOrganizacionActiva><MiembroCreate /></RequiereOrganizacionActiva>} />
                 <Route path="/cuenta/cambiar-contrasena" element={<CambiarContrasenaPage />} />
+                <Route path="/cuenta/perfil" element={<PerfilPage />} />
                 <Route
                   path="/clientes/create"
                   element={
@@ -191,7 +247,7 @@ function App() {
               <Route
                 element={
                   <Authenticated key="catch-all">
-                    <ThemedLayout>
+                    <ThemedLayout Sider={SiderConSeccionesSuperadmin}>
                       <Outlet />
                     </ThemedLayout>
                   </Authenticated>

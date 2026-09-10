@@ -168,6 +168,8 @@ additional_redirect_urls = [
   "http://localhost:3100/acceso/definir-contrasena?origen=invitacion",
   "http://127.0.0.1:3100/acceso/definir-contrasena?origen=recuperacion",
   "http://localhost:3100/acceso/definir-contrasena?origen=recuperacion",
+  "http://127.0.0.1:3100/cuenta/perfil",
+  "http://localhost:3100/cuenta/perfil",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -229,9 +231,10 @@ web3 = 30
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
+double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# También habilita la confirmación del correo nuevo durante un cambio de email.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = true
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -260,6 +263,10 @@ otp_expiry = 3600
 enabled = true
 subject = "Tu contrasena fue modificada"
 
+[auth.email.notification.email_changed]
+enabled = true
+subject = "Tu correo fue modificado"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false
@@ -287,9 +294,9 @@ max_frequency = "5s"
 # uri = "pg-functions://postgres/auth/before-user-created-hook"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-# [auth.hook.custom_access_token]
-# enabled = true
-# uri = "pg-functions://<database>/<schema>/<hook_name>"
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/registrar_inicio_sesion"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]

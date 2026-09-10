@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTable } from '@refinedev/core'
 import { List } from '@refinedev/mui'
 import {
   Alert,
+  Avatar,
   Button,
   Dialog,
   DialogActions,
@@ -23,6 +24,20 @@ import { supabaseClient } from '../../lib/supabase'
 
 type Miembro = { user_id: string; rol_id: string; created_at: string }
 type CambioPendiente = { miembro: Miembro; nuevoRol: string }
+
+function FotoMiembro({ userId }: { userId: string }) {
+  const [url, setUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    let activa = true
+    // La ruta se deriva de la membresía autorizada; nunca se consulta perfiles_usuario.
+    void supabaseClient.storage.from('fotos-perfil').createSignedUrl(`${userId}/avatar`, 60)
+      .then(({ data }) => { if (activa) setUrl(data?.signedUrl ?? null) })
+    return () => { activa = false }
+  }, [userId])
+
+  return <Avatar src={url ?? undefined} alt={`Foto de ${userId}`}>?</Avatar>
+}
 
 export function MiembroList() {
   const { tableQuery } = useTable<Miembro>({ resource: 'usuarios_organizacion' })
@@ -86,6 +101,7 @@ export function MiembroList() {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Foto</TableCell>
               <TableCell>Usuario</TableCell>
               <TableCell>Rol</TableCell>
               <TableCell>Incorporado</TableCell>
@@ -97,6 +113,7 @@ export function MiembroList() {
               const nuevoRol = rolesPendientes[miembro.user_id] ?? miembro.rol_id
               return (
                 <TableRow key={miembro.user_id}>
+                  <TableCell><FotoMiembro userId={miembro.user_id} /></TableCell>
                   <TableCell>{miembro.user_id}</TableCell>
                   <TableCell>
                     {puedeEscribir ? (
