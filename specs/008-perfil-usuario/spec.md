@@ -10,6 +10,14 @@
 
 **Delivery scope**: refine | supabase
 
+## Clarifications
+
+### Session 2026-09-09
+
+- Q: ¿Quién debe poder ver la foto de perfil de una persona? → A: La ven personas de la misma organización.
+- Q: ¿El listado debe incluir cada inicio de sesión exitoso, además de los cambios de contraseña y correo? → A: Cada inicio de sesión exitoso.
+- Q: ¿Durante cuánto tiempo deben permanecer visibles los avisos de seguridad en el perfil? → A: Últimas 20 acciones de seguridad.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consultar y actualizar datos personales (Priority: P1)
@@ -73,7 +81,7 @@ Como persona autenticada, puedo elegir o quitar mi foto de perfil y consultar lo
 
 **Acceptance Scenarios**:
 
-1. **Given** una persona autenticada, **When** carga una imagen de perfil válida, **Then** la nueva foto queda asociada solo a su propio perfil y se muestra como su representación visual en la aplicación.
+1. **Given** una persona autenticada, **When** carga una imagen de perfil válida, **Then** la nueva foto queda asociada a su propio perfil, se muestra como su representación visual y puede verse por integrantes de su misma organización.
 2. **Given** una persona autenticada con foto de perfil, **When** decide quitarla, **Then** la foto deja de mostrarse y la aplicación usa una representación neutra de su identidad.
 3. **Given** una persona autenticada, **When** consulta los datos de su cuenta, **Then** ve en modo de solo lectura su correo de acceso, fecha de creación de la cuenta, organización y rol vigentes cuando corresponden.
 4. **Given** una persona autenticada, **When** consulta su cuenta, **Then** no puede modificar desde esta sección su rol, organización, pertenencia ni datos de otra persona.
@@ -83,7 +91,7 @@ Como persona autenticada, puedo elegir o quitar mi foto de perfil y consultar lo
 
 ### User Story 5 - Consultar avisos de seguridad (Priority: P3)
 
-Como persona autenticada, puedo consultar los avisos recientes de seguridad de mi propia cuenta, para detectar cambios sensibles o accesos que no reconozco y actuar a tiempo.
+Como persona autenticada, puedo consultar las últimas 20 acciones de seguridad de mi propia cuenta, para revisar mis inicios de sesión y cambios sensibles recientes y detectar acciones que no reconozco a tiempo.
 
 **Why this priority**: Complementa las notificaciones por correo y da visibilidad dentro de la aplicación a los acontecimientos que afectan el control de la cuenta, sin introducir una gestión de sesiones.
 
@@ -92,7 +100,7 @@ Como persona autenticada, puedo consultar los avisos recientes de seguridad de m
 **Acceptance Scenarios**:
 
 1. **Given** una persona que cambia su contraseña o confirma un cambio de correo, **When** abre sus avisos de seguridad, **Then** encuentra un aviso de ese cambio con su tipo y momento, sin secretos ni enlaces sensibles.
-2. **Given** una persona con un aviso de acceso relevante a su cuenta, **When** abre sus avisos de seguridad, **Then** puede identificar que ocurrió un acceso y cuándo ocurrió, sin que ello le muestre ni le permita administrar sesiones activas.
+2. **Given** una persona que inició sesión correctamente, **When** abre sus avisos de seguridad, **Then** puede identificar sus inicios de sesión exitosos entre las últimas 20 acciones y cuándo ocurrieron, sin que ello le muestre ni le permita administrar sesiones activas.
 3. **Given** una persona autenticada, **When** intenta consultar avisos de seguridad de otra cuenta por interfaz o acceso directo, **Then** la operación es rechazada y no se expone información ajena.
 
 ---
@@ -120,7 +128,9 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 - La aplicación no expone contraseñas, enlaces de confirmación ni direcciones de correo de otras personas en mensajes, registros operativos ni auditorías.
 - La foto de perfil es opcional: si falta o se elimina, la aplicación conserva una representación neutra y no bloquea el acceso ni la actualización de los demás datos.
 - Una foto rechazada o cuya actualización falle no reemplaza la foto de perfil anterior.
-- Los avisos de seguridad no dan acceso a sesiones activas ni permiten cerrar dispositivos; solo informan acontecimientos de la propia cuenta.
+- Una persona de otra organización no puede consultar ni obtener la foto de perfil de integrantes ajenos.
+- Los avisos de seguridad no dan acceso a sesiones activas ni permiten cerrar dispositivos; solo informan los inicios de sesión exitosos y acontecimientos sensibles de la propia cuenta.
+- El listado de avisos se limita a las 20 acciones de seguridad más recientes; no incluye creación o edición de usuarios, clientes u otros datos operativos.
 
 ## Requirements *(mandatory)*
 
@@ -143,9 +153,11 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 - **FR-015**: El sistema DEBE mostrar una representación neutra de identidad cuando una persona no tenga foto de perfil y no debe exigir una foto para usar la cuenta.
 - **FR-016**: El sistema DEBE mostrar a cada persona autenticada, en modo de solo lectura, los datos de su propia cuenta: correo de acceso, fecha de creación, organización y rol vigentes cuando correspondan.
 - **FR-017**: El sistema DEBE impedir que la sección de perfil permita cambiar roles, organización o pertenencias; esas decisiones permanecen en sus flujos de administración correspondientes.
-- **FR-018**: El sistema DEBE mostrar a cada persona autenticada los avisos recientes de seguridad de su propia cuenta, incluyendo cambios efectivos de contraseña y correo, así como accesos relevantes detectados.
+- **FR-018**: El sistema DEBE mostrar a cada persona autenticada las 20 acciones de seguridad más recientes de su propia cuenta, incluyendo inicios de sesión exitosos y cambios efectivos de contraseña y correo.
+- **FR-018a**: El sistema DEBE excluir del listado de avisos la creación o edición de usuarios, clientes y cualquier otra acción operativa que no sea un inicio de sesión exitoso o un cambio efectivo de contraseña o correo.
 - **FR-019**: Cada aviso de seguridad DEBE indicar su tipo y momento, excluir contraseñas, enlaces, tokens y otros secretos, y no habilitar la consulta ni administración de sesiones activas.
-- **FR-020**: El sistema DEBE restringir fotos, datos de cuenta y avisos de seguridad al titular de la cuenta, sin exponerlos a otras personas por interfaz ni acceso directo.
+- **FR-020**: El sistema DEBE permitir que la foto de perfil de una persona sea visible únicamente para ella y para integrantes de su misma organización, y debe impedir su consulta desde otras organizaciones por interfaz y acceso directo.
+- **FR-021**: El sistema DEBE restringir los datos de cuenta y avisos de seguridad al titular de la cuenta, sin exponerlos a otras personas por interfaz ni acceso directo.
 
 ### Key Entities
 
@@ -155,7 +167,7 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 - **Evento de seguridad de perfil**: registro de un cambio efectivo de correo que permite trazabilidad sin revelar secretos.
 - **Foto de perfil**: imagen opcional elegida por una persona para representar visualmente su propia cuenta.
 - **Datos de cuenta**: resumen de solo lectura de los atributos vigentes de la cuenta y su pertenencia, sin controles para administrar permisos.
-- **Aviso de seguridad**: comunicación visible para el titular sobre un cambio sensible o acceso relevante de su propia cuenta, sin capacidad de gestionar sesiones.
+- **Aviso de seguridad**: comunicación visible para el titular sobre cada inicio de sesión exitoso o cambio sensible de su propia cuenta, sin capacidad de gestionar sesiones.
 
 ## Success Criteria *(mandatory)*
 
@@ -168,7 +180,7 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 - **SC-005**: El 100 % de los cambios efectivos de correo genera un aviso de seguridad a la dirección anterior y un evento de trazabilidad, sin incluir secretos.
 - **SC-006**: El 100 % de las personas autenticadas puede identificar la cuenta de su sesión activa y acceder a su perfil desde la pantalla general sin navegar por más de una opción.
 - **SC-007**: Una persona puede cargar o quitar su foto de perfil y comprobar el resultado en menos de 2 minutos, sin afectar su acceso ni sus otros datos personales.
-- **SC-008**: El 100 % de los cambios efectivos de correo o contraseña se refleja en los avisos de seguridad del titular, sin exponer secretos ni avisos de terceros.
+- **SC-008**: El 100 % de los inicios de sesión exitosos y cambios efectivos de correo o contraseña que estén entre las 20 acciones más recientes se refleja en los avisos de seguridad del titular, sin exponer secretos ni avisos de terceros.
 
 ## Assumptions
 
@@ -178,6 +190,6 @@ Como persona autenticada, puedo acceder desde mi perfil al cambio de mi contrase
 - El aviso al correo anterior se envía solo después de que el nuevo correo fue confirmado con éxito; si no se puede entregar, el cambio no se revierte automáticamente.
 - El cambio de contraseña ya está dentro de `006-autogestion-contrasena`; esta entrega solo lo incorpora como entrada desde el perfil, sin duplicar su lógica ni ampliar sus requisitos.
 - La pantalla general es la primera pantalla que ve una persona tras autenticarse y contiene el indicador “Logueado como” y el acceso al perfil; no se define una ubicación visual específica dentro de ella.
-- La foto de perfil sirve para representar a la persona dentro de su propia sesión; su visibilidad para otros miembros de una organización no forma parte de esta entrega.
-- Los avisos de seguridad comprenden una vista de acontecimientos de la cuenta y las comunicaciones de seguridad ya requeridas; no incluyen un listado, ubicación ni cierre de sesiones activas.
+- La foto de perfil sirve para representar a la persona dentro de su propia sesión y para identificarla ante integrantes de su misma organización; no es visible entre organizaciones.
+- Los avisos de seguridad comprenden una vista de las 20 acciones de seguridad más recientes: inicios de sesión exitosos y cambios sensibles de la cuenta, además de las comunicaciones de seguridad ya requeridas; no incluyen acciones operativas, administración ni cierre de sesiones activas.
 - Quedan fuera de alcance la edición de roles, organización o pertenencias, preferencias, eliminación de cuenta, autenticación multifactor, historial general de actividad y modificación de datos por terceros.
