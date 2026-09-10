@@ -52,3 +52,11 @@ pnpm test:db
 \`\`\`
 
 Se espera que Vitest cubra rutas, estados y mensajes del perfil, y que pgTAP demuestre RLS para perfiles, eventos y \`storage.objects\`, incluidos los intentos entre organizaciones. Consultar [data-model.md](./data-model.md) y el [contrato](./contracts/perfil-personal.md) para las reglas verificadas.
+
+## Resultado de validacion - 2026-09-10
+
+- T034: los formularios usan etiquetas visibles, mensajes con `Alert` y roles de estado, y los botones de cada operacion exponen su estado `aria-busy`. La carga y eliminacion de foto limpian el mensaje anterior antes de iniciar una nueva operacion.
+- T036: `pnpm lint` paso con una advertencia existente de React sobre `setState` dentro de `useEffect`; `pnpm build`, `pnpm infra:config`, `pnpm test:web` (44 pruebas) y `pnpm test:db` (130 pruebas pgTAP) pasaron.
+- Verificacion de navegador: una visita anonima a `/cuenta/perfil` redirige a `/login?to=%2Fcuenta%2Fperfil`; la pantalla de acceso se renderiza correctamente.
+- T037, ejecutado con cuentas y organizaciones efimeras locales ya eliminadas: se inicio sesion, se guardaron nombre y apellido, se verificaron correo, fecha, organizacion y rol de solo lectura, se solicito un correo nuevo tras reautenticar, Mailpit recibio la confirmacion en el correo nuevo y el aviso en el anterior, se confirmo el enlace y el nuevo inicio de sesion funciono. La vista mostro eventos `inicio_sesion` y `correo_modificado`.
+- El cambio de contrasena se repitio manualmente desde el enlace del perfil: se valido la contrasena actual, una nueva clave conforme a la politica y la sesion activa continuo en la pantalla principal. La carga, el reemplazo y la eliminacion de foto se verificaron con Playwright en el contenedor local: se inyecto un PNG en memoria en el selector, se confirmaron los tres mensajes de resultado y la comprobacion final en Supabase dejo la fila de perfil con `foto_path` nulo y sin objeto en Storage. Durante el recorrido se detecto y corrigio con una migracion aditiva el bloqueo de RLS que impedia crear un perfil con solo foto.

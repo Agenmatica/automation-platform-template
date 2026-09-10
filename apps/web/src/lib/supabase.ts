@@ -13,6 +13,7 @@ export const supabaseConfigured = Boolean(
 )
 
 export const passwordDefinitionPath = '/acceso/definir-contrasena'
+export const profilePath = '/cuenta/perfil'
 
 export type PasswordFlowOrigin = 'invitacion' | 'recuperacion'
 
@@ -20,6 +21,10 @@ export function passwordDefinitionRedirectUrl(origin: PasswordFlowOrigin, appUrl
   const url = new URL(passwordDefinitionPath, appUrl)
   url.searchParams.set('origen', origin)
   return url.toString()
+}
+
+export function profileRedirectUrl(appUrl: string) {
+  return new URL(profilePath, appUrl).toString()
 }
 
 export const supabaseClient = createClient(supabaseUrl, supabaseKey, {
