@@ -25,6 +25,15 @@ specs/                     especificaciones por funcionalidad
 .specify/                  reglas y plantillas de Spec Kit
 ```
 
+## Referencia del schema de Supabase
+
+`docs/schema.html` es una referencia navegable (tablas, columnas, PK/FK,
+funciones RPC) del schema `public` que expone PostgREST. Es generada, no se
+edita a mano: `pnpm docs:schema` la regenera a partir del Supabase local
+corriendo (`pnpm dev:supabase`), leyendo el OpenAPI que PostgREST arma solo.
+Es una foto del momento — correlo de nuevo después de una migración que
+cambie el schema, antes de commitear.
+
 Compartir repositorio no significa desplegar todo junto. Un cambio sólo activa
 el pipeline correspondiente a las rutas que modifica.
 
