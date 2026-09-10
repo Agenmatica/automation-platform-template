@@ -49,6 +49,11 @@ asignación por organización + auditoría) a 'cualquier feature futura'."
   además pre-habilitar la funcionalidad para todas las organizaciones
   actuales, para no cortarles el acceso de un día para el otro; queda
   para si alguna vez hace falta, no como parte de esto.
+- Q: ¿Qué debe ver el superadmin en la grilla el primer día, cuando el
+  catálogo de funcionalidades todavía está vacío? → A: Un mensaje
+  explícito indicando que todavía no hay funcionalidades registradas, no
+  una tabla vacía sin contexto — mismo patrón que ya usa este producto
+  para "sin reportes asignados" (spec 007).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -88,6 +93,10 @@ vuelve a quedar como si nunca se hubiera habilitado.
    **When** intenta habilitar o deshabilitar una funcionalidad por
    cualquier medio, **Then** el sistema lo rechaza — es una capacidad
    exclusiva del superadmin.
+6. **Given** el catálogo de funcionalidades sin ninguna entrada todavía,
+   **When** el superadmin abre la pantalla, **Then** ve un mensaje
+   explícito indicando que no hay funcionalidades registradas, no una
+   tabla vacía sin contexto.
 
 ---
 
@@ -139,6 +148,10 @@ una organización recién creada sin ninguna habilitación registrada.
 - ¿Qué ve una organización que consulta el catálogo de funcionalidades sin
   tener ninguna habilitada? Ninguna — el catálogo completo nunca se
   expone a quien no tiene acceso a esas funcionalidades.
+- ¿Qué ve el superadmin en la grilla mientras el catálogo de
+  funcionalidades está vacío (el estado del primer día)? Un mensaje
+  explícito indicando que todavía no hay funcionalidades registradas, no
+  una tabla vacía sin contexto.
 - ¿Qué pasa si dos personas con permiso intentan habilitar o deshabilitar
   la misma funcionalidad para la misma organización al mismo tiempo? El
   resultado final es consistente (habilitada o deshabilitada una sola vez)
@@ -185,6 +198,9 @@ una organización recién creada sin ninguna habilitación registrada.
   funcionalidades ni las habilitaciones de otras organizaciones.
 - **FR-012**: Repetir una habilitación o deshabilitación ya vigente NO
   DEBE generar un nuevo registro de auditoría duplicado.
+- **FR-013**: Mientras el catálogo de funcionalidades no tenga ninguna
+  entrada, el sistema DEBE mostrarle al superadmin un mensaje explícito
+  indicándolo, en vez de una tabla vacía sin contexto.
 
 ### Key Entities
 
