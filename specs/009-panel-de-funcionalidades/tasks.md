@@ -19,8 +19,8 @@
 
 **Purpose**: preparar los puntos de edición y las pruebas de la feature, sin lógica todavía.
 
-- [ ] T001 [P] Crear `supabase/migrations/<timestamp>_panel_de_funcionalidades.sql` con el comentario de reversión (data-model.md) y sin contenido más allá de eso todavía.
-- [ ] T002 [P] Crear el esqueleto de `supabase/tests/database/panel_de_funcionalidades.test.sql` con el fixture multi-tenant (dos organizaciones, un administrador por cada una) — mismo patrón que `analitica_embebida.test.sql`.
+- [X] T001 [P] Crear `supabase/migrations/<timestamp>_panel_de_funcionalidades.sql` con el comentario de reversión (data-model.md) y sin contenido más allá de eso todavía.
+- [X] T002 [P] Crear el esqueleto de `supabase/tests/database/panel_de_funcionalidades.test.sql` con el fixture multi-tenant (dos organizaciones, un administrador por cada una) — mismo patrón que `analitica_embebida.test.sql`.
 
 **Checkpoint**: archivos listos para completar en la fase siguiente.
 
@@ -32,11 +32,11 @@
 
 **⚠️ CRITICAL**: ninguna historia de usuario puede implementarse sin esta fase.
 
-- [ ] T003 En la migración de T001: crear las 3 tablas de `data-model.md` (`features`, `organizaciones_features`, `eventos_features`) con sus PK/FK y el `check` de formato de slug en `features.id`.
-- [ ] T004 En el mismo archivo: agregar `private.tiene_feature(p_feature_id text)` y `private.puede_ver_feature_organizacion(p_feature_id text, p_organizacion_id uuid)` — código exacto en data-model.md, con el comentario de por qué no deben confundirse (research.md #6).
-- [ ] T005 En el mismo archivo: agregar las 4 RPCs (`registrar_feature`, `habilitar_feature`, `deshabilitar_feature`, `tiene_feature_publica`) según `contracts/gestion-funcionalidades.md`, todas `security definer`, `search_path = ''`, con `revoke execute ... from public; grant execute ... to authenticated`.
-- [ ] T006 En el mismo archivo: activar RLS en las 3 tablas, agregar las policies de `select` de `data-model.md` (incluida la de `features` restringida a `is_superadmin() or tiene_feature(id)` — research.md #4), y los `grant select` a `authenticated` sin ningún `insert`/`update`/`delete` directo.
-- [ ] T007 Completar `supabase/tests/database/panel_de_funcionalidades.test.sql` (pgTAP): las 9 aserciones de aislamiento y comportamiento listadas en `spec.md`/Verificación del plan (dos organizaciones con la misma feature habilitada solo ven su propia fila; `tiene_feature` aislado por organización aun con la misma feature activa en dos a la vez; superadmin según su organización activa; fail-closed para una organización sin ninguna fila; RPCs rechazan a un administrador de organización; idempotencia de habilitar/deshabilitar; `eventos_features` aislado por organización; borrar una organización cascadea sus habilitaciones sin tocar el catálogo; `features` no expone el catálogo completo a quien no tiene acceso). Correr `pnpm dev:supabase` + `pnpm test:db` hasta verde junto con las suites existentes.
+- [X] T003 En la migración de T001: crear las 3 tablas de `data-model.md` (`features`, `organizaciones_features`, `eventos_features`) con sus PK/FK y el `check` de formato de slug en `features.id`.
+- [X] T004 En el mismo archivo: agregar `private.tiene_feature(p_feature_id text)` y `private.puede_ver_feature_organizacion(p_feature_id text, p_organizacion_id uuid)` — código exacto en data-model.md, con el comentario de por qué no deben confundirse (research.md #6).
+- [X] T005 En el mismo archivo: agregar las 4 RPCs (`registrar_feature`, `habilitar_feature`, `deshabilitar_feature`, `tiene_feature_publica`) según `contracts/gestion-funcionalidades.md`, todas `security definer`, `search_path = ''`, con `revoke execute ... from public; grant execute ... to authenticated`.
+- [X] T006 En el mismo archivo: activar RLS en las 3 tablas, agregar las policies de `select` de `data-model.md` (incluida la de `features` restringida a `is_superadmin() or tiene_feature(id)` — research.md #4), y los `grant select` a `authenticated` sin ningún `insert`/`update`/`delete` directo.
+- [X] T007 Completar `supabase/tests/database/panel_de_funcionalidades.test.sql` (pgTAP): 31 aserciones cubriendo permisos y validación de las 4 RPCs, idempotencia de habilitar/deshabilitar, aislamiento entre organizaciones con la misma feature habilitada (réplica del bug puede_ver_reporte/puede_ver_asignacion de 007), fail-closed, resolución por organización activa del superadmin, catálogo no expuesto completo (FR-008), auditoría aislada, y cascada al borrar una organización. `pnpm test:db` en verde junto con las suites existentes (161 aserciones totales). Verificado además contra el reset parcial de CI (dos corridas seguidas dropeando solo public/private) — esta migración no toca ningún schema persistente (storage), así que no aplica el problema de idempotencia encontrado en la spec de perfil.
 
 **Checkpoint**: esquema completo, RLS probada con pgTAP, RPCs funcionando contra la base — recién acá arrancan las historias de usuario.
 
