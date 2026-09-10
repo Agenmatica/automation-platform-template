@@ -80,6 +80,15 @@ create policy eventos_seguridad_usuario_insert_auth
   on public.eventos_seguridad_usuario for insert to supabase_auth_admin
   with check (true);
 
+-- drop policy if exists + create (en vez de solo create): igual que el
+-- insert del bucket arriba, storage.objects no se resetea entre corridas
+-- del job `database` en el runner self-hosted — reaplicar esta migración
+-- sin esto rompe con "policy ... already exists".
+drop policy if exists fotos_perfil_select on storage.objects;
+drop policy if exists fotos_perfil_insert_titular on storage.objects;
+drop policy if exists fotos_perfil_update_titular on storage.objects;
+drop policy if exists fotos_perfil_delete_titular on storage.objects;
+
 create policy fotos_perfil_select
   on storage.objects for select to authenticated
   using (
