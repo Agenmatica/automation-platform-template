@@ -27,6 +27,7 @@
     "db:reset:ci": "bash scripts/reset-db-ci.sh",
     "preview": "pnpm --filter @platform/web preview",
     "supabase": "supabase",
+    "docs:schema": "node scripts/generar-doc-schema.mjs",
     "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",
     "infra:config:refine": "docker compose -f infra/refine/compose.yaml config --quiet",
     "infra:config:kestra": "docker compose -f infra/kestra/compose.yaml config --quiet",
