@@ -12,8 +12,8 @@
 
 **Purpose**: preparar los puntos de edición y las pruebas de la feature.
 
-- [ ] T001 Crear el esqueleto de prueba de perfil y sus mocks de Auth/Storage en apps/web/src/pages/cuenta/perfil.test.tsx.
-- [ ] T002 [P] Crear el archivo pgTAP de la feature y su fixture multi-tenant en supabase/tests/database/perfil_usuario.test.sql.
+- [X] T001 Crear el esqueleto de prueba de perfil y sus mocks de Auth/Storage en apps/web/src/pages/cuenta/perfil.test.tsx.
+- [X] T002 [P] Crear el archivo pgTAP de la feature y su fixture multi-tenant en supabase/tests/database/perfil_usuario.test.sql.
 
 ---
 
