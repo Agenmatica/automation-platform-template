@@ -246,5 +246,10 @@ una organización recién creada sin ninguna habilitación registrada.
   ejemplo, una automatización que corre por su cuenta, sin que nadie esté
   usando el producto en ese momento) es responsable de consultar su propia
   habilitación — este mecanismo no lo hace en su nombre.
+- Registrarse en el catálogo, y consultar la habilitación desde su propia
+  regla de acceso a datos y su propia pantalla, es una acción explícita
+  que cada funcionalidad futura debe tomar — ninguna funcionalidad nueva
+  queda automáticamente controlada por este mecanismo solo por existir.
+  Este mecanismo provee la capacidad (FR-006); no la impone.
 - `organizaciones` (spec 003) sigue siendo el catálogo de referencia de
   organizaciones; esta funcionalidad no lo modifica, solo lo consume.
