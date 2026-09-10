@@ -293,3 +293,16 @@ Task: "Crear apps/web/src/components/ReporteEmbebido.tsx"
   el purge de `node_modules` (volumen con estado propio) al detectarlo
   desalineado del lockfile. Fix: `CI: "true"` en el `environment` de
   `infra/refine/compose.yaml`. Ver commit 3ad76a9.
+
+## Desvío post-cierre: cuenta de servicio real para el guest token
+
+- El `.env` local de `emitir-acceso-reporte` había quedado reusando
+  `SUPERSET_ADMIN_USERNAME` (`admin`) en vez de la cuenta de servicio
+  dedicada que research.md #3 ya pedía — detectado revisando credenciales
+  locales, no por el guion del quickstart. Fix:
+  `infra/superset/crear_cuenta_servicio_guest_token.py`, corrido por
+  `superset shell` al final del `command` de `superset-init`, crea un rol
+  con el único permiso real que hace falta (`can_grant_guest_token` sobre
+  `SecurityRestApi`, confirmado contra el código fuente de Superset y
+  probado end-to-end contra un stack arrancado en frío — research.md
+  #11). Ver commit 6c05f3e.

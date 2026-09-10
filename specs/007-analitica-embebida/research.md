@@ -260,3 +260,55 @@ supabase start`. No se resuelve acá porque toca la topología de red de dos
 productos a la vez y merece su propia decisión (¿red externa compartida
 declarada en ambos compose?, ¿depender de `host.docker.internal`?), no un
 parche apurado dentro de una spec de analítica.
+
+## 11. Cuenta de servicio dedicada para el guest token (post-cierre)
+
+El diseño original (#3) ya decía "cuenta de servicio dedicada, no la
+interactiva del superadmin" — pero en la práctica el `.env` local había
+quedado con `SUPERSET_GUEST_TOKEN_USERNAME=admin`, reusando exactamente lo
+que #3 decía rechazar (funcionaba porque `admin` tiene todos los permisos,
+no porque fuera la cuenta correcta).
+
+**Decisión**: `infra/superset/crear_cuenta_servicio_guest_token.py`, corrido
+vía `superset shell` al final del `command` de `superset-init` en
+`compose.yaml` (después de `superset init`, que es quien registra las
+vistas/permisos de Superset en la base — antes de eso no existen filas que
+asignarle a un rol). Crea, si no existen, un rol `Guest Token Service` con
+un único permiso y una cuenta con ese rol, usando
+`SUPERSET_GUEST_TOKEN_USERNAME`/`PASSWORD` (mismos nombres que ya
+documentaba `supabase/functions/.env.example`, ahora también en el
+`.env.example` raíz porque hacen falta en dos mecanismos de despliegue
+distintos: Compose acá, secrets de Edge Functions allá).
+
+**El permiso exacto** — `can_grant_guest_token` sobre el view-menu
+`SecurityRestApi` — se confirmó contra el código fuente real de Superset
+6.1.0 (`superset/security/api.py`, el endpoint `POST /guest_token/` está
+decorado `@permission_name("grant_guest_token")`) y **probando end-to-end**
+contra un Superset real, no solo leyendo el código:
+
+- Usar `"grant_guest_token"` a secas (sin el prefijo) crea un permiso
+  *distinto* del que Flask-AppBuilder realmente registra y chequea —
+  `flask_appbuilder/api/__init__.py` antepone siempre `PERMISSION_PREFIX`
+  ("can_") al registrar los permisos de cada método de una API. Con el
+  nombre sin prefijo, la cuenta quedaba con un permiso que nadie
+  consultaba: `POST /guest_token/` seguía devolviendo `403 Forbidden`
+  aunque el rol "tuviera" el permiso en la tabla.
+- `security_manager.find_permission_view_menu(...)` devuelve `None` para
+  un par permiso/view-menu que todavía no se usó nunca — Superset no
+  pre-crea la fila de `ab_permission_view` para un `@permission_name` a
+  medida como este durante el arranque normal. Hace falta
+  `add_permission_view_menu(...)`, que crea el par si falta (a diferencia
+  de `find_...`, que solo busca).
+- Verificado con `curl` real contra el stack local, arrancado en frío
+  (`docker compose down -v && up`): login con la cuenta nueva +
+  `POST /guest_token/` contra un dashboard inexistente responde
+  `400 "EmbeddedDashboard not found"` — el mismo error que da `admin`, es
+  decir, pasa el chequeo de permiso y llega al código de negocio — y
+  `GET /api/v1/dashboard/` (fuera del único permiso que tiene) responde
+  `403`, confirmando que no hay privilegio de más.
+
+**Alternativas consideradas**: automatizarlo por API REST en vez de
+`superset shell` — descartada porque `superset-init` corre *antes* de que
+el servicio `superset` esté sirviendo tráfico (`depends_on:
+service_completed_successfully`), no hay a qué URL pegarle todavía dentro
+del mismo contenedor que hace el init.
