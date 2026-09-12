@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-09
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Integrar Superset como una funcionalidad más del
 producto para mostrar analítica a cada organización, embebida dentro de

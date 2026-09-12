@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-10
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Panel de features por organización: el
 superadmin necesita poder habilitar/deshabilitar funcionalidades por

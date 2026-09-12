@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-09
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Gestión del perfil del usuario activo: actualizar nombre, apellido y correo electrónico propio, con cambio de contraseña disponible desde el perfil."
 

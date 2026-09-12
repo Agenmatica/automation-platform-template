@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-09
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Permitir que cada usuario acepte su invitación creando una contraseña, recupere su contraseña por correo y la modifique por sí mismo desde su sesión."
 
