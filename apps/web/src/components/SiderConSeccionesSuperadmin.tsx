@@ -4,7 +4,11 @@ import { ThemedSider } from '@refinedev/mui'
 import { useIsSuperadmin } from '../hooks/useIsSuperadmin'
 import { useOrganizacionActiva } from '../hooks/useOrganizacionActiva'
 
-const RECURSOS_EXCLUSIVOS_SUPERADMIN = new Set(['organizaciones', 'analitica-administrar'])
+const RECURSOS_EXCLUSIVOS_SUPERADMIN = new Set([
+  'organizaciones',
+  'analitica-administrar',
+  'features-administrar',
+])
 const RECURSOS_DE_ORGANIZACION = new Set(['clientes', 'miembros', 'analitica'])
 
 function recursoDeItem(item: React.ReactNode) {

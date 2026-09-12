@@ -23,6 +23,7 @@ import { ClienteList } from './pages/clientes/list'
 import { AnaliticaAdministrar } from './pages/analitica/administrar'
 import { AnaliticaList } from './pages/analitica/list'
 import { AnaliticaPermisos } from './pages/analitica/permisos'
+import { FeaturesAdministrar } from './pages/features/administrar'
 import { MiembroCreate } from './pages/miembros/create'
 import { MiembroList } from './pages/miembros/list'
 import { DefinirContrasenaPage } from './pages/acceso/definir-contrasena'
@@ -163,6 +164,11 @@ function App() {
                 list: '/analitica',
                 meta: { label: 'Analítica' },
               },
+              {
+                name: 'features-administrar',
+                list: '/features/administrar',
+                meta: { label: 'Funcionalidades (administrar)' },
+              },
               { name: 'miembros', list: '/miembros', create: '/miembros/create', meta: { label: 'Miembros' } },
               { name: 'cuenta', list: '/cuenta/perfil', meta: { label: 'Mi cuenta' } },
             ]}
@@ -232,6 +238,7 @@ function App() {
                     </RequiereOrganizacionActiva>
                   }
                 />
+                <Route path="/features/administrar" element={<FeaturesAdministrar />} />
               </Route>
 
               <Route

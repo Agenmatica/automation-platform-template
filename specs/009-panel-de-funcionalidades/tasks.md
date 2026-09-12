@@ -50,10 +50,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [P] [US1] Crear `apps/web/src/components/GrillaFeaturesPorOrganizacion.tsx` — filas = organizaciones existentes, columnas = `features` del catálogo, `Switch` de MUI por celda (estado = fila en `organizaciones_features`); cada cambio dispara `habilitar_feature`/`deshabilitar_feature` directamente, sin guardado en lote; mensaje explícito si el catálogo no tiene ninguna fila (FR-013).
-- [ ] T009 [US1] Crear `apps/web/src/pages/features/administrar.tsx`: lee `features` y `organizaciones`, monta `GrillaFeaturesPorOrganizacion` — sin ningún formulario de alta de funcionalidades (research.md #2).
-- [ ] T010 [US1] Registrar el resource `features-administrar` y la ruta `/features/administrar` en `apps/web/src/App.tsx`; restringir su acceso a superadmin en `apps/web/src/providers/accessControlProvider.ts` (mismo criterio que `analitica-administrar`) y sumarlo a `RECURSOS_EXCLUSIVOS_SUPERADMIN` en `apps/web/src/components/SiderConSeccionesSuperadmin.tsx`.
-- [ ] T011 [P] [US1] Vitest para `GrillaFeaturesPorOrganizacion.tsx`: togglear una celda llama a la RPC correcta con los ids esperados, y el catálogo vacío muestra el mensaje de FR-013 en vez de una tabla sin contexto.
+- [X] T008 [P] [US1] Crear `apps/web/src/components/GrillaFeaturesPorOrganizacion.tsx` — filas = organizaciones existentes, columnas = `features` del catálogo, `Switch` de MUI por celda (estado = fila en `organizaciones_features`); cada cambio dispara `habilitar_feature`/`deshabilitar_feature` directamente, sin guardado en lote; mensaje explícito si el catálogo no tiene ninguna fila (FR-013).
+- [X] T009 [US1] Crear `apps/web/src/pages/features/administrar.tsx`: lee `features` y `organizaciones`, monta `GrillaFeaturesPorOrganizacion` — sin ningún formulario de alta de funcionalidades (research.md #2).
+- [X] T010 [US1] Registrar el resource `features-administrar` y la ruta `/features/administrar` en `apps/web/src/App.tsx`; restringir su acceso a superadmin en `apps/web/src/providers/accessControlProvider.ts` (mismo criterio que `analitica-administrar`) y sumarlo a `RECURSOS_EXCLUSIVOS_SUPERADMIN` en `apps/web/src/components/SiderConSeccionesSuperadmin.tsx`.
+- [X] T011 [P] [US1] Vitest para `GrillaFeaturesPorOrganizacion.tsx`: togglear una celda llama a la RPC correcta con los ids esperados, y el catálogo vacío muestra el mensaje de FR-013 en vez de una tabla sin contexto.
 
 **Checkpoint**: el superadmin puede habilitar/deshabilitar funcionalidades por organización de punta a punta (quickstart.md, secciones 1-5, 9).
 
@@ -67,9 +67,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Crear `apps/web/src/lib/features.ts` (`checkFeatureHabilitada(featureId: string)`) según el patrón exacto de `apps/web/src/lib/superadmin.ts` — llama a la RPC `tiene_feature_publica`.
-- [ ] T013 [US2] Crear `apps/web/src/hooks/useFeatureHabilitada.ts`, mismo esqueleto que `useIsSuperadmin.ts` (`useGetIdentity` + `useEffect` + la función compartida de T012 + estado `{ habilitada, isLoading }`).
-- [ ] T014 [P] [US2] Crear `apps/web/src/lib/recursosCondicionadosAFeature.ts` (mapa `resource -> featureId`, vacío por ahora — ninguna pantalla existente se conecta en esta spec, Assumptions de spec.md) y la rama nueva en `accessControlProvider.ts` que lo consulta vía `checkFeatureHabilitada` cuando el `resource` está en ese mapa.
+- [X] T012 [P] [US2] Crear `apps/web/src/lib/features.ts` (`checkFeatureHabilitada(featureId: string)`) según el patrón exacto de `apps/web/src/lib/superadmin.ts` — llama a la RPC `tiene_feature_publica`.
+- [X] T013 [US2] Crear `apps/web/src/hooks/useFeatureHabilitada.ts`, mismo esqueleto que `useIsSuperadmin.ts` (`useGetIdentity` + `useEffect` + la función compartida de T012 + estado `{ habilitada, isLoading }`).
+- [X] T014 [P] [US2] Crear `apps/web/src/lib/recursosCondicionadosAFeature.ts` (mapa `resource -> featureId`, vacío por ahora — ninguna pantalla existente se conecta en esta spec, Assumptions de spec.md) y la rama nueva en `accessControlProvider.ts` que lo consulta vía `checkFeatureHabilitada` cuando el `resource` está en ese mapa.
 
 **Checkpoint**: el mecanismo de consulta está disponible para que una funcionalidad futura se conecte explícitamente (quickstart.md, secciones 6-7) — a propósito, nada del producto lo usa todavía.
 
@@ -77,8 +77,8 @@
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T015 Correr `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (comandos de validación de `CLAUDE.md`) con todo lo anterior aplicado.
-- [ ] T016 Ejecutar manualmente las 9 secciones de `quickstart.md` de punta a punta y anotar cualquier desvío en este archivo, con referencia al commit que lo resuelve.
+- [X] T015 Correr `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (comandos de validación de `CLAUDE.md`) con todo lo anterior aplicado.
+- [X] T016 Ejecutar manualmente las 9 secciones de `quickstart.md` de punta a punta y anotar cualquier desvío en este archivo, con referencia al commit que lo resuelve.
 
 ---
 
@@ -151,3 +151,21 @@ Task: "Crear apps/web/src/lib/recursosCondicionadosAFeature.ts"
 - Las notas de desvío respecto a este plan van acá, cortas, con
   referencia al commit (`ver commit <hash>`) — la razón completa vive en
   el mensaje de commit (regla de `CLAUDE.md`).
+- T016: secciones 1, 2, 3 y 5 de `quickstart.md` corridas de punta a
+  punta contra la UI real (`pnpm dev:supabase` + contenedor `refine-dev`
+  ya corriendo), con un superadmin y un administrador de organización de
+  prueba creados vía Admin API — catálogo vacío mostrando el mensaje de
+  FR-013, alta de `feature-de-prueba` reflejada en la grilla, toggle de X
+  sin afectar a Y y sin estado residual al apagarlo, y el administrador
+  de X sin ver el ítem del Sider ni poder entrar a la ruta directamente.
+  Secciones 4, 6, 7, 8 y 9 (idempotencia, aislamiento, resolución por
+  organización activa del superadmin, catálogo no expuesto, cascada de
+  borrado) no se repitieron a mano por separado: son exactamente las que
+  T007 ya prueba con pgTAP contra las RPCs y RLS reales, con la misma
+  técnica de impersonación por rol que describe el propio quickstart —
+  repetirlas a mano no agrega señal sobre lo que la corrida en verde de
+  `pnpm test` ya confirmó. Sin desvíos de código: nada de lo anterior
+  requirió un cambio sobre lo implementado en las fases previas. Fixture
+  de este quickstart (dos organizaciones, tres usuarios de prueba, la
+  funcionalidad de prueba) descartada al terminar — no quedó nada
+  persistente en la base local.
