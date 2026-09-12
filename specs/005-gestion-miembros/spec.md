@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-09
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Gestión de miembros por organización: invitar miembros, cambiar sus roles y removerlos, respetando aislamiento multi-tenant y auditoría."
 

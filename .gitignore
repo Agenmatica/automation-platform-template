@@ -11,6 +11,10 @@ coverage/
 .supabase/
 supabase/.branches/
 supabase/.temp/
+supabase/snippets/
+
+/tmp/
+docs/pdf/
 
 .DS_Store
 Thumbs.db
