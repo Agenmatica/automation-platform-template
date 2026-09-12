@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { useTable } from '@refinedev/core'
+import { useCallback, useEffect, useState } from 'react'
 import { List } from '@refinedev/mui'
 import {
   Alert,
@@ -22,7 +21,13 @@ import {
 import { usePuedeGestionarMembresias } from '../../hooks/usePuedeGestionarMembresias'
 import { supabaseClient } from '../../lib/supabase'
 
-type Miembro = { user_id: string; rol_id: string; created_at: string }
+type Miembro = {
+  user_id: string
+  rol_id: string
+  created_at: string
+  nombre: string | null
+  apellido: string | null
+}
 type CambioPendiente = { miembro: Miembro; nuevoRol: string }
 
 function FotoMiembro({ userId }: { userId: string }) {
@@ -40,14 +45,28 @@ function FotoMiembro({ userId }: { userId: string }) {
 }
 
 export function MiembroList() {
-  const { tableQuery } = useTable<Miembro>({ resource: 'usuarios_organizacion' })
   const { puedeEscribir, isLoading: checkingPermiso } = usePuedeGestionarMembresias()
+  const [miembros, setMiembros] = useState<Miembro[]>([])
   const [rolesPendientes, setRolesPendientes] = useState<Record<string, string>>({})
   const [cambioPendiente, setCambioPendiente] = useState<CambioPendiente | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [removiendo, setRemoviendo] = useState<string | null>(null)
-  const miembros = tableQuery.data?.data ?? []
+
+  const cargarMiembros = useCallback(async () => {
+    const { data, error: rpcError } = await supabaseClient.rpc('listar_miembros_organizacion')
+
+    if (rpcError) {
+      setError(rpcError.message)
+      return
+    }
+
+    setMiembros(data ?? [])
+  }, [])
+
+  useEffect(() => {
+    void cargarMiembros()
+  }, [cargarMiembros])
 
   const confirmarCambio = async () => {
     if (!cambioPendiente) return
@@ -72,7 +91,7 @@ export function MiembroList() {
     })
     setCambioPendiente(null)
     setGuardando(false)
-    await tableQuery.refetch()
+    await cargarMiembros()
   }
 
   const removerMiembro = async (miembro: Miembro) => {
@@ -91,7 +110,7 @@ export function MiembroList() {
     }
 
     setRemoviendo(null)
-    await tableQuery.refetch()
+    await cargarMiembros()
   }
 
   return (
@@ -102,7 +121,8 @@ export function MiembroList() {
           <TableHead>
             <TableRow>
               <TableCell>Foto</TableCell>
-              <TableCell>Usuario</TableCell>
+              <TableCell>Apellido</TableCell>
+              <TableCell>Nombre</TableCell>
               <TableCell>Rol</TableCell>
               <TableCell>Incorporado</TableCell>
               {puedeEscribir && <TableCell>Acciones</TableCell>}
@@ -114,7 +134,8 @@ export function MiembroList() {
               return (
                 <TableRow key={miembro.user_id}>
                   <TableCell><FotoMiembro userId={miembro.user_id} /></TableCell>
-                  <TableCell>{miembro.user_id}</TableCell>
+                  <TableCell>{miembro.apellido ?? 'Sin apellido completado'}</TableCell>
+                  <TableCell>{miembro.nombre ?? 'Sin nombre completado'}</TableCell>
                   <TableCell>
                     {puedeEscribir ? (
                       <TextField
