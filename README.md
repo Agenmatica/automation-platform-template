@@ -40,8 +40,31 @@ independiente en Docker Desktop. Para detener uno, ejecuta
 | Refine | http://localhost:3100 |
 | Supabase API | http://127.0.0.1:8100 |
 | Supabase Studio | http://127.0.0.1:3101 |
+| Supabase Auth (mails de prueba, Mailpit) | http://127.0.0.1:3102 |
 | Kestra | http://127.0.0.1:8082 |
 | Superset | http://127.0.0.1:8088 |
+
+### Usuarios y credenciales (solo stack local)
+
+Todos los valores de abajo son los defaults del template — están pensados
+para poder cambiarse (`ChangeMe1Local`, `change-me-local`, etc.) y solo
+existen en Docker/Postgres local, nunca en un ambiente remoto.
+
+| Servicio | Usuario | Password | Dónde se define |
+|---|---|---|---|
+| Refine (login vía Supabase Auth) | `superadmin@local.test` | `Superadmin-Local1!` | `supabase/seed.sql` — se recrea en cada `supabase db reset` |
+| Supabase Studio | — (sin login) | — | `supabase/config.toml` (`[studio]`) |
+| Supabase Auth / Mailpit | — (sin login) | — | `supabase/config.toml` (`[local_smtp]`) |
+| Supabase Postgres (conexión directa) | `postgres` | `postgres` | fijo del CLI de Supabase, puerto `127.0.0.1:5434` |
+| Supabase API keys (anon, service_role, JWT secret) | — | — | generadas por el CLI; correr `npx supabase status` para verlas (no se hardcodean acá porque son las del proyecto local activo) |
+| Kestra | `admin@local.test` | `ChangeMe1Local` | `.env.example` → copiar a `infra/kestra/.env` (`KESTRA_BASIC_AUTH_USERNAME` / `KESTRA_BASIC_AUTH_PASSWORD`) |
+| Superset | `admin` (email `admin@local.test`) | `change-me-local` | `.env.example` → copiar a `infra/superset/.env` (`SUPERSET_ADMIN_USERNAME` / `SUPERSET_ADMIN_PASSWORD`) |
+
+El superadmin de Refine es un usuario más de Supabase Auth marcado en la
+tabla `superadmins` (ver quickstart de la spec 003) — no es un login
+separado. Si cambiás los valores de `infra/kestra/.env` o
+`infra/superset/.env`, esta tabla queda desactualizada para tu copia local;
+son solo los defaults con los que arranca el template.
 
 ## Flujo de una funcionalidad
 

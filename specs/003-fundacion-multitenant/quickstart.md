@@ -3,9 +3,11 @@
 ## Prerrequisitos
 
 - `pnpm dev:supabase` corriendo, migraciones aplicadas.
-- Tu propio usuario marcado en `superadmins` (se hace a mano una sola vez,
-  vía SQL local, hasta que exista otra forma — no hay pantalla para esto,
-  a propósito, sos el único superadmin hoy).
+- Un superadmin en `superadmins` para probar los pasos 2 a 4. `supabase/seed.sql`
+  ya da de alta uno de desarrollo (`superadmin@local.test` /
+  `Superadmin-Local1!`) en cada `supabase db reset` — no hace falta el alta a
+  mano salvo que quieras marcar a otro usuario. Sigue sin haber pantalla para
+  esto a propósito (no es una acción que deba quedar expuesta en la UI).
 
 ## 1. Aislamiento real (US1, SC-001)
 
