@@ -47,7 +47,20 @@ create unique index respaldos_un_solo_en_progreso
 -- Contraseña placeholder — nunca un valor real acá, se rota por entorno
 -- con "alter role kestra_backups with password '...'" usando
 -- KESTRA_BACKUPS_DB_PASSWORD (research.md R8, documentado en quickstart.md).
-create role kestra_backups with login password 'reemplazar-por-entorno';
+-- Guardado con chequeo de pg_roles: los roles son objetos de clúster, no de
+-- schema, así que "supabase db reset" (pnpm db:reset:ci) no los borra al
+-- recrear el schema public. Sin este chequeo, correr la migración dos veces
+-- sobre el mismo clúster (como pasa en runners self-hosted con Postgres
+-- persistente entre jobs de CI) falla con "role already exists".
+do $$
+begin
+  if not exists (
+    select 1 from pg_catalog.pg_roles where rolname = 'kestra_backups'
+  ) then
+    create role kestra_backups with login password 'reemplazar-por-entorno';
+  end if;
+end
+$$;
 
 comment on role kestra_backups is
   'Rol de mínimo privilegio para la conexión JDBC directa de Kestra (spec 011) — no pasa por PostgREST/Supabase Auth, por eso no tiene auth.uid() ni le aplica private.is_superadmin() (research.md R2). Solo EXECUTE sobre iniciar_respaldo/finalizar_respaldo_completado/finalizar_respaldo_error.';
