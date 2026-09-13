@@ -45,6 +45,16 @@ services:
               enabled: true
               username: ${KESTRA_BASIC_AUTH_USERNAME:-admin@local.test}
               password: ${KESTRA_BASIC_AUTH_PASSWORD:-change-me-local}
+      # Leídas por el flow infra/kestra/flows/respaldo-postgres.yml (spec 011)
+      # vía {{ envs.kestra_backups_db_password }} / {{ envs.kestra_backups_db_url }} /
+      # {{ envs.kestra_backups_pgdump_url }}.
+      # Prefijo ENV_ obligatorio: desde Kestra 0.23 es el único prefijo que
+      # {{ envs.* }} expone por defecto (kestra.variables.env-vars-prefix) —
+      # KESTRA_BACKUPS_DB_PASSWORD sigue siendo el nombre "humano" en
+      # .env.example, este es solo el nombre con el que llega al proceso.
+      ENV_KESTRA_BACKUPS_DB_PASSWORD: ${KESTRA_BACKUPS_DB_PASSWORD:-change-me-local}
+      ENV_KESTRA_BACKUPS_DB_URL: ${KESTRA_BACKUPS_DB_URL:-jdbc:postgresql://host.docker.internal:5434/postgres}
+      ENV_KESTRA_BACKUPS_PGDUMP_URL: ${KESTRA_BACKUPS_PGDUMP_URL:-postgres://postgres:postgres@host.docker.internal:5434/postgres}
     ports:
       - "127.0.0.1:8082:8080"
     volumes:
