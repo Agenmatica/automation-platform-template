@@ -58,6 +58,7 @@ existen en Docker/Postgres local, nunca en un ambiente remoto.
 | Supabase Postgres (conexión directa) | `postgres` | `postgres` | fijo del CLI de Supabase, puerto `127.0.0.1:5434` |
 | Supabase API keys (anon, service_role, JWT secret) | — | — | generadas por el CLI; correr `npx supabase status` para verlas (no se hardcodean acá porque son las del proyecto local activo) |
 | Kestra | `admin@local.test` | `ChangeMe1Local` | `.env.example` → copiar a `infra/kestra/.env` (`KESTRA_BASIC_AUTH_USERNAME` / `KESTRA_BASIC_AUTH_PASSWORD`) |
+| `kestra_backups` (rol Postgres, conexión JDBC directa del flow de respaldos, spec 011) | `kestra_backups` | `change-me-local` | `.env.example` (`KESTRA_BACKUPS_DB_PASSWORD`) — se rota por entorno, nunca queda en la migración (research.md R8) |
 | Superset | `admin` (email `admin@local.test`) | `change-me-local` | `.env.example` → copiar a `infra/superset/.env` (`SUPERSET_ADMIN_USERNAME` / `SUPERSET_ADMIN_PASSWORD`) |
 
 El superadmin de Refine es un usuario más de Supabase Auth marcado en la

@@ -35,7 +35,7 @@ reemplaza las prioridades históricas de sus specs.
 
 
 | Prioridad | Categoría       | Capacidad entregada                       | Dependencias                             | Resultado disponible                                                                                                                                                                                 | Estado       |
-| --------- | --------------- | ----------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| --------- | --------------- | ------------------------------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | P0        | Infraestructura | Separación local por producto             | Ninguna                                  | Cada componente se levanta con su propio Compose y ciclo de desarrollo; no existe un Compose raíz. [Spec 001](../specs/001-separacion-local-por-producto/spec.md)                                    | Implementado |
 | P0        | Fundación       | Template genérico de automatización       | Separación local por producto            | Monorepo reutilizable, convenciones de desarrollo, documentación y despliegues independientes para Refine, Supabase, Kestra, Superset y workers. [Spec 002](../specs/002-plantilla-generica/spec.md) | Implementado |
 | P0        | Multi-tenancy   | Organizaciones, roles y RLS               | Fundación genérica                       | Organizaciones, membresía única, roles, contexto seguro y pruebas de aislamiento para datos expuestos. [Spec 003](../specs/003-fundacion-multitenant/spec.md)                                        | Implementado |
@@ -67,76 +67,114 @@ posteriores.
 6. **La IA propone; las personas controlan.** Las acciones sensibles requieren
  permisos, confirmación humana y trazabilidad.
 
-## Hoja de ruta por horizonte
+## Backlog priorizado
 
-### Convención de backlog
+### Qué significa cada campo
 
-- **P0:** requisito para derivar, proteger u operar un producto real; bloquea
-trabajo posterior.
-- **P1:** siguiente capacidad de alto valor una vez cubiertos los P0 o cuando
-aparece su disparador.
-- **P2:** capacidad útil, activada solo por el primer caso de uso concreto.
-- **P3:** explorar más adelante; no debe generar infraestructura anticipada.
-- **Estado:** todos los ítems de este backlog están en **Exploración** hasta
-que una decisión de producto abra su propia spec.
+- **Prioridad:** P0 bloquea trabajo posterior una vez que aparece su
+disparador; P1 es la siguiente capacidad de alto valor una vez cubiertos los
+P0 (o cuando aparece su propio disparador); P2 es útil pero se activa solo
+con el primer caso de uso concreto; P3 se explora más adelante y no debe
+generar infraestructura anticipada.
+- **Dependencias:** qué otra capacidad de este backlog (o del backlog ya
+entregado) tiene que existir antes de poder abrir la spec de esta.
+- **Disparador:** el evento de producto real que habilita abrir la spec. Sin
+él, el ítem se queda en Exploración sin importar su prioridad.
+- **Estado:** todos los ítems siguen en **Exploración** hasta que una
+decisión de producto abra su propia spec (ver [Regla para priorizar una
+nueva capacidad](#regla-para-priorizar-una-nueva-capacidad)).
 
-Los ítems dentro de cada horizonte están ordenados primero por prioridad y,
-entre prioridades iguales, por dependencia.
+### Cómo se ordena la cola
 
-### Horizonte 1 — Convertir la base en derivable
+Un backlog real es una única cola, no una tabla separada por tema. El orden
+de la tabla siguiente sale de aplicar, en este orden:
 
+0. **El dominio del futuro producto no es una condición de esta cola.**
+Ninguna de las 24 capacidades necesita saber qué va a hacer el producto
+derivado — todas están diseñadas como mecanismo genérico, sin conocimiento
+de dominio (Principio 1; ver también Límites explícitos). No tener un
+dominio pensado hoy **no pospone ningún ítem** de esta tabla. Lo único que
+sigue siendo una condición real — y aparte del dominio — es el
+**Disparador** de cada fila: un evento de un producto derivado real y en
+marcha, sea cual sea su dominio. Sin al menos un producto derivado
+existiendo, ningún disparador puede ocurrir; esa es la única razón por la
+que hoy nada de esta tabla se activa, no la falta de un dominio elegido.
+1. **Dependencia primero (restricción dura).** No se puede empezar una
+capacidad antes que lo que necesita, y esto manda incluso sobre la
+prioridad nominal: *Trazas, costos y evaluaciones* está etiquetada P0 pero
+no puede empezar antes que *Auditoría transversal* (P1), porque depende de
+ella. No es un error de esta tabla — es una alerta legítima del backlog:
+hasta que exista la spec de Auditoría transversal, Trazas y costos no puede
+avanzar aunque su prioridad nominal sea mayor.
+2. **Prioridad**, entre las capacidades que ya tienen sus dependencias
+resueltas.
+3. **Valor de negocio**, como desempate dentro de una misma prioridad: se
+adelanta lo que desbloquea más capacidades siguientes (por ejemplo,
+*Gestión de entornos* se adelanta frente a otros P0 porque de ella dependen
+seis capacidades más).
 
-| Prioridad | Capacidad                      | Dependencias                   | Disparador                                             | Resultado de salida                                                           | Estado      |
-| --------- | ------------------------------ | ------------------------------ | ------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------- |
-| P0        | Creador de productos derivados | Ninguna                        | Primer producto derivado.                              | Crear un repo nuevo con nombre, servicios, variables y documentación propios. | Exploración |
-| P0        | Gestión de entornos            | Creador de productos derivados | Primer despliegue de producto.                         | Contrato claro de variables, secretos, URLs y responsabilidades por entorno.  | Exploración |
-| P0        | Versión de origen              | Creador de productos derivados | Primer producto derivado.                              | Cada producto registra el tag o commit de origen.                             | Exploración |
-| P1        | Adopción selectiva de mejoras  | Versión de origen              | Primera mejora que deba volver a un producto derivado. | Guía para incorporar commits o paquetes de forma deliberada.                  | Exploración |
-| P1        | Contratos de integración       | Gestión de entornos            | Primera integración nueva entre componentes.           | Convención documentada de autenticación, payloads, errores y versionado.      | Exploración |
+Los "horizontes" (Convertir la base en derivable / Operar con confianza / IA
+segura / Bajo demanda) siguen sirviendo como agrupación temática para leer el
+detalle de cada capacidad en la sección siguiente, pero **no determinan el
+orden de ejecución** — ese orden es el de la tabla de abajo.
 
+### Backlog único (orden de ejecución)
 
-### Horizonte 2 — Operar un producto con confianza
+Se agrega una columna que no existía antes: **Tipo de disparador**. Sale
+directo del punto 0 de arriba — como el dominio no importa, lo único que
+distingue a un ítem de otro es si su disparador va a ocurrir en *cualquier*
+producto derivado tarde o temprano (**Inevitable**), o si depende de que
+ese producto elija construir esa función en particular, algo que puede no
+pasar nunca (**Condicional**). No cambia el orden de la cola (eso lo siguen
+dando dependencia, prioridad y valor); ayuda a leer cada fila con la
+pregunta correcta: "Inevitable" es "esto va a pasar seguro, en algún
+momento"; "Condicional" es "esto pasa *solo si* el producto termina
+necesitando justo esta función".
 
+| # | Prioridad | Capacidad | Horizonte | Dependencias | Disparador | Tipo de disparador | Resultado de salida | Estado |
+| - | --------- | --------- | --------- | ------------- | ---------- | ------------------- | -------------------- | ------ |
+| 1  | P0 | Creador de productos derivados | H1 | Ninguna | Primer producto derivado. | Inevitable | Crear un repo nuevo con nombre, servicios, variables y documentación propios. | Exploración |
+| 2  | P0 | Gestión de entornos | H1 | Creador de productos derivados | Primer despliegue de producto. | Inevitable | Contrato claro de variables, secretos, URLs y responsabilidades por entorno. | Exploración |
+| 3  | P0 | Seguridad continua | H2 | Ninguna | Antes de producción y de forma continua. | Inevitable | Chequeos automatizados de dependencias, imágenes, secretos y configuración. | Exploración |
+| 4  | P0 | Backups | H2 | Gestión de entornos | Antes de operar datos reales. | Inevitable | Backup periódico de datos y metadatos operativos. | Exploración |
+| 5  | P0 | Política de datos IA | H3 | Gestión de entornos y seguridad continua | Antes de datos reales en IA. | Condicional (solo si usa IA) | Reglas explícitas de datos permitidos, excluidos y tratamiento de errores. | Exploración |
+| 6  | P0 | Versión de origen | H1 | Creador de productos derivados | Primer producto derivado. | Inevitable | Cada producto registra el tag o commit de origen. | Exploración |
+| 7  | P0 | Restauración | H2 | Backups | Antes de operar datos reales. | Inevitable | Restauración verificada en un entorno aislado. | Exploración |
+| 8  | P0 | E2E en CI | H2 | Gestión de entornos | Primer flujo crítico de negocio. | Inevitable | Suite Playwright versionada que corre en CI para recorridos críticos. | Exploración |
+| 9  | P0 | Monitoreo, alertas y errores | H2 | Gestión de entornos | Primer servicio de producción. | Inevitable | Healthchecks, registro central de errores y alertas ante fallos críticos. | Exploración |
+| 10 | P0 | Gateway IA | H3 | Política de datos IA y gestión de entornos | Primera llamada a un modelo. | Condicional (solo si usa IA) | Backend único que aplica autenticación, límites y configuración de proveedor. | Exploración |
+| 11 | P0 | Contexto y permisos IA | H3 | Gateway IA y RLS existente | Primera consulta IA sobre datos internos. | Condicional (solo si usa IA) | Cada ejecución recibe identidad, organización y alcance autorizados. | Exploración |
+| 12 | P1 | Contratos de integración | H1 | Gestión de entornos | Primera integración nueva entre componentes. | Condicional (solo si integra componentes) | Convención documentada de autenticación, payloads, errores y versionado. | Exploración |
+| 13 | P1 | Auditoría transversal | H2 | Contratos de integración | Primera operación sensible que cruce componentes. | Condicional (solo si hay operación sensible cruzando componentes) | Actor, organización, acción, resultado y momento consultables de forma uniforme. | Exploración |
+| 14 | P0 | Trazas, costos y evaluaciones | H3 | Gateway IA y auditoría transversal | Primera capacidad IA en uso. | Condicional (solo si usa IA) | Registro de modelo, costo, fuentes, herramientas y casos de evaluación versionados. | Exploración |
+| 15 | P1 | Adopción selectiva de mejoras | H1 | Versión de origen | Primera mejora que deba volver a un producto derivado. | Condicional (solo si vuelve una mejora) | Guía para incorporar commits o paquetes de forma deliberada. | Exploración |
+| 16 | P1 | Herramientas IA | H3 | Contexto y permisos IA; contratos de integración | Primera herramienta conectada al modelo. | Condicional (solo si usa IA) | Herramientas con contratos, permisos y validación de entradas/salidas. | Exploración |
+| 17 | P1 | Aprobación humana | H3 | Herramientas IA y auditoría transversal | Primera acción con efecto externo o persistente. | Condicional (solo si hay acción automatizada con efecto externo) | Flujo propuesta → revisión → aprobación/rechazo → ejecución auditable. | Exploración |
+| 18 | P2 | Archivos y documentos | H2 | Gestión de entornos | Primer producto que gestione documentos. | Condicional (solo si gestiona documentos) | Carga, acceso, retención y eliminación por organización con permisos explícitos. | Exploración |
+| 19 | P2 | Notificaciones | H2 | Auditoría transversal | Primera notificación fuera de Auth. | Condicional (solo si notifica algo fuera de Auth) | Interfaz común para solicitar avisos; contenido y destinatarios siguen siendo del producto. | Exploración |
+| 20 | P2 | Ejecuciones durables | H3 | Gateway IA y patrón Kestra existente | Primera tarea IA de larga duración. | Condicional (solo si usa IA) | Estados, reintentos y resultados sobre Kestra o workers. | Exploración |
+| 21 | P2 | UI de IA | H4 | Gateway IA; trazas y costos IA | Una capacidad IA necesita mostrar progreso, fuentes o aprobación. | Condicional (solo si usa IA) | Piezas visuales reutilizables: estado de generación, progreso, fuentes y aprobación de propuestas. | Exploración |
+| 22 | P2 | Búsqueda documental/RAG | H4 | Archivos y documentos; contexto y permisos IA | Un producto necesita responder sobre documentos propios. | Condicional (documentos + IA) | Ingesta, indexación, búsqueda, permisos y referencias a las fuentes. | Exploración |
+| 23 | P3 | Paquetes compartidos | H4 | Dos productos reutilizando código estable | Dos o más productos usan la misma interfaz de código. | Condicional (requiere un segundo producto) | Paquete versionado, con pruebas y compatibilidad explícita entre productos. | Exploración |
+| 24 | P3 | gRPC interno | H4 | Varios workers especializados y contratos definidos | Hay necesidad real de alto volumen o streaming. | Condicional (solo con volumen/streaming real) | Contratos fuertes y streaming entre workers especializados. | Exploración |
 
-| Prioridad | Capacidad                    | Dependencias             | Disparador                                        | Resultado de salida                                                                         | Estado      |
-| --------- | ---------------------------- | ------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------- |
-| P0        | Seguridad continua           | Ninguna                  | Antes de producción y de forma continua.          | Chequeos automatizados de dependencias, imágenes, secretos y configuración.                 | Exploración |
-| P0        | Backups                      | Gestión de entornos      | Antes de operar datos reales.                     | Backup periódico de datos y metadatos operativos.                                           | Exploración |
-| P0        | Restauración                 | Backups                  | Antes de operar datos reales.                     | Restauración verificada en un entorno aislado.                                              | Exploración |
-| P0        | E2E en CI                    | Gestión de entornos      | Primer flujo crítico de negocio.                  | Suite Playwright versionada que corre en CI para recorridos críticos.                       | Exploración |
-| P0        | Monitoreo, alertas y errores | Gestión de entornos      | Primer servicio de producción.                    | Healthchecks, registro central de errores y alertas ante fallos críticos.                   | Exploración |
-| P1        | Auditoría transversal        | Contratos de integración | Primera operación sensible que cruce componentes. | Actor, organización, acción, resultado y momento consultables de forma uniforme.            | Exploración |
-| P2        | Notificaciones               | Auditoría transversal    | Primera notificación fuera de Auth.               | Interfaz común para solicitar avisos; contenido y destinatarios siguen siendo del producto. | Exploración |
-| P2        | Archivos y documentos        | Gestión de entornos      | Primer producto que gestione documentos.          | Carga, acceso, retención y eliminación por organización con permisos explícitos.            | Exploración |
+H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
+H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
+8 de los 24 ítems son **Inevitables**: en cuanto exista un primer producto
+derivado y avance por su ciclo de vida normal (creado → desplegado → en
+producción con datos reales), los va a cruzar sin importar a qué se dedique.
+Los otros 16 son **Condicionales**: dependen de que ese producto elija
+construir justo esa función (IA, documentos, integraciones, notificaciones,
+un segundo producto) — pueden tardar mucho más o no llegar a activarse
+nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+la diferencia es si la función en sí va a existir.
 
-### Horizonte 3 — Capacidad AI-first segura
-
-Este horizonte empieza solo cuando exista una funcionalidad de IA concreta. No
-empieza con un chatbot genérico.
-
-
-| Prioridad | Capacidad                     | Dependencias                                     | Disparador                                       | Resultado de salida                                                                 | Estado      |
-| --------- | ----------------------------- | ------------------------------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------- | ----------- |
-| P0        | Política de datos IA          | Gestión de entornos y seguridad continua         | Antes de datos reales en IA.                     | Reglas explícitas de datos permitidos, excluidos y tratamiento de errores.          | Exploración |
-| P0        | Gateway IA                    | Política de datos IA y gestión de entornos       | Primera llamada a un modelo.                     | Backend único que aplica autenticación, límites y configuración de proveedor.       | Exploración |
-| P0        | Contexto y permisos IA        | Gateway IA y RLS existente                       | Primera consulta IA sobre datos internos.        | Cada ejecución recibe identidad, organización y alcance autorizados.                | Exploración |
-| P0        | Trazas, costos y evaluaciones | Gateway IA y auditoría transversal               | Primera capacidad IA en uso.                     | Registro de modelo, costo, fuentes, herramientas y casos de evaluación versionados. | Exploración |
-| P1        | Herramientas IA               | Contexto y permisos IA; contratos de integración | Primera herramienta conectada al modelo.         | Herramientas con contratos, permisos y validación de entradas/salidas.              | Exploración |
-| P1        | Aprobación humana             | Herramientas IA y auditoría transversal          | Primera acción con efecto externo o persistente. | Flujo propuesta → revisión → aprobación/rechazo → ejecución auditable.              | Exploración |
-| P2        | Ejecuciones durables          | Gateway IA y patrón Kestra existente             | Primera tarea IA de larga duración.              | Estados, reintentos y resultados sobre Kestra o workers.                            | Exploración |
-
-
-### Horizonte 4 — Capacidades activadas por demanda
-
-
-| Prioridad | Capacidad               | Dependencias                                        | Cuándo tiene sentido                                              | Qué queda fuera del template                                                                  | Estado      |
-| --------- | ----------------------- | --------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------- |
-| P2        | UI de IA                | Gateway IA; trazas y costos IA                      | Una capacidad IA necesita mostrar progreso, fuentes o aprobación. | El asistente, sus pantallas y conversaciones particulares.                                    | Exploración |
-| P2        | Búsqueda documental/RAG | Archivos y documentos; contexto y permisos IA       | Un producto necesita responder sobre documentos propios.          | Contenido, taxonomía y casos de consulta del dominio.                                         | Exploración |
-| P3        | Paquetes compartidos    | Dos productos reutilizando código estable           | Dos o más productos usan la misma interfaz de código.             | Dependencias prematuras o acoplamiento entre productos.                                       | Exploración |
-| P3        | gRPC interno            | Varios workers especializados y contratos definidos | Hay necesidad real de alto volumen o streaming.                   | Comunicación normal de navegador, Supabase o Kestra, que sigue usando interfaces más simples. | Exploración |
-
+> **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
+> únicamente cuando exista una funcionalidad de IA concreta que lo dispare —
+> no con un chatbot genérico. Si ese disparador no aparece, los ítems 5, 10,
+> 11, 14, 16, 17 y 20 se saltan y la cola sigue por el siguiente ítem
+> disponible (por ejemplo, el 12, 15, 18 o 19, que no dependen de IA).
 
 ## Límites explícitos
 
