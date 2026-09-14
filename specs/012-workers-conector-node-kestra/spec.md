@@ -8,6 +8,14 @@
 
 **Input**: User description: "Convención de workers técnicos para automatizaciones de integración: Node.js como lenguaje del worker (conectores que traen datos de sistemas externos vía API o automatización de navegador con Playwright), orquestado por Kestra (scheduling, reintentos, alertas — Kestra no reemplaza al worker, lo supervisa). Cada sistema externo tiene su propio conector. Los datos importados se normalizan en una tabla central por dominio, preservando el origen (columna `origen` + `id_externo` para idempotencia) y guardando los campos particulares de cada sistema en una columna `jsonb`, en vez de una tabla por sistema. Alcance basado en dos casos reales de dominios independientes ya confirmados en conversación (integración con Mercado Libre y con sistemas contables como Xubio/Colppy/Tango) — la spec documenta la convención y el contrato de worker (estructura de carpeta, Dockerfile, idempotencia, healthcheck) en `workers/README.md` y como guía reusable, sin incluir el dominio de negocio de ninguno de los dos casos (ni Mercado Libre ni contable)."
 
+## Clarifications
+
+### Session 2026-09-14
+
+- Q: ¿Cómo debe manejar la convención las credenciales que cada conector necesita para acceder a su sistema externo (API keys, sesiones de navegador logueadas)? → A: La convención remite al principio de manejo de secretos ya existente en el proyecto (nunca en Git, solo en gestores de variables/vault por entorno) — no define un mecanismo de almacenamiento nuevo específico para conectores.
+- Q: ¿La clave que evita duplicados al reimportar es la combinación de `origen` + `id_externo`, o alcanza con que `id_externo` sea único por sí solo? → A: Es la combinación `origen` + `id_externo` (clave compuesta) — ningún sistema externo controla los IDs de otro.
+- Q: ¿Qué significa "healthcheck" para un worker que corre como proceso puntual disparado por Kestra (no un servicio persistente)? → A: Para ese tipo de worker, el healthcheck se cumple con el código de salida/estado que Kestra ya registra — no se requiere un endpoint HTTP separado. Un worker que sí sea un servicio persistente queda fuera de esta convención (FR-008) y ahí aplica un healthcheck tradicional.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Contrato claro para arrancar un worker nuevo (Priority: P1)
@@ -60,7 +68,7 @@ Quien lea esta convención en el futuro, sin haber participado de la discusión 
 ### Edge Cases
 
 - ¿Qué pasa si un worker nuevo necesita otro lenguaje distinto de Node.js porque su carga de trabajo lo justifica (por ejemplo, procesamiento de datos pesado)? La convención debe dejar Node.js como runtime *por defecto*, no como obligación absoluta.
-- ¿Qué pasa si un worker solo integra una única fuente externa? El patrón de tabla central aplica quando hay múltiples fuentes del mismo dominio; con una sola fuente, la convención no debe forzar su uso si no aporta valor.
+- ¿Qué pasa si un worker solo integra una única fuente externa? El patrón de tabla central aplica cuando hay múltiples fuentes del mismo dominio; con una sola fuente, la convención no debe forzar su uso si no aporta valor.
 - ¿Qué pasa si un conector necesita automatización de navegador? La convención debe indicar que se apoya en la infraestructura de Playwright ya existente en el template, sin requerir una imagen o servicio nuevo.
 - ¿Qué pasa si una futura spec de producto derivado necesita procesamiento en tiempo real o un backend que sirva un frontend? Debe quedar claro que eso no está cubierto por esta convención.
 
@@ -71,18 +79,19 @@ Quien lea esta convención en el futuro, sin haber participado de la discusión 
 - **FR-001**: `workers/README.md` DEBE especificar Node.js + TypeScript como runtime por defecto recomendado para workers de integración con sistemas externos, sin prohibir el uso de otro lenguaje cuando un worker puntual lo justifique.
 - **FR-002**: `workers/README.md` DEBE establecer que cada sistema externo integrado se implementa como un conector propio y aislado dentro del worker.
 - **FR-003**: `workers/README.md` DEBE aclarar la relación entre Kestra y el worker: Kestra programa, reintenta y alerta; el worker ejecuta el trabajo técnico (llamadas a APIs, automatización de navegador, descarga y procesamiento de archivos, validación e importación). Uno no reemplaza al otro.
-- **FR-004**: `workers/README.md` DEBE documentar el patrón de "tabla central" para normalizar datos de múltiples fuentes de un mismo dominio: columna de origen, identificador externo como clave de idempotencia, y una columna flexible para los datos propios de cada fuente que no comparten estructura común.
+- **FR-004**: `workers/README.md` DEBE documentar el patrón de "tabla central" para normalizar datos de múltiples fuentes de un mismo dominio: columna de origen, identificador externo, y una columna flexible para los datos propios de cada fuente que no comparten estructura común. La combinación de origen + identificador externo (no el identificador externo por sí solo) es la clave que determina si un registro ya fue importado.
 - **FR-005**: El documento DEBE aclarar que la tabla central es una convención de diseño que cada spec de producto derivado adapta a su propio dominio — no un esquema, migración ni tabla que el template provee directamente.
-- **FR-006**: El documento DEBE extender el contrato de worker ya existente (carpeta propia, Dockerfile, salida idempotente, healthcheck, pruebas) sin duplicarlo ni contradecirlo.
+- **FR-006**: El documento DEBE extender el contrato de worker ya existente (carpeta propia, Dockerfile, salida idempotente, healthcheck, pruebas) sin duplicarlo ni contradecirlo. Para un worker que corre como proceso puntual disparado por Kestra (no un servicio persistente), el healthcheck se cumple con el código de salida/estado que Kestra ya registra — no se requiere un endpoint HTTP separado; esto no aplica a un worker que sea un servicio persistente, caso que de todas formas queda fuera de esta convención (FR-008).
 - **FR-007**: El documento NO DEBE incluir ningún concepto de dominio de negocio de los casos que motivaron la convención (ni de integración con marketplaces como Mercado Libre, ni de sistemas contables como Xubio, Colppy o Tango).
 - **FR-008**: El documento DEBE dejar fuera de su alcance, de forma explícita, el procesamiento en tiempo real disparado por eventos de usuario (colas como Redis/BullMQ) y cualquier backend síncrono que sirva a un frontend — indicando que siguen siendo decisiones propias de cada producto derivado.
 - **FR-009**: El documento DEBE registrar que esta convención surge de al menos dos automatizaciones de dominios de negocio independientes, como justificación de por qué se documenta a nivel de template y no dentro de un producto derivado puntual.
+- **FR-010**: El documento DEBE remitir, para las credenciales que cada conector necesite (API keys, sesiones de navegador logueadas u otro secreto de acceso al sistema externo), al manejo de secretos ya establecido para el proyecto (nunca en Git, solo en gestores de variables o vault por entorno) — sin definir un mecanismo de almacenamiento nuevo o específico para conectores.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Worker de integración**: unidad de ejecución técnica que un flow de Kestra dispara, responsable de correr uno o más conectores y de dejar los datos importados en estado consistente e idempotente.
 - **Conector**: módulo dentro de un worker responsable de obtener datos de un único sistema externo (vía API o automatización de navegador), sin conocer ni depender de los demás conectores del mismo worker.
-- **Tabla central**: patrón de modelo de datos que un worker usa para normalizar registros provenientes de múltiples fuentes de un mismo dominio de negocio, preservando el origen y un identificador externo por registro.
+- **Tabla central**: patrón de modelo de datos que un worker usa para normalizar registros provenientes de múltiples fuentes de un mismo dominio de negocio, preservando el origen y un identificador externo por registro; la combinación de ambos (no el identificador externo solo) identifica un registro de forma única.
 
 ## Success Criteria *(mandatory)*
 
