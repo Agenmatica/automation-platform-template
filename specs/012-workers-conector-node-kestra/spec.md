@@ -29,22 +29,22 @@ Quien va a construir un worker de integración con este template (persona o agen
 **Acceptance Scenarios**:
 
 1. **Given** alguien que va a crear un worker de integración por primera vez, **When** lee `workers/README.md`, **Then** encuentra especificado el runtime por defecto, la estructura de carpeta esperada, y el contrato de idempotencia y healthcheck.
-2. **Given** un worker que va a integrar un sistema externo, **When** se diseña, **Then** el documento aclara que cada sistema externo se implementa como un conector propio, aislado de los demás conectores del mismo worker.
+2. **Given** un worker dedicado a un sistema externo que expone más de un tipo de dato o reporte, **When** se diseña, **Then** el documento aclara que cada tipo de dato se implementa como un conector propio dentro de ese worker, aislado de los demás conectores del mismo worker, y que cada conector elige su propio método de acceso (API o automatización de navegador) según lo que ese reporte permita.
 3. **Given** alguien evaluando si Kestra por sí solo alcanza para una automatización, **When** consulta la convención, **Then** encuentra explícito que Kestra programa, reintenta y alerta, mientras que el worker ejecuta el trabajo técnico — uno no reemplaza al otro.
 
 ---
 
 ### User Story 2 - Normalizar datos de múltiples fuentes sin una tabla por sistema (Priority: P2)
 
-Quien diseña el modelo de datos de un worker que trae información equivalente desde más de un sistema externo del mismo dominio necesita un criterio para no terminar con una tabla distinta por cada sistema, ya que eso obliga a que todo lo que consuma esos datos conozca cada estructura por separado.
+Quien diseña el modelo de datos de varios workers (cada uno dedicado a su propio sistema externo) que producen información equivalente dentro del mismo dominio necesita un criterio para no terminar con una tabla distinta por cada sistema, ya que eso obliga a que todo lo que consuma esos datos conozca cada estructura por separado.
 
-**Why this priority**: Depende de que exista el contrato general de worker (User Story 1), pero es la parte que más valor aporta cuando el worker integra más de una fuente — es el problema concreto que motivó esta convención en los dos casos reales que la originaron.
+**Why this priority**: Depende de que exista el contrato general de worker (User Story 1), pero es la parte que más valor aporta cuando más de un sistema externo produce el mismo tipo de dato — es el problema concreto que motivó esta convención en los dos casos reales que la originaron.
 
-**Independent Test**: Se puede validar diseñando en el papel el modelo de datos de un worker hipotético con dos fuentes externas distintas, usando solo la convención documentada, y verificando que el resultado no requiere una tabla por fuente.
+**Independent Test**: Se puede validar diseñando en el papel el modelo de datos de dos workers hipotéticos, cada uno dedicado a un sistema externo distinto, usando solo la convención documentada, y verificando que el resultado no requiere una tabla por sistema.
 
 **Acceptance Scenarios**:
 
-1. **Given** un worker que integra dos o más sistemas externos del mismo dominio, **When** se diseña la tabla de destino, **Then** la convención indica usar una tabla central con una columna de origen, un identificador externo para detectar duplicados, y una columna flexible para los datos propios de cada sistema que no comparten estructura común.
+1. **Given** dos o más workers, cada uno dedicado a un sistema externo distinto del mismo dominio, **When** se diseña la tabla de destino, **Then** la convención indica usar una tabla central con una columna de origen, un identificador externo para detectar duplicados, y una columna flexible para los datos propios de cada sistema que no comparten estructura común.
 2. **Given** que un sistema externo ya integrado cambia su forma de acceso (por ejemplo, pasa de requerir automatización de navegador a ofrecer una API), **When** se actualiza su conector, **Then** la tabla central y el resto de los conectores no requieren ningún cambio.
 3. **Given** que un worker vuelve a ejecutar la importación de un período ya procesado, **When** encuentra registros con el mismo origen e identificador externo, **Then** no los duplica.
 
@@ -68,20 +68,20 @@ Quien lea esta convención en el futuro, sin haber participado de la discusión 
 ### Edge Cases
 
 - ¿Qué pasa si un worker nuevo necesita otro lenguaje distinto de Node.js porque su carga de trabajo lo justifica (por ejemplo, procesamiento de datos pesado)? La convención debe dejar Node.js como runtime *por defecto*, no como obligación absoluta.
-- ¿Qué pasa si un worker solo integra una única fuente externa? El patrón de tabla central aplica cuando hay múltiples fuentes del mismo dominio; con una sola fuente, la convención no debe forzar su uso si no aporta valor.
+- ¿Qué pasa si el sistema externo de un worker solo expone un único tipo de dato (un solo conector)? El patrón de tabla central aplica igual cuando hay más de un worker (más de un sistema) produciendo el mismo tipo de dato; con un solo worker y un solo tipo de dato, la convención no debe forzar una tabla central si no aporta valor.
 - ¿Qué pasa si un conector necesita automatización de navegador? La convención debe indicar que se apoya en la infraestructura de Playwright ya existente en el template, sin requerir una imagen o servicio nuevo.
 - ¿Qué pasa si una futura spec necesita procesamiento en tiempo real o un backend que sirva un frontend? Debe quedar claro que eso no está cubierto por esta convención.
-- ¿Qué pasa si los mismos sistemas externos producen más de un tipo de registro de negocio (por ejemplo, movimientos y balances de mayor)? Cada tipo tiene su propia tabla central — la convención no obliga a una única tabla por worker ni por conjunto de sistemas integrados.
+- ¿Qué pasa si un mismo sistema externo produce más de un tipo de registro de negocio (por ejemplo, movimientos y balances de mayor)? Cada tipo se implementa como su propio conector dentro del worker de ese sistema, y tiene su propia tabla central — la convención no obliga a una única tabla por worker.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: `workers/README.md` DEBE especificar Node.js + TypeScript como runtime por defecto recomendado para workers de integración con sistemas externos, sin prohibir el uso de otro lenguaje cuando un worker puntual lo justifique.
-- **FR-002**: `workers/README.md` DEBE establecer que cada sistema externo integrado se implementa como un conector propio y aislado dentro del worker.
+- **FR-002**: `workers/README.md` DEBE establecer que un worker se dedica a un único sistema externo, y que dentro de ese worker cada tipo de dato o reporte que ese sistema expone se implementa como un conector propio y aislado — cada conector elige su propio método de acceso (API o automatización de navegador) según lo que ese reporte puntual permita.
 - **FR-003**: `workers/README.md` DEBE aclarar la relación entre Kestra y el worker: Kestra programa, reintenta y alerta; el worker ejecuta el trabajo técnico (llamadas a APIs, automatización de navegador, descarga y procesamiento de archivos, validación e importación). Uno no reemplaza al otro.
 - **FR-004**: `workers/README.md` DEBE documentar el patrón de "tabla central" para normalizar datos de múltiples fuentes que representan el **mismo tipo de registro de negocio** (por ejemplo, movimientos contables, o balances de mayor — no "todo el dominio contable" en una sola tabla): columna de organización dueña del dato (multi-tenant, ver FR-011), columna de origen, identificador externo, y una columna flexible para los datos propios de cada fuente que no comparten estructura común. La combinación de organización + origen + identificador externo (no el identificador externo por sí solo, ni siquiera junto con origen sin la organización) es la clave que determina si un registro ya fue importado — dos organizaciones distintas pueden tener, cada una, un registro con el mismo `id_externo` en el mismo sistema de origen, sin ser el mismo dato.
-- **FR-004b**: El documento DEBE aclarar que un worker (o un conjunto de conectores que comparten los mismos sistemas externos) puede alimentar **más de una tabla central** — una por cada tipo de registro de negocio distinto que necesite normalizarse — y que un mismo conector puede escribir en más de una tabla central si el sistema que integra expone más de un tipo de dato.
+- **FR-004b**: El documento DEBE aclarar que un worker puede alimentar **más de una tabla central** — una por cada tipo de registro de negocio distinto que su sistema externo exponga, a través de sus distintos conectores internos — y que un mismo conector puede escribir en más de una tabla central si el tipo de dato que trae mezcla más de un concepto de negocio.
 - **FR-005**: El documento DEBE aclarar que la tabla central es una convención de diseño que cada spec que la implemente adapta a su propio dominio — no un esquema, migración ni tabla que el template provee directamente.
 - **FR-006**: El documento DEBE extender el contrato de worker ya existente (carpeta propia, Dockerfile, salida idempotente, healthcheck, pruebas) sin duplicarlo ni contradecirlo. Para un worker que corre como proceso puntual disparado por Kestra (no un servicio persistente), el healthcheck se cumple con el código de salida/estado que Kestra ya registra — no se requiere un endpoint HTTP separado; esto no aplica a un worker que sea un servicio persistente, caso que de todas formas queda fuera de esta convención (FR-008).
 - **FR-007**: El documento NO DEBE incluir ningún concepto de dominio de negocio de los casos que motivaron la convención — ninguna marca, empresa o sistema externo concreto por nombre, ni terminología propia de un dominio de negocio puntual.
@@ -92,9 +92,9 @@ Quien lea esta convención en el futuro, sin haber participado de la discusión 
 
 ### Key Entities *(include if feature involves data)*
 
-- **Worker de integración**: unidad de ejecución técnica que un flow de Kestra dispara, responsable de correr uno o más conectores y de dejar los datos importados en estado consistente e idempotente.
-- **Conector**: módulo dentro de un worker responsable de obtener datos de un único sistema externo (vía API o automatización de navegador), sin conocer ni depender de los demás conectores del mismo worker.
-- **Tabla central**: patrón de modelo de datos que un worker usa para normalizar registros provenientes de múltiples fuentes que representan el mismo tipo de registro de negocio (no todo un dominio entero), preservando la organización dueña del dato, el origen y un identificador externo por registro; la combinación de los tres (nunca el identificador externo solo, ni origen + identificador externo sin la organización) identifica un registro de forma única, y la organización es además la columna que habilita RLS como cualquier otra tabla del template. Un mismo worker puede tener varias tablas centrales — una por cada tipo de registro distinto — y un mismo conector puede alimentar más de una si su sistema expone más de un tipo de dato.
+- **Worker de integración**: unidad de ejecución técnica dedicada a un único sistema externo, que un flow de Kestra dispara, responsable de correr uno o más conectores de ese sistema y de dejar los datos importados en estado consistente e idempotente.
+- **Conector**: módulo dentro de un worker responsable de obtener un único tipo de dato o reporte del sistema externo al que ese worker está dedicado (vía API o automatización de navegador, según lo que ese reporte permita), sin conocer ni depender de los demás conectores del mismo worker.
+- **Tabla central**: patrón de modelo de datos que un worker usa para normalizar registros provenientes de múltiples fuentes que representan el mismo tipo de registro de negocio (no todo un dominio entero), preservando la organización dueña del dato, el origen y un identificador externo por registro; la combinación de los tres (nunca el identificador externo solo, ni origen + identificador externo sin la organización) identifica un registro de forma única, y la organización es además la columna que habilita RLS como cualquier otra tabla del template. Un mismo worker puede tener varias tablas centrales — una por cada tipo de registro distinto que su sistema externo exponga, a través de sus distintos conectores — y un mismo conector puede alimentar más de una si el dato que trae mezcla más de un concepto de negocio.
 
 ## Success Criteria *(mandatory)*
 
