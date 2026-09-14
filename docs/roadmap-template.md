@@ -45,6 +45,8 @@ reemplaza las prioridades históricas de sus specs.
 | P1        | Analítica       | Analítica embebida por organización       | Multi-tenancy y Superset                 | Reportes de Superset embebidos con acceso resuelto por organización y sin exponer credenciales de administración al navegador. [Spec 007](../specs/007-analitica-embebida/spec.md)                   | Implementado |
 | P1        | Identidad       | Perfil personal y seguridad de cuenta     | Autogestión de contraseña, RLS y Storage | Perfil propio, cambio seguro de correo, fotos aisladas, resumen de cuenta y avisos de seguridad. [Spec 008](../specs/008-perfil-usuario/spec.md)                                                     | Implementado |
 | P0        | Plataforma      | Panel de funcionalidades por organización | Multi-tenancy y contexto activo          | Catálogo, habilitación fail-closed por organización, administración de superadmin y auditoría de cambios. [Spec 009](../specs/009-panel-de-funcionalidades/spec.md)                                  | Implementado |
+| P1        | Identidad       | Nombre visible entre miembros             | Gestión de miembros y perfil personal    | Nombre y apellido visibles entre miembros de una misma organización (antes solo UUID), con estado explícito si el perfil está incompleto. [Spec 010](../specs/010-nombre-miembros-organizacion/spec.md) | Implementado |
+| P0        | Operación       | Backups automáticos de Postgres           | Ninguna                                  | Respaldo diario (o a demanda) de la base completa vía Kestra, con verificación estructural y registro auditable de estado/tamaño/error. Restauración queda fuera de esta entrega (ítem 6 del backlog priorizado). [Spec 011](../specs/011-backups-postgres/spec.md) | Implementado |
 
 
  La spec 003 conserva una tarea abierta de comprobación inicial de entorno;
@@ -90,7 +92,7 @@ Un backlog real es una única cola, no una tabla separada por tema. El orden
 de la tabla siguiente sale de aplicar, en este orden:
 
 0. **El dominio del futuro producto no es una condición de esta cola.**
-Ninguna de las 24 capacidades necesita saber qué va a hacer el producto
+Ninguna de las 23 capacidades necesita saber qué va a hacer el producto
 derivado — todas están diseñadas como mecanismo genérico, sin conocimiento
 de dominio (Principio 1; ver también Límites explícitos). No tener un
 dominio pensado hoy **no pospone ningún ítem** de esta tabla. Lo único que
@@ -136,27 +138,26 @@ necesitando justo esta función".
 | 1  | P0 | Creador de productos derivados | H1 | Ninguna | Primer producto derivado. | Inevitable | Crear un repo nuevo con nombre, servicios, variables y documentación propios. | Exploración |
 | 2  | P0 | Gestión de entornos | H1 | Creador de productos derivados | Primer despliegue de producto. | Inevitable | Contrato claro de variables, secretos, URLs y responsabilidades por entorno. | Exploración |
 | 3  | P0 | Seguridad continua | H2 | Ninguna | Antes de producción y de forma continua. | Inevitable | Chequeos automatizados de dependencias, imágenes, secretos y configuración. | Exploración |
-| 4  | P0 | Backups | H2 | Gestión de entornos | Antes de operar datos reales. | Inevitable | Backup periódico de datos y metadatos operativos. | Exploración |
-| 5  | P0 | Política de datos IA | H3 | Gestión de entornos y seguridad continua | Antes de datos reales en IA. | Condicional (solo si usa IA) | Reglas explícitas de datos permitidos, excluidos y tratamiento de errores. | Exploración |
-| 6  | P0 | Versión de origen | H1 | Creador de productos derivados | Primer producto derivado. | Inevitable | Cada producto registra el tag o commit de origen. | Exploración |
-| 7  | P0 | Restauración | H2 | Backups | Antes de operar datos reales. | Inevitable | Restauración verificada en un entorno aislado. | Exploración |
-| 8  | P0 | E2E en CI | H2 | Gestión de entornos | Primer flujo crítico de negocio. | Inevitable | Suite Playwright versionada que corre en CI para recorridos críticos. | Exploración |
-| 9  | P0 | Monitoreo, alertas y errores | H2 | Gestión de entornos | Primer servicio de producción. | Inevitable | Healthchecks, registro central de errores y alertas ante fallos críticos. | Exploración |
-| 10 | P0 | Gateway IA | H3 | Política de datos IA y gestión de entornos | Primera llamada a un modelo. | Condicional (solo si usa IA) | Backend único que aplica autenticación, límites y configuración de proveedor. | Exploración |
-| 11 | P0 | Contexto y permisos IA | H3 | Gateway IA y RLS existente | Primera consulta IA sobre datos internos. | Condicional (solo si usa IA) | Cada ejecución recibe identidad, organización y alcance autorizados. | Exploración |
-| 12 | P1 | Contratos de integración | H1 | Gestión de entornos | Primera integración nueva entre componentes. | Condicional (solo si integra componentes) | Convención documentada de autenticación, payloads, errores y versionado. | Exploración |
-| 13 | P1 | Auditoría transversal | H2 | Contratos de integración | Primera operación sensible que cruce componentes. | Condicional (solo si hay operación sensible cruzando componentes) | Actor, organización, acción, resultado y momento consultables de forma uniforme. | Exploración |
-| 14 | P0 | Trazas, costos y evaluaciones | H3 | Gateway IA y auditoría transversal | Primera capacidad IA en uso. | Condicional (solo si usa IA) | Registro de modelo, costo, fuentes, herramientas y casos de evaluación versionados. | Exploración |
-| 15 | P1 | Adopción selectiva de mejoras | H1 | Versión de origen | Primera mejora que deba volver a un producto derivado. | Condicional (solo si vuelve una mejora) | Guía para incorporar commits o paquetes de forma deliberada. | Exploración |
-| 16 | P1 | Herramientas IA | H3 | Contexto y permisos IA; contratos de integración | Primera herramienta conectada al modelo. | Condicional (solo si usa IA) | Herramientas con contratos, permisos y validación de entradas/salidas. | Exploración |
-| 17 | P1 | Aprobación humana | H3 | Herramientas IA y auditoría transversal | Primera acción con efecto externo o persistente. | Condicional (solo si hay acción automatizada con efecto externo) | Flujo propuesta → revisión → aprobación/rechazo → ejecución auditable. | Exploración |
-| 18 | P2 | Archivos y documentos | H2 | Gestión de entornos | Primer producto que gestione documentos. | Condicional (solo si gestiona documentos) | Carga, acceso, retención y eliminación por organización con permisos explícitos. | Exploración |
-| 19 | P2 | Notificaciones | H2 | Auditoría transversal | Primera notificación fuera de Auth. | Condicional (solo si notifica algo fuera de Auth) | Interfaz común para solicitar avisos; contenido y destinatarios siguen siendo del producto. | Exploración |
-| 20 | P2 | Ejecuciones durables | H3 | Gateway IA y patrón Kestra existente | Primera tarea IA de larga duración. | Condicional (solo si usa IA) | Estados, reintentos y resultados sobre Kestra o workers. | Exploración |
-| 21 | P2 | UI de IA | H4 | Gateway IA; trazas y costos IA | Una capacidad IA necesita mostrar progreso, fuentes o aprobación. | Condicional (solo si usa IA) | Piezas visuales reutilizables: estado de generación, progreso, fuentes y aprobación de propuestas. | Exploración |
-| 22 | P2 | Búsqueda documental/RAG | H4 | Archivos y documentos; contexto y permisos IA | Un producto necesita responder sobre documentos propios. | Condicional (documentos + IA) | Ingesta, indexación, búsqueda, permisos y referencias a las fuentes. | Exploración |
-| 23 | P3 | Paquetes compartidos | H4 | Dos productos reutilizando código estable | Dos o más productos usan la misma interfaz de código. | Condicional (requiere un segundo producto) | Paquete versionado, con pruebas y compatibilidad explícita entre productos. | Exploración |
-| 24 | P3 | gRPC interno | H4 | Varios workers especializados y contratos definidos | Hay necesidad real de alto volumen o streaming. | Condicional (solo con volumen/streaming real) | Contratos fuertes y streaming entre workers especializados. | Exploración |
+| 4  | P0 | Política de datos IA | H3 | Gestión de entornos y seguridad continua | Antes de datos reales en IA. | Condicional (solo si usa IA) | Reglas explícitas de datos permitidos, excluidos y tratamiento de errores. | Exploración |
+| 5  | P0 | Versión de origen | H1 | Creador de productos derivados | Primer producto derivado. | Inevitable | Cada producto registra el tag o commit de origen. | Exploración |
+| 6  | P0 | Restauración | H2 | Backups (entregado, spec 011) | Antes de operar datos reales. | Inevitable | Restauración verificada en un entorno aislado. | Exploración |
+| 7  | P0 | E2E en CI | H2 | Gestión de entornos | Primer flujo crítico de negocio. | Inevitable | Suite Playwright versionada que corre en CI para recorridos críticos. | Exploración |
+| 8  | P0 | Monitoreo, alertas y errores | H2 | Gestión de entornos | Primer servicio de producción. | Inevitable | Healthchecks, registro central de errores y alertas ante fallos críticos. | Exploración |
+| 9  | P0 | Gateway IA | H3 | Política de datos IA y gestión de entornos | Primera llamada a un modelo. | Condicional (solo si usa IA) | Backend único que aplica autenticación, límites y configuración de proveedor. | Exploración |
+| 10 | P0 | Contexto y permisos IA | H3 | Gateway IA y RLS existente | Primera consulta IA sobre datos internos. | Condicional (solo si usa IA) | Cada ejecución recibe identidad, organización y alcance autorizados. | Exploración |
+| 11 | P1 | Contratos de integración | H1 | Gestión de entornos | Primera integración nueva entre componentes. | Condicional (solo si integra componentes) | Convención documentada de autenticación, payloads, errores y versionado. | Exploración |
+| 12 | P1 | Auditoría transversal | H2 | Contratos de integración | Primera operación sensible que cruce componentes. | Condicional (solo si hay operación sensible cruzando componentes) | Actor, organización, acción, resultado y momento consultables de forma uniforme. | Exploración |
+| 13 | P0 | Trazas, costos y evaluaciones | H3 | Gateway IA y auditoría transversal | Primera capacidad IA en uso. | Condicional (solo si usa IA) | Registro de modelo, costo, fuentes, herramientas y casos de evaluación versionados. | Exploración |
+| 14 | P1 | Adopción selectiva de mejoras | H1 | Versión de origen | Primera mejora que deba volver a un producto derivado. | Condicional (solo si vuelve una mejora) | Guía para incorporar commits o paquetes de forma deliberada. | Exploración |
+| 15 | P1 | Herramientas IA | H3 | Contexto y permisos IA; contratos de integración | Primera herramienta conectada al modelo. | Condicional (solo si usa IA) | Herramientas con contratos, permisos y validación de entradas/salidas. | Exploración |
+| 16 | P1 | Aprobación humana | H3 | Herramientas IA y auditoría transversal | Primera acción con efecto externo o persistente. | Condicional (solo si hay acción automatizada con efecto externo) | Flujo propuesta → revisión → aprobación/rechazo → ejecución auditable. | Exploración |
+| 17 | P2 | Archivos y documentos | H2 | Gestión de entornos | Primer producto que gestione documentos. | Condicional (solo si gestiona documentos) | Carga, acceso, retención y eliminación por organización con permisos explícitos. | Exploración |
+| 18 | P2 | Notificaciones | H2 | Auditoría transversal | Primera notificación fuera de Auth. | Condicional (solo si notifica algo fuera de Auth) | Interfaz común para solicitar avisos; contenido y destinatarios siguen siendo del producto. | Exploración |
+| 19 | P2 | Ejecuciones durables | H3 | Gateway IA y patrón Kestra existente | Primera tarea IA de larga duración. | Condicional (solo si usa IA) | Estados, reintentos y resultados sobre Kestra o workers. | Exploración |
+| 20 | P2 | UI de IA | H4 | Gateway IA; trazas y costos IA | Una capacidad IA necesita mostrar progreso, fuentes o aprobación. | Condicional (solo si usa IA) | Piezas visuales reutilizables: estado de generación, progreso, fuentes y aprobación de propuestas. | Exploración |
+| 21 | P2 | Búsqueda documental/RAG | H4 | Archivos y documentos; contexto y permisos IA | Un producto necesita responder sobre documentos propios. | Condicional (documentos + IA) | Ingesta, indexación, búsqueda, permisos y referencias a las fuentes. | Exploración |
+| 22 | P3 | Paquetes compartidos | H4 | Dos productos reutilizando código estable | Dos o más productos usan la misma interfaz de código. | Condicional (requiere un segundo producto) | Paquete versionado, con pruebas y compatibilidad explícita entre productos. | Exploración |
+| 23 | P3 | gRPC interno | H4 | Varios workers especializados y contratos definidos | Hay necesidad real de alto volumen o streaming. | Condicional (solo con volumen/streaming real) | Contratos fuertes y streaming entre workers especializados. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
