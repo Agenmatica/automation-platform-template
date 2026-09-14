@@ -14,7 +14,10 @@ Esta feature no expone una API ni una CLI — su única "interfaz" es el documen
    → Kestra programa/reintenta/alerta; el worker ejecuta el trabajo técnico (API, automatización de navegador, descarga/procesamiento de archivos, validación e importación). No hay redundancia. (FR-003)
 
 4. **¿Cómo se normalizan datos que vienen de múltiples fuentes del mismo dominio, sin una tabla por sistema?**
-   → Patrón de tabla central: columna `origen` + `id_externo` como clave compuesta de idempotencia (nunca `id_externo` solo), y una columna `jsonb` para los datos particulares de cada fuente. (FR-004)
+   → Patrón de tabla central: columna de organización dueña del dato + `origen` + `id_externo` como clave compuesta de idempotencia (nunca `id_externo` solo, ni `origen`+`id_externo` sin la organización), y una columna `jsonb` para los datos particulares de cada fuente. (FR-004)
+
+4b. **¿La tabla central es una excepción al aislamiento multi-tenant del resto del template?**
+   → No. Lleva columna de organización y RLS como cualquier tabla expuesta, aunque la escriba un worker en vez de un usuario desde la UI. (FR-011)
 
 5. **¿La tabla central es algo que el template provee directamente, o algo que cada producto adapta?**
    → Es una convención de diseño; cada spec de producto derivado la adapta a su propio dominio. No es un esquema, migración ni tabla que el template entregue. (FR-005)
@@ -33,6 +36,9 @@ Esta feature no expone una API ni una CLI — su única "interfaz" es el documen
 
 10. **¿Dónde se guardan las credenciales que un conector necesita para acceder a su sistema externo?**
     → Vía el mecanismo de manejo de secretos ya establecido en el proyecto (nunca en Git, solo en gestores de variables o vault por entorno) — sin un mecanismo nuevo específico para conectores. (FR-010)
+
+11. **¿Quién decide a qué organización pertenece cada registro que un conector importa?**
+    → La organización dueña de la conexión/credencial que el worker usó para esa ejecución — el worker la propaga a cada fila que escribe, no es algo que el conector infiera de los datos en sí. (FR-011, `data-model.md`)
 
 ## Fuera del contrato (a propósito)
 

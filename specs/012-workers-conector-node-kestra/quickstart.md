@@ -10,7 +10,7 @@ No hay nada que instalar ni ejecutar — esta feature es una edición de documen
 ## Pasos
 
 1. Abrir `workers/README.md` en el repo.
-2. Recorrer, una por una, las 10 preguntas de `contracts/workers-readme-contract.md`. Para cada una, confirmar que el documento la responde sin ambigüedad y sin tener que inferir nada que no esté escrito.
+2. Recorrer, una por una, las 11 preguntas de `contracts/workers-readme-contract.md` (incluida la 4b). Para cada una, confirmar que el documento la responde sin ambigüedad y sin tener que inferir nada que no esté escrito.
 3. Buscar en el texto completo del archivo los siguientes términos — **ninguno debe aparecer**: `Mercado Libre`, `marketplace`, `Xubio`, `Colppy`, `Tango`, `Redis`, `BullMQ`. Si alguno aparece fuera de una frase que lo excluye explícitamente del alcance, la spec no está bien implementada (FR-007, FR-008).
 4. Confirmar que la sección nueva no contradice ni duplica el contrato de worker que ya existía en el archivo antes de esta feature (estructura de carpeta, Dockerfile, idempotencia, pruebas) — debe leerse como una extensión, no como una segunda fuente de verdad paralela.
 5. (Opcional, prueba de consistencia) Pedirle a alguien sin contexto de esta conversación que lea solo `workers/README.md` y describa en sus palabras: el runtime por defecto, qué es un conector, y qué es la tabla central. Si lo describe correctamente sin preguntar nada más, se cumple SC-001.

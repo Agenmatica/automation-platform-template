@@ -28,11 +28,11 @@ No quedaron `[NEEDS CLARIFICATION]` sin resolver en el Technical Context — el 
 
 ## R4 — Patrón de tabla central
 
-**Decisión**: Columna `origen` + `id_externo` como clave compuesta de idempotencia, más una columna `jsonb` para los datos particulares de cada fuente. Documentado como técnica, no como esquema fijo.
+**Decisión**: Columna de organización dueña del dato + `origen` + `id_externo` como clave compuesta de idempotencia (los tres, no un subconjunto), más una columna `jsonb` para los datos particulares de cada fuente. Documentado como técnica, no como esquema fijo.
 
-**Justificación**: Confirmado por `/speckit-clarify` — ningún sistema externo controla el espacio de IDs de otro, por lo que `id_externo` solo no garantiza unicidad real entre fuentes distintas. La alternativa de una tabla por sistema fue explícitamente descartada en los dos casos reales porque obliga a que todo lo que consuma esos datos (reportes, otros flows) conozca cada estructura por separado.
+**Justificación**: `/speckit-clarify` había confirmado que `id_externo` solo no alcanza (ningún sistema externo controla el espacio de IDs de otro). Durante el diseño de Fase 1 (`data-model.md`) se detectó que `(origen, id_externo)` tampoco alcanza en un template multi-tenant: dos organizaciones distintas pueden conectar cada una su propia cuenta del mismo sistema externo (dos Xubio distintos, por ejemplo), y cada una le asigna sus propios `id_externo` — pueden coincidir en número sin ser el mismo dato. Sin la organización en la clave, un worker podría pisar o confundir datos entre organizaciones, y la tabla no tendría columna para aplicar RLS (Principio I de la constitución, que no tiene excepción para datos importados por un worker). La alternativa de una tabla por sistema fue además descartada en los dos casos reales porque obliga a que todo lo que consuma esos datos conozca cada estructura por separado.
 
-**Alternativas consideradas**: Tabla por sistema externo (rechazada — no escala más allá de dos o tres fuentes sin duplicar lógica de consumo); `id_externo` como clave única simple sin `origen` (rechazada en clarify — riesgo de colisión entre fuentes distintas).
+**Alternativas consideradas**: Tabla por sistema externo (rechazada — no escala sin duplicar lógica de consumo); `id_externo` solo (rechazada en clarify — colisión entre fuentes distintas); `(origen, id_externo)` sin organización (rechazada durante el diseño de Fase 1 — colisión entre organizaciones distintas que comparten sistema externo, y sin columna para RLS).
 
 ## R5 — Credenciales de conectores
 

@@ -26,20 +26,24 @@ Módulo dentro de un worker responsable de un único sistema externo.
 | Método de acceso | API, o automatización de navegador (Playwright, R7) cuando no hay API disponible |
 | Credenciales | Gestionadas vía el mecanismo de secretos ya existente en el proyecto (R5) — nunca en Git, nunca en la tabla central |
 | Acoplamiento | Ninguno con otros conectores — cambiar el método de acceso de un conector no afecta a los demás (FR-004, SC-004) |
+| Contexto de organización | Cada ejecución de un conector corre en nombre de una organización concreta (la dueña de la conexión/credencial usada) — ese contexto es lo que el worker propaga a la Tabla central, no algo que el conector deba inferir por su cuenta. |
 
-**Relación con Tabla central**: cada registro que un conector produce se escribe en la Tabla central marcado con su propio valor de `origen`.
+**Relación con Tabla central**: cada registro que un conector produce se escribe en la Tabla central marcado con su propio valor de `origen` y con la organización de la conexión que lo originó.
 
 ## Entidad: Tabla central (patrón, no esquema)
 
-Patrón de modelo de datos que un worker usa para normalizar registros de múltiples fuentes del mismo dominio de negocio, en vez de una tabla por sistema.
+Patrón de modelo de datos que un worker usa para normalizar registros de múltiples fuentes del mismo dominio de negocio, en vez de una tabla por sistema. Es una tabla de datos real del producto derivado — no una excepción al aislamiento multi-tenant del template (Principio I; FR-011).
 
 | Columna (conceptual) | Tipo esperado | Regla |
 |---|---|---|
+| *(referencia a organización)* | FK a la tabla de organizaciones | Identifica qué organización es dueña del registro. Obligatoria — habilita RLS igual que cualquier otra tabla expuesta del template. Parte de la clave compuesta de idempotencia. |
 | `origen` | texto/enum corto | Identifica de qué conector/sistema vino el registro. Parte de la clave compuesta de idempotencia. |
-| `id_externo` | texto | El identificador que el sistema de origen le asignó al registro. Parte de la clave compuesta de idempotencia — **nunca usado solo** (R4, Clarifications de `spec.md`). |
+| `id_externo` | texto | El identificador que el sistema de origen le asignó al registro. Parte de la clave compuesta de idempotencia — **nunca usado solo, ni junto a `origen` sin la organización** (R4 en `research.md`): dos organizaciones con cuentas distintas del mismo sistema externo pueden compartir el mismo `id_externo` sin ser el mismo dato. |
 | *(columnas comunes del dominio)* | según el producto | Los campos que **todas** las fuentes de ese dominio comparten — definidos por cada spec de producto derivado, no por esta convención. |
 | *(columna flexible, ej. `datos_originales`)* | `jsonb` | Los campos que una fuente tiene y otra no — evita forzar todo a la estructura común. |
 
-**Regla de unicidad**: la combinación `(origen, id_externo)` identifica un registro de forma única. Un worker que reimporta un período ya procesado no debe generar filas duplicadas para la misma combinación (Acceptance Scenario 3, User Story 2 de `spec.md`).
+**Regla de unicidad**: la combinación `(organización, origen, id_externo)` identifica un registro de forma única. Un worker que reimporta un período ya procesado no debe generar filas duplicadas para la misma combinación (Acceptance Scenario 3, User Story 2 de `spec.md`).
+
+**RLS**: como cualquier tabla expuesta del template, requiere policy de aislamiento por organización — no hay excepción porque las filas las escriba un worker en vez de un usuario desde la UI.
 
 **Lo que este documento NO define**: nombres de columnas de dominio, tipos de datos específicos del negocio, ni ningún esquema SQL real — eso es explícitamente responsabilidad de cada spec de producto derivado (FR-005).

@@ -36,7 +36,7 @@ Ampliar `workers/README.md` con la convención para workers técnicos de integra
 
 | Principio / Gate | Evaluación |
 |---|---|
-| I. Aislamiento multi-tenant por diseño | N/A — no hay tablas, RLS ni datos de organización involucrados en esta feature. |
+| I. Aislamiento multi-tenant por diseño | Cumplido — corregido durante el diseño de Fase 1: la tabla central que esta convención documenta **sí** es una tabla de datos, y por lo tanto hereda este principio sin excepción. FR-011 exige columna de organización + RLS; la clave de idempotencia pasó de `(origen, id_externo)` a `(organización, origen, id_externo)` (ver `research.md` R4). |
 | II. Especificar antes de implementar | Cumplido — esta es la spec (`spec.md`, clarificada) que precede a cualquier cambio en `workers/README.md`. |
 | III. Automatizaciones idempotentes y auditables | Cumplido y reforzado — la convención documentada es, precisamente, la forma concreta de cumplir este principio para workers futuros (idempotencia vía origen + id_externo, registro de estado vía Kestra). |
 | IV. Un monorepo, despliegues independientes | N/A — no se agrega ningún servicio ni Compose nuevo. |
@@ -46,7 +46,7 @@ Ampliar `workers/README.md` con la convención para workers técnicos de integra
 
 **Resultado**: PASS sin excepciones. No aplica Complexity Tracking.
 
-**Re-chequeo post-diseño (tras Fase 1)**: `data-model.md`, `contracts/workers-readme-contract.md` y `quickstart.md` no introducen tablas, servicios, dependencias ni migraciones — solo formalizan el mismo contenido documental ya evaluado arriba. El resultado se mantiene: PASS sin excepciones.
+**Re-chequeo post-diseño (tras Fase 1)**: al diseñar `data-model.md` se detectó que la fila del Principio I de la tabla de arriba estaba mal evaluada como N/A — la tabla central sí es una tabla de datos real (aunque el esquema de cada columna de dominio lo defina cada producto derivado), así que el aislamiento multi-tenant le aplica igual que a cualquier tabla expuesta del template. Se corrigió esa fila y se agregó FR-011 a la spec antes de continuar. Con esa corrección aplicada, `data-model.md`, `contracts/workers-readme-contract.md` y `quickstart.md` no introducen ningún otro servicio, dependencia o migración nueva. Resultado final: PASS sin excepciones.
 
 ## Project Structure
 
