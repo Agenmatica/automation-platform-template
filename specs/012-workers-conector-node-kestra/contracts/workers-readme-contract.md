@@ -19,6 +19,9 @@ Esta feature no expone una API ni una CLI — su única "interfaz" es el documen
 4b. **¿La tabla central es una excepción al aislamiento multi-tenant del resto del template?**
    → No. Lleva columna de organización y RLS como cualquier tabla expuesta, aunque la escriba un worker en vez de un usuario desde la UI. (FR-011)
 
+4c. **¿Un worker solo puede tener una tabla central, aunque integre sistemas que producen distintos tipos de dato?**
+   → No. Es una tabla central por cada tipo de registro de negocio (movimientos, balances de mayor, facturas, etc.) — un mismo conector puede escribir en más de una si su sistema expone más de un tipo. (FR-004b)
+
 5. **¿La tabla central es algo que el template provee directamente, o algo que cada producto adapta?**
    → Es una convención de diseño; cada spec de producto derivado la adapta a su propio dominio. No es un esquema, migración ni tabla que el template entregue. (FR-005)
 

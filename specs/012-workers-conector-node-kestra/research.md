@@ -34,6 +34,8 @@ No quedaron `[NEEDS CLARIFICATION]` sin resolver en el Technical Context — el 
 
 **Alternativas consideradas**: Tabla por sistema externo (rechazada — no escala sin duplicar lógica de consumo); `id_externo` solo (rechazada en clarify — colisión entre fuentes distintas); `(origen, id_externo)` sin organización (rechazada durante el diseño de Fase 1 — colisión entre organizaciones distintas que comparten sistema externo, y sin columna para RLS).
 
+**Precisión adicional (post-diseño)**: "mismo dominio" no significa "todo el dominio de negocio en una tabla" — significa un mismo *tipo de registro*. Los mismos sistemas externos (Xubio/Colppy/Tango) pueden producir varios tipos de dato distintos (movimientos contables, balances de mayor, facturas); cada tipo es su propia tabla central, con la misma técnica repetida (FR-004b). Un conector no está atado a una sola tabla de destino.
+
 ## R5 — Credenciales de conectores
 
 **Decisión**: Remitir al principio de manejo de secretos ya existente en el proyecto (nunca en Git, solo en gestores de variables o vault por entorno), sin definir un mecanismo de almacenamiento nuevo específico para conectores.

@@ -32,7 +32,9 @@ Módulo dentro de un worker responsable de un único sistema externo.
 
 ## Entidad: Tabla central (patrón, no esquema)
 
-Patrón de modelo de datos que un worker usa para normalizar registros de múltiples fuentes del mismo dominio de negocio, en vez de una tabla por sistema. Es una tabla de datos real del producto derivado — no una excepción al aislamiento multi-tenant del template (Principio I; FR-011).
+Patrón de modelo de datos que un worker usa para normalizar registros de múltiples fuentes que representan **un mismo tipo de registro de negocio** (movimientos contables, balances de mayor, facturas — cada uno un concepto distinto), en vez de una tabla por sistema externo. Es una tabla de datos real del producto derivado — no una excepción al aislamiento multi-tenant del template (Principio I; FR-011).
+
+**Un worker puede tener varias tablas centrales.** Si los mismos sistemas externos (Xubio, Colppy, Tango) exponen más de un tipo de dato — movimientos y también balances de mayor, por ejemplo — cada tipo se normaliza en su propia tabla central, no todos juntos en una sola. Un mismo conector puede escribir en más de una tabla central si el sistema que integra expone más de un tipo de dato (FR-004b).
 
 | Columna (conceptual) | Tipo esperado | Regla |
 |---|---|---|
