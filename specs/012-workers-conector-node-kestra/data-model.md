@@ -1,6 +1,6 @@
 # Data Model: Convención de Workers de Integración (Node + Kestra)
 
-Este documento no describe una tabla ni una migración real — no hay base de datos propia de esta feature (ver `plan.md`, Storage: N/A). Describe el **modelo conceptual** que `workers/README.md` debe documentar como patrón, para que cada spec de producto derivado lo instancie con su propio esquema concreto (Assumptions de `spec.md`).
+Este documento no describe una tabla ni una migración real — no hay base de datos propia de esta feature (ver `plan.md`, Storage: N/A). Describe el **modelo conceptual** que `workers/README.md` debe documentar como patrón, para que cada implementación lo instancie con su propio esquema concreto (Assumptions de `spec.md`).
 
 ## Entidad: Worker de integración
 
@@ -32,20 +32,20 @@ Módulo dentro de un worker responsable de un único sistema externo.
 
 ## Entidad: Tabla central (patrón, no esquema)
 
-Patrón de modelo de datos que un worker usa para normalizar registros de múltiples fuentes que representan **un mismo tipo de registro de negocio** (movimientos contables, balances de mayor, facturas — cada uno un concepto distinto), en vez de una tabla por sistema externo. Es una tabla de datos real del producto derivado — no una excepción al aislamiento multi-tenant del template (Principio I; FR-011).
+Patrón de modelo de datos que un worker usa para normalizar registros de múltiples fuentes que representan **un mismo tipo de registro de negocio** (cada tipo de registro es un concepto distinto), en vez de una tabla por sistema externo. Es una tabla de datos real de quien implemente la convención — no una excepción al aislamiento multi-tenant del template (Principio I; FR-011).
 
-**Un worker puede tener varias tablas centrales.** Si los mismos sistemas externos (Xubio, Colppy, Tango) exponen más de un tipo de dato — movimientos y también balances de mayor, por ejemplo — cada tipo se normaliza en su propia tabla central, no todos juntos en una sola. Un mismo conector puede escribir en más de una tabla central si el sistema que integra expone más de un tipo de dato (FR-004b).
+**Un worker puede tener varias tablas centrales.** Si los mismos sistemas externos integrados exponen más de un tipo de dato, cada tipo se normaliza en su propia tabla central, no todos juntos en una sola. Un mismo conector puede escribir en más de una tabla central si el sistema que integra expone más de un tipo de dato (FR-004b).
 
 | Columna (conceptual) | Tipo esperado | Regla |
 |---|---|---|
 | *(referencia a organización)* | FK a la tabla de organizaciones | Identifica qué organización es dueña del registro. Obligatoria — habilita RLS igual que cualquier otra tabla expuesta del template. Parte de la clave compuesta de idempotencia. |
 | `origen` | texto/enum corto | Identifica de qué conector/sistema vino el registro. Parte de la clave compuesta de idempotencia. |
 | `id_externo` | texto | El identificador que el sistema de origen le asignó al registro. Parte de la clave compuesta de idempotencia — **nunca usado solo, ni junto a `origen` sin la organización** (R4 en `research.md`): dos organizaciones con cuentas distintas del mismo sistema externo pueden compartir el mismo `id_externo` sin ser el mismo dato. |
-| *(columnas comunes del dominio)* | según el producto | Los campos que **todas** las fuentes de ese dominio comparten — definidos por cada spec de producto derivado, no por esta convención. |
+| *(columnas comunes del dominio)* | según la implementación | Los campos que **todas** las fuentes de ese dominio comparten — definidos por cada spec que la implemente, no por esta convención. |
 | *(columna flexible, ej. `datos_originales`)* | `jsonb` | Los campos que una fuente tiene y otra no — evita forzar todo a la estructura común. |
 
 **Regla de unicidad**: la combinación `(organización, origen, id_externo)` identifica un registro de forma única. Un worker que reimporta un período ya procesado no debe generar filas duplicadas para la misma combinación (Acceptance Scenario 3, User Story 2 de `spec.md`).
 
 **RLS**: como cualquier tabla expuesta del template, requiere policy de aislamiento por organización — no hay excepción porque las filas las escriba un worker en vez de un usuario desde la UI.
 
-**Lo que este documento NO define**: nombres de columnas de dominio, tipos de datos específicos del negocio, ni ningún esquema SQL real — eso es explícitamente responsabilidad de cada spec de producto derivado (FR-005).
+**Lo que este documento NO define**: nombres de columnas de dominio, tipos de datos específicos del negocio, ni ningún esquema SQL real — eso es explícitamente responsabilidad de cada spec que implemente la convención (FR-005).

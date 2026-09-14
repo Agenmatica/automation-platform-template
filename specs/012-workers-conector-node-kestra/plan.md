@@ -16,7 +16,7 @@ Ampliar `workers/README.md` con la convención para workers técnicos de integra
 
 **Primary Dependencies**: Ninguna nueva. Se referencia Node.js + TypeScript, Kestra y Playwright como decisiones ya vigentes en el template (no se instala ni configura nada).
 
-**Storage**: N/A — no hay tablas ni migraciones; el patrón de "tabla central" se documenta como técnica de diseño para que cada producto derivado la adapte a su propio esquema.
+**Storage**: N/A — no hay tablas ni migraciones; el patrón de "tabla central" se documenta como técnica de diseño para que cada implementación la adapte a su propio esquema.
 
 **Testing**: Revisión manual del documento contra `checklists/requirements.md` (ya validado en `/speckit-clarify`) y contra el `quickstart.md` de esta fase — no aplica testing automatizado de código porque no hay código.
 
@@ -46,7 +46,7 @@ Ampliar `workers/README.md` con la convención para workers técnicos de integra
 
 **Resultado**: PASS sin excepciones. No aplica Complexity Tracking.
 
-**Re-chequeo post-diseño (tras Fase 1)**: al diseñar `data-model.md` se detectó que la fila del Principio I de la tabla de arriba estaba mal evaluada como N/A — la tabla central sí es una tabla de datos real (aunque el esquema de cada columna de dominio lo defina cada producto derivado), así que el aislamiento multi-tenant le aplica igual que a cualquier tabla expuesta del template. Se corrigió esa fila y se agregó FR-011 a la spec antes de continuar. Con esa corrección aplicada, `data-model.md`, `contracts/workers-readme-contract.md` y `quickstart.md` no introducen ningún otro servicio, dependencia o migración nueva. Resultado final: PASS sin excepciones.
+**Re-chequeo post-diseño (tras Fase 1)**: al diseñar `data-model.md` se detectó que la fila del Principio I de la tabla de arriba estaba mal evaluada como N/A — la tabla central sí es una tabla de datos real (aunque el esquema de cada columna de dominio lo defina cada implementación), así que el aislamiento multi-tenant le aplica igual que a cualquier tabla expuesta del template. Se corrigió esa fila y se agregó FR-011 a la spec antes de continuar. Con esa corrección aplicada, `data-model.md`, `contracts/workers-readme-contract.md` y `quickstart.md` no introducen ningún otro servicio, dependencia o migración nueva. Resultado final: PASS sin excepciones.
 
 ## Project Structure
 

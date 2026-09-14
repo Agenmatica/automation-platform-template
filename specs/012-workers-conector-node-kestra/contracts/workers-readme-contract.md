@@ -22,19 +22,19 @@ Esta feature no expone una API ni una CLI — su única "interfaz" es el documen
 4c. **¿Un worker solo puede tener una tabla central, aunque integre sistemas que producen distintos tipos de dato?**
    → No. Es una tabla central por cada tipo de registro de negocio (movimientos, balances de mayor, facturas, etc.) — un mismo conector puede escribir en más de una si su sistema expone más de un tipo. (FR-004b)
 
-5. **¿La tabla central es algo que el template provee directamente, o algo que cada producto adapta?**
-   → Es una convención de diseño; cada spec de producto derivado la adapta a su propio dominio. No es un esquema, migración ni tabla que el template entregue. (FR-005)
+5. **¿La tabla central es algo que el template provee directamente, o algo que cada implementación adapta?**
+   → Es una convención de diseño; cada spec que la implemente la adapta a su propio dominio. No es un esquema, migración ni tabla que el template entregue. (FR-005)
 
 6. **¿Qué significa "healthcheck" para un worker que Kestra dispara y que termina al finalizar (no un servicio persistente)?**
    → El código de salida/estado que Kestra ya registra — sin necesidad de un endpoint HTTP separado. Un worker que sea un servicio persistente queda fuera de esta convención. (FR-006)
 
-7. **¿El documento menciona Mercado Libre, marketplaces, Xubio, Colppy, Tango o cualquier otro concepto de negocio de los casos que la motivaron?**
+7. **¿El documento nombra alguna marca, empresa, sistema externo concreto o cualquier otro concepto de negocio de los casos que la motivaron?**
    → No, en ningún punto. (FR-007) — verificable por revisión de texto (SC-003).
 
 8. **¿Esta convención resuelve procesamiento en tiempo real (colas) o un backend síncrono para un frontend?**
-   → No — ambos quedan explícitamente fuera de alcance, como decisión propia de cada producto derivado. (FR-008)
+   → No — ambos quedan explícitamente fuera de alcance, como decisión propia de cada implementación. (FR-008)
 
-9. **¿Por qué esta convención vive en el template y no en un producto derivado puntual?**
+9. **¿Por qué esta convención vive en el template y no en una implementación puntual?**
    → Porque surge de al menos dos automatizaciones de dominios de negocio independientes que llegaron al mismo patrón sin coordinación. (FR-009)
 
 10. **¿Dónde se guardan las credenciales que un conector necesita para acceder a su sistema externo?**
@@ -45,5 +45,5 @@ Esta feature no expone una API ni una CLI — su única "interfaz" es el documen
 
 ## Fuera del contrato (a propósito)
 
-- Nombres de columnas de dominio, esquemas SQL reales, o cualquier detalle específico de un producto derivado — eso lo define cada spec puntual, no este documento.
+- Nombres de columnas de dominio, esquemas SQL reales, o cualquier detalle específico de una implementación puntual — eso lo define cada spec puntual, no este documento.
 - Cualquier mención a Redis, BullMQ o un backend HTTP síncrono como parte de esta convención (si aparecen, debe ser para decir explícitamente que quedan fuera, no para incorporarlos).
