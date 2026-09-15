@@ -8,6 +8,7 @@ const RECURSOS_EXCLUSIVOS_SUPERADMIN = new Set([
   'organizaciones',
   'analitica-administrar',
   'features-administrar',
+  'servidores',
 ])
 const RECURSOS_DE_ORGANIZACION = new Set(['clientes', 'miembros', 'analitica'])
 

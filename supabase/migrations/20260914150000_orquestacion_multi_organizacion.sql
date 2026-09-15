@@ -4,12 +4,13 @@
 --   drop function private.registrar_alerta(text, uuid, uuid, text);
 --   drop function private.marcar_conexion_credencial_invalida(uuid, text);
 --   drop function private.marcar_conexion_activa(uuid);
---   drop function private.obtener_credencial_servidor(uuid);
---   drop function private.obtener_credencial_conexion(uuid);
---   drop function private.actualizar_credencial_conexion(uuid, text);
---   drop function private.crear_conexion(uuid, text, text);
+--   drop function private.datos_despacho_conexion(uuid, text);
+--   drop function public.obtener_credencial_servidor(uuid);
+--   drop function public.obtener_credencial_conexion(uuid);
+--   drop function public.actualizar_credencial_conexion(uuid, text);
+--   drop function public.crear_conexion(uuid, text, text);
 --   drop function private.organizacion_del_rol_actual();
---   drop function private.aprovisionar_servidor_organizacion(uuid, text, integer, text, text);
+--   drop function public.aprovisionar_servidor_organizacion(uuid, text, integer, text, text);
 --   drop function private.es_administrador_de(uuid);
 --   drop role kestra_orquestacion;
 --   drop table alertas;
@@ -20,6 +21,23 @@
 -- además borrar a mano cada rol worker_<organizacion_id sin guiones>
 -- creado dinámicamente por aprovisionar_servidor_organizacion — no están
 -- listados acá porque no existen hasta el primer aprovisionamiento.
+--
+-- Desvío (Fase 3, T016): las 5 funciones que Refine llama directo desde el
+-- navegador (aprovisionar_servidor_organizacion, crear_conexion,
+-- actualizar_credencial_conexion, obtener_credencial_conexion,
+-- obtener_credencial_servidor) viven en public, no en private como decían
+-- data-model.md/contracts/ original — supabase/config.toml solo expone
+-- "public"/"graphql_public" a PostgREST (api.schemas): una función en
+-- private es inalcanzable por supabaseClient.rpc(...) sin importar su
+-- GRANT, exactamente el bug que esto corrige. Mismo criterio que el resto
+-- del repo (public.agregar_miembro, public.habilitar_feature,
+-- public.entrar_a_organizacion, etc.): private queda reservado para
+-- helpers que ninguna sesión de PostgREST necesita invocar directo
+-- (es_administrador_de, organizacion_del_rol_actual, marcar_conexion_*,
+-- registrar_alerta — estas dos últimas y registrar_alerta las usa
+-- kestra_orquestacion por JDBC directo, no por PostgREST). Cada función no
+-- cambió de lógica, solo de schema — el chequeo de permiso interno sigue
+-- siendo el único punto de decisión (R4).
 
 -- supabase_vault ya viene instalada en la imagen de Postgres de Supabase;
 -- queda explícita acá porque es el primer uso en este repo (research.md R3).
@@ -43,7 +61,7 @@ create table servidores_organizacion (
 );
 
 comment on table servidores_organizacion is
-  'Servidor Docker propio de cada organización, alcanzable por SSH desde el servidor central (spec 013). Un servidor por organización (unique). credencial_ssh_vault_id/credencial_db_vault_id referencian vault.secrets — nunca en texto plano acá (R3). Escritura únicamente vía private.aprovisionar_servidor_organizacion.';
+  'Servidor Docker propio de cada organización, alcanzable por SSH desde el servidor central (spec 013). Un servidor por organización (unique). credencial_ssh_vault_id/credencial_db_vault_id referencian vault.secrets — nunca en texto plano acá (R3). Escritura únicamente vía public.aprovisionar_servidor_organizacion.';
 
 create table conexiones (
   id uuid primary key default gen_random_uuid(),
@@ -57,7 +75,7 @@ create table conexiones (
 );
 
 comment on table conexiones is
-  'Vínculo entre una organización y un sistema externo (spec 013). Sin índice único sobre (organizacion_id, sistema_externo): una organización puede tener más de una conexión al mismo sistema (R10, FR-021). credencial_vault_id referencia vault.secrets, nunca en texto plano acá — el valor descifrado sale únicamente por private.obtener_credencial_conexion.';
+  'Vínculo entre una organización y un sistema externo (spec 013). Sin índice único sobre (organizacion_id, sistema_externo): una organización puede tener más de una conexión al mismo sistema (R10, FR-021). credencial_vault_id referencia vault.secrets, nunca en texto plano acá — el valor descifrado sale únicamente por public.obtener_credencial_conexion.';
 
 create index conexiones_organizacion_id_idx on conexiones (organizacion_id);
 
@@ -144,7 +162,7 @@ as $$
 $$;
 
 comment on function private.organizacion_del_rol_actual() is
-  'Resuelve la organización dueña del rol de Postgres que abrió esta conexión. Usa session_user, no current_user: dentro de una función security definer, current_user pasa a ser el dueño de la función (postgres), no quien llamó — session_user sí conserva la identidad real de la conexión (verificado empíricamente; difiere de la redacción informal de tasks.md/data-model.md, que dice "current_user"). Pensada para que las políticas RLS de las tablas de dominio de una implementación futura (spec 012) resuelvan la organización de un rol worker_* sin depender de un claim que el propio worker podría fijar (R5). EXECUTE se otorga rol por rol al aprovisionar cada servidor (private.aprovisionar_servidor_organizacion) — no existe un grupo worker_* genérico en Postgres.';
+  'Resuelve la organización dueña del rol de Postgres que abrió esta conexión. Usa session_user, no current_user: dentro de una función security definer, current_user pasa a ser el dueño de la función (postgres), no quien llamó — session_user sí conserva la identidad real de la conexión (verificado empíricamente; difiere de la redacción informal de tasks.md/data-model.md, que dice "current_user"). Pensada para que las políticas RLS de las tablas de dominio de una implementación futura (spec 012) resuelvan la organización de un rol worker_* sin depender de un claim que el propio worker podría fijar (R5). EXECUTE se otorga rol por rol al aprovisionar cada servidor (public.aprovisionar_servidor_organizacion) — no existe un grupo worker_* genérico en Postgres.';
 
 -- Sin este revoke, el EXECUTE a PUBLIC que Postgres otorga por defecto a
 -- toda función nueva quedaría alcanzable por cualquier authenticated (ya
@@ -153,7 +171,7 @@ comment on function private.organizacion_del_rol_actual() is
 -- concede explícito más abajo.
 revoke execute on function private.organizacion_del_rol_actual() from public;
 
-create or replace function private.aprovisionar_servidor_organizacion(
+create or replace function public.aprovisionar_servidor_organizacion(
   p_organizacion_id uuid,
   p_host text,
   p_usuario_ssh text,
@@ -222,13 +240,13 @@ begin
 end;
 $$;
 
-comment on function private.aprovisionar_servidor_organizacion(uuid, text, text, text, integer) is
-  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md (FR-014). Crea el rol worker_<organizacion_id>, genera su contraseña, guarda ambas credenciales en Vault e inserta la fila — todo en una sola llamada. password_rol viaja SOLO en el resultado de esta llamada: no queda recuperable en texto plano después (mismo criterio que cualquier secret manager, ver quickstart.md). Falla con 23505 si la organización ya tiene servidor: no hay "reemplazar servidor" en esta spec.';
+comment on function public.aprovisionar_servidor_organizacion(uuid, text, text, text, integer) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md (FR-014). Crea el rol worker_<organizacion_id>, genera su contraseña, guarda ambas credenciales en Vault e inserta la fila — todo en una sola llamada. password_rol viaja SOLO en el resultado de esta llamada: no queda recuperable en texto plano después (mismo criterio que cualquier secret manager, ver quickstart.md). Falla con 23505 si la organización ya tiene servidor: no hay "reemplazar servidor" en esta spec. En public (no private): es la función que Refine llama vía supabaseClient.rpc — private no es alcanzable por PostgREST (api.schemas en supabase/config.toml), ver nota de desvío al inicio del archivo.';
 
-revoke execute on function private.aprovisionar_servidor_organizacion(uuid, text, text, text, integer) from public;
-grant execute on function private.aprovisionar_servidor_organizacion(uuid, text, text, text, integer) to authenticated;
+revoke execute on function public.aprovisionar_servidor_organizacion(uuid, text, text, text, integer) from public;
+grant execute on function public.aprovisionar_servidor_organizacion(uuid, text, text, text, integer) to authenticated;
 
-create or replace function private.crear_conexion(
+create or replace function public.crear_conexion(
   p_organizacion_id uuid,
   p_sistema_externo text,
   p_credencial text
@@ -260,13 +278,13 @@ begin
 end;
 $$;
 
-comment on function private.crear_conexion(uuid, text, text) is
-  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md. La app nunca inserta la fila directo con el valor plano: esta función guarda la credencial en Vault y crea la fila en un solo paso, con estado inicial activa.';
+comment on function public.crear_conexion(uuid, text, text) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md. La app nunca inserta la fila directo con el valor plano: esta función guarda la credencial en Vault y crea la fila en un solo paso, con estado inicial activa. En public (no private): ver nota de desvío al inicio del archivo.';
 
-revoke execute on function private.crear_conexion(uuid, text, text) from public;
-grant execute on function private.crear_conexion(uuid, text, text) to authenticated;
+revoke execute on function public.crear_conexion(uuid, text, text) from public;
+grant execute on function public.crear_conexion(uuid, text, text) to authenticated;
 
-create or replace function private.actualizar_credencial_conexion(
+create or replace function public.actualizar_credencial_conexion(
   p_conexion_id uuid,
   p_nueva_credencial text
 )
@@ -296,13 +314,13 @@ begin
 end;
 $$;
 
-comment on function private.actualizar_credencial_conexion(uuid, text) is
-  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md. Rota el secreto de Vault de una conexión existente sin cambiar su id ni su estado. No devuelve la credencial anterior ni la nueva.';
+comment on function public.actualizar_credencial_conexion(uuid, text) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md. Rota el secreto de Vault de una conexión existente sin cambiar su id ni su estado. No devuelve la credencial anterior ni la nueva. En public (no private): ver nota de desvío al inicio del archivo.';
 
-revoke execute on function private.actualizar_credencial_conexion(uuid, text) from public;
-grant execute on function private.actualizar_credencial_conexion(uuid, text) to authenticated;
+revoke execute on function public.actualizar_credencial_conexion(uuid, text) from public;
+grant execute on function public.actualizar_credencial_conexion(uuid, text) to authenticated;
 
-create or replace function private.obtener_credencial_conexion(p_conexion_id uuid)
+create or replace function public.obtener_credencial_conexion(p_conexion_id uuid)
 returns text
 language plpgsql
 stable
@@ -330,14 +348,14 @@ begin
 end;
 $$;
 
-comment on function private.obtener_credencial_conexion(uuid) is
-  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md (R4). Único punto de acceso a la credencial de negocio descifrada: valida permiso antes de leer vault.decrypted_secrets, nunca expuesta directo (FR-006/FR-007). session_user = kestra_orquestacion cubre la ejecución real; un administrador de la organización (o superadmin) puede usarla igual, por ejemplo para una prueba de conexión desde Refine.';
+comment on function public.obtener_credencial_conexion(uuid) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md (R4). Único punto de acceso a la credencial de negocio descifrada: valida permiso antes de leer vault.decrypted_secrets, nunca expuesta directo (FR-006/FR-007). session_user = kestra_orquestacion cubre la ejecución real (JDBC directo, no PostgREST); un administrador de la organización (o superadmin) puede usarla igual desde Refine, por ejemplo para una prueba de conexión — por eso vive en public y no en private, ver nota de desvío al inicio del archivo.';
 
-revoke execute on function private.obtener_credencial_conexion(uuid) from public;
-grant execute on function private.obtener_credencial_conexion(uuid) to authenticated;
-grant execute on function private.obtener_credencial_conexion(uuid) to kestra_orquestacion;
+revoke execute on function public.obtener_credencial_conexion(uuid) from public;
+grant execute on function public.obtener_credencial_conexion(uuid) to authenticated;
+grant execute on function public.obtener_credencial_conexion(uuid) to kestra_orquestacion;
 
-create or replace function private.obtener_credencial_servidor(p_organizacion_id uuid)
+create or replace function public.obtener_credencial_servidor(p_organizacion_id uuid)
 returns text
 language plpgsql
 stable
@@ -361,12 +379,67 @@ begin
 end;
 $$;
 
-comment on function private.obtener_credencial_servidor(uuid) is
-  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md (R4). Ídem private.obtener_credencial_conexion, para la credencial SSH de infraestructura de servidores_organizacion.';
+comment on function public.obtener_credencial_servidor(uuid) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/gestion-conexiones-y-servidores.md (R4). Ídem public.obtener_credencial_conexion, para la credencial SSH de infraestructura de servidores_organizacion. En public (no private): ver nota de desvío al inicio del archivo.';
 
-revoke execute on function private.obtener_credencial_servidor(uuid) from public;
-grant execute on function private.obtener_credencial_servidor(uuid) to authenticated;
-grant execute on function private.obtener_credencial_servidor(uuid) to kestra_orquestacion;
+revoke execute on function public.obtener_credencial_servidor(uuid) from public;
+grant execute on function public.obtener_credencial_servidor(uuid) to authenticated;
+grant execute on function public.obtener_credencial_servidor(uuid) to kestra_orquestacion;
+
+-- Agregada en Fase 3 (T015, no en data-model.md original): el flow de
+-- despacho necesita el host/puerto/usuario del servidor de la organización
+-- para su tarea SSH, y el conexion_id para pedir la credencial de negocio
+-- después — pero kestra_orquestacion no tiene (ni debe tener, mismo
+-- criterio que kestra_backups en spec 011: acceso solo por función, nunca
+-- select de tabla directo) ningún GRANT sobre servidores_organizacion ni
+-- conexiones. Sin secretos acá (host/puerto/usuario no son secretos, R3):
+-- security definer solo para poder leer las tablas pese a que
+-- kestra_orquestacion no tiene select sobre ellas, no por control de
+-- acceso adicional (ese ya lo resuelve el grant execute exclusivo de
+-- abajo). Si una organización tiene más de una conexión al mismo
+-- sistema_externo (R10, permitido a propósito) esta función toma la más
+-- reciente — desambiguar cuál usa el flow genérico por defecto queda
+-- fuera de alcance por ahora (research.md R10, "alternatives considered").
+create or replace function private.datos_despacho_conexion(
+  p_organizacion_id uuid,
+  p_sistema_externo text
+)
+returns table (
+  conexion_id uuid,
+  host text,
+  puerto_ssh integer,
+  usuario_ssh text
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_resultado record;
+begin
+  select c.id, s.host, s.puerto_ssh, s.usuario_ssh
+  into v_resultado
+  from public.conexiones c
+  join public.servidores_organizacion s on s.organizacion_id = c.organizacion_id
+  where c.organizacion_id = p_organizacion_id
+    and c.sistema_externo = p_sistema_externo
+  order by c.created_at desc
+  limit 1;
+
+  if v_resultado is null then
+    raise exception 'No hay conexión a % para la organización %, o no tiene servidor aprovisionado', p_sistema_externo, p_organizacion_id using errcode = 'P0002';
+  end if;
+
+  return query select v_resultado.id, v_resultado.host, v_resultado.puerto_ssh, v_resultado.usuario_ssh;
+end;
+$$;
+
+comment on function private.datos_despacho_conexion(uuid, text) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/orquestacion-kestra.md (paso 3, despacho). Único punto por el que infra/kestra/flows/plantilla-generico.yml/plantilla-dedicado.yml resuelven a qué conexión y servidor despachar, sin darle a kestra_orquestacion select directo sobre las tablas (mismo criterio que kestra_backups, spec 011). No expone ningún *_vault_id — las credenciales siguen saliendo únicamente por obtener_credencial_conexion/obtener_credencial_servidor.';
+
+revoke execute on function private.datos_despacho_conexion(uuid, text) from public, authenticated, anon;
+grant execute on function private.datos_despacho_conexion(uuid, text) to kestra_orquestacion;
 
 create or replace function private.marcar_conexion_activa(p_conexion_id uuid)
 returns void
@@ -446,7 +519,7 @@ alter table alertas enable row level security;
 
 -- servidores_organizacion: superadmin ve todas, administrador de esa
 -- organización ve la suya. Sin policy de insert/update: el único camino es
--- private.aprovisionar_servidor_organizacion (security definer, bypassa
+-- public.aprovisionar_servidor_organizacion (security definer, bypassa
 -- RLS como dueño de la tabla) — no hay "alta directa" para authenticated.
 create policy servidores_organizacion_select on servidores_organizacion
   for select to authenticated
@@ -456,7 +529,7 @@ create policy servidores_organizacion_select on servidores_organizacion
 -- solo select/delete tienen GRANT de tabla para authenticated más abajo —
 -- insert/update quedan sin GRANT a propósito (contracts/gestion-conexiones-y-servidores.md
 -- #3/#4: "nunca un insert/update directo del cliente", solo vía
--- private.crear_conexion/actualizar_credencial_conexion). Las policies de
+-- public.crear_conexion/actualizar_credencial_conexion). Las policies de
 -- insert/update quedan igual definidas como cinturón de seguridad si algún
 -- día se otorga el GRANT.
 create policy conexiones_select on conexiones

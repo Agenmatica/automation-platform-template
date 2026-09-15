@@ -1,0 +1,116 @@
+# Orquestación de workers multi-organización (spec 013). Se aplica al
+# Kestra corriendo vía su API/CLI (mismo principio que respaldo-postgres.yml,
+# spec 011) — nunca se crea o edita solo desde la UI.
+#
+# Contrato completo: specs/013-orquestacion-multi-organizacion/contracts/orquestacion-kestra.md
+#
+# Es una PLANTILLA: cada conector real (spec de producto futura) copia este
+# archivo con su propio `id`/namespace y ajusta `imagen` a la imagen que
+# publica su propio workers/<carpeta>/Dockerfile (T014) — no hay un único
+# flow "genérico" compartido entre conectores de negocio distintos, porque
+# Kestra no permite parametrizar el `id` de un flow en tiempo de ejecución.
+# Lo que sí es común a cualquier conector es este contrato de despacho
+# (resolver conexión → credenciales → SSH → marcar activa).
+#
+# Fase 3 (US1, T015): despacho por SSH a una sola organización pasada como
+# input, sin el recorrido paralelo todavía (eso es US2/T018) y sin
+# retry/errors todavía (eso es US4/T027) — un incremento entregable por sí
+# solo (MVP): un servidor de organización puede recibir una ejecución
+# despachada por SSH con una imagen real publicada por CI.
+id: plantilla-generico
+namespace: platform.orquestacion
+
+description: |
+  Plantilla de despacho por SSH al servidor de una organización (FR-001,
+  FR-002): resuelve su conexión activa a un sistema externo, pide las
+  credenciales de infraestructura y de negocio a través de las funciones
+  SECURITY DEFINER de spec 013 (nunca lee vault.decrypted_secrets directo),
+  hace `docker pull` + `docker run` de la imagen del worker en el servidor
+  de la organización, y en éxito marca la conexión como activa (R9).
+
+inputs:
+  - id: organizacion_id
+    type: STRING
+    description: "uuid de la organización a despachar en esta ejecución."
+
+  - id: sistema_externo
+    type: STRING
+    description: "slug del sistema externo (conexiones.sistema_externo) que este conector atiende."
+
+  - id: imagen
+    type: STRING
+    description: "Imagen del worker a ejecutar, con tag — por ejemplo ghcr.io/<owner>/<repo>-worker-<nombre>:latest (T014)."
+
+tasks:
+  # Resuelve a qué conexión/servidor despachar (private.datos_despacho_conexion,
+  # T015 — agregada porque kestra_orquestacion no tiene select directo sobre
+  # servidores_organizacion/conexiones, mismo criterio que kestra_backups en
+  # spec 011: acceso solo por función). Falla con P0002 si la organización no
+  # tiene conexión a ese sistema o no tiene servidor aprovisionado.
+  - id: resolver_despacho
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH_ONE
+    sql: select * from private.datos_despacho_conexion(CAST(:organizacion_id AS uuid), :sistema_externo);
+    parameters:
+      organizacion_id: "{{ inputs.organizacion_id }}"
+      sistema_externo: "{{ inputs.sistema_externo }}"
+
+  # Credencial SSH de infraestructura del servidor (R4) — nunca en texto
+  # plano fuera de esta tarea/las siguientes, nunca logueada explícitamente.
+  - id: obtener_credencial_servidor
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH_ONE
+    sql: select public.obtener_credencial_servidor(CAST(:organizacion_id AS uuid)) as credencial;
+    parameters:
+      organizacion_id: "{{ inputs.organizacion_id }}"
+
+  # Credencial de negocio de la conexión (R4) — la que el worker necesita
+  # para autenticarse contra el sistema externo, no la de acceso al servidor.
+  - id: obtener_credencial_conexion
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH_ONE
+    sql: select public.obtener_credencial_conexion(CAST(:conexion_id AS uuid)) as credencial;
+    parameters:
+      conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+
+  # Despacho real (R1): docker pull (trae la imagen vigente publicada por
+  # T014, sin ningún paso de despliegue activo hacia el servidor — FR-016)
+  # + docker run con las credenciales de esta ejecución pasadas por
+  # variable de entorno al worker. ORGANIZACION_ID/SISTEMA_EXTERNO/CREDENCIAL
+  # es una convención razonable de este template, no un contrato rígido —
+  # cada worker documenta su propio contrato de entrada en su README
+  # (workers/README.md, spec 012).
+  - id: despacho_ssh
+    type: io.kestra.plugin.fs.ssh.Command
+    host: "{{ outputs.resolver_despacho.row.host }}"
+    port: "{{ outputs.resolver_despacho.row.puerto_ssh }}"
+    username: "{{ outputs.resolver_despacho.row.usuario_ssh }}"
+    password: "{{ outputs.obtener_credencial_servidor.row.credencial }}"
+    commands:
+      - docker pull {{ inputs.imagen }}
+      - |
+        docker run --rm \
+          -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
+          -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
+          -e CREDENCIAL="{{ outputs.obtener_credencial_conexion.row.credencial }}" \
+          {{ inputs.imagen }}
+
+  # Éxito (R9): limpia error/credencial_invalida sin ninguna acción del
+  # administrador (FR-013) — no-op si la conexión ya estaba activa.
+  - id: marcar_conexion_activa
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    sql: select private.marcar_conexion_activa(CAST(:conexion_id AS uuid));
+    parameters:
+      conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"

@@ -16,7 +16,7 @@
 -- de punta a punta es responsabilidad de quickstart.md, no de esta suite.
 begin;
 
-select plan(60);
+select plan(65);
 
 -- ============================================================================
 -- Fixture
@@ -100,7 +100,7 @@ select is(
 reset role;
 
 -- ============================================================================
--- private.aprovisionar_servidor_organizacion (FR-014, US5)
+-- public.aprovisionar_servidor_organizacion (FR-014, US5)
 -- ============================================================================
 
 select set_config(
@@ -111,7 +111,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select private.aprovisionar_servidor_organizacion('d1111111-1111-1111-1111-111111111111', 'host-x.example.com', 'deploy', 'clave-ssh-x')$$,
+  $$select public.aprovisionar_servidor_organizacion('d1111111-1111-1111-1111-111111111111', 'host-x.example.com', 'deploy', 'clave-ssh-x')$$,
   '42501',
   null,
   'un administrador de organización no puede aprovisionar un servidor (solo superadmin)'
@@ -127,7 +127,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select private.aprovisionar_servidor_organizacion('00000000-0000-0000-0000-000000000000', 'host.example.com', 'deploy', 'clave-ssh')$$,
+  $$select public.aprovisionar_servidor_organizacion('00000000-0000-0000-0000-000000000000', 'host.example.com', 'deploy', 'clave-ssh')$$,
   'P0002',
   null,
   'aprovisionar_servidor_organizacion rechaza una organización que no existe'
@@ -135,7 +135,7 @@ select throws_ok(
 
 insert into t_txt (key, val)
 select 'password_x', password_rol
-from private.aprovisionar_servidor_organizacion(
+from public.aprovisionar_servidor_organizacion(
   'd1111111-1111-1111-1111-111111111111', 'host-x.example.com', 'deploy', 'clave-ssh-x'
 );
 
@@ -151,7 +151,7 @@ select is(
 );
 
 select throws_ok(
-  $$select private.aprovisionar_servidor_organizacion('d1111111-1111-1111-1111-111111111111', 'otro-host.example.com', 'deploy', 'otra-clave')$$,
+  $$select public.aprovisionar_servidor_organizacion('d1111111-1111-1111-1111-111111111111', 'otro-host.example.com', 'deploy', 'otra-clave')$$,
   '23505',
   null,
   'una organización con servidor ya aprovisionado no puede aprovisionarse de nuevo'
@@ -160,7 +160,7 @@ select throws_ok(
 -- Segunda organización, para los bloques de aislamiento más abajo.
 insert into t_txt (key, val)
 select 'password_y', password_rol
-from private.aprovisionar_servidor_organizacion(
+from public.aprovisionar_servidor_organizacion(
   'd2222222-2222-2222-2222-222222222222', 'host-y.example.com', 'deploy', 'clave-ssh-y'
 );
 
@@ -208,7 +208,7 @@ select is(
 );
 
 -- ============================================================================
--- private.crear_conexion / actualizar_credencial_conexion (FR-009, US3)
+-- public.crear_conexion / actualizar_credencial_conexion (FR-009, US3)
 -- ============================================================================
 
 select set_config(
@@ -219,7 +219,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select private.crear_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba', 'credencial-secreta')$$,
+  $$select public.crear_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba', 'credencial-secreta')$$,
   '42501',
   null,
   'un miembro sin rol administrador no puede crear una conexión (US3 AC3)'
@@ -235,14 +235,14 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select private.crear_conexion('d2222222-2222-2222-2222-222222222222', 'sistema-de-prueba', 'credencial-secreta')$$,
+  $$select public.crear_conexion('d2222222-2222-2222-2222-222222222222', 'sistema-de-prueba', 'credencial-secreta')$$,
   '42501',
   null,
   'el administrador de X no puede crear una conexión para Y'
 );
 
 insert into t_ids (key, val)
-select 'conexion_x', (private.crear_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba', 'credencial-secreta-x')).id;
+select 'conexion_x', (public.crear_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba', 'credencial-secreta-x')).id;
 
 select is(
   (select estado from conexiones where id = (select val from t_ids where key = 'conexion_x')),
@@ -251,14 +251,14 @@ select is(
 );
 
 select throws_ok(
-  $$select private.actualizar_credencial_conexion('00000000-0000-0000-0000-000000000000', 'nueva-credencial')$$,
+  $$select public.actualizar_credencial_conexion('00000000-0000-0000-0000-000000000000', 'nueva-credencial')$$,
   'P0002',
   null,
   'actualizar_credencial_conexion rechaza una conexión que no existe'
 );
 
 select lives_ok(
-  format($$select private.actualizar_credencial_conexion('%s', 'credencial-rotada-x')$$, (select val from t_ids where key = 'conexion_x')),
+  format($$select public.actualizar_credencial_conexion('%s', 'credencial-rotada-x')$$, (select val from t_ids where key = 'conexion_x')),
   'el administrador de X puede rotar la credencial de su propia conexión'
 );
 
@@ -272,7 +272,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  format($$select private.actualizar_credencial_conexion('%s', 'otra-credencial')$$, (select val from t_ids where key = 'conexion_x')),
+  format($$select public.actualizar_credencial_conexion('%s', 'otra-credencial')$$, (select val from t_ids where key = 'conexion_x')),
   '42501',
   null,
   'el administrador de Y no puede rotar la credencial de una conexión de X'
@@ -289,12 +289,12 @@ select set_config(
 set local role authenticated;
 
 insert into t_ids (key, val)
-select 'conexion_y', (private.crear_conexion('d2222222-2222-2222-2222-222222222222', 'sistema-de-prueba', 'credencial-secreta-y')).id;
+select 'conexion_y', (public.crear_conexion('d2222222-2222-2222-2222-222222222222', 'sistema-de-prueba', 'credencial-secreta-y')).id;
 
 reset role;
 
 -- ============================================================================
--- private.obtener_credencial_conexion / obtener_credencial_servidor (R4)
+-- public.obtener_credencial_conexion / obtener_credencial_servidor (R4)
 -- ============================================================================
 
 select set_config(
@@ -305,13 +305,13 @@ select set_config(
 set local role authenticated;
 
 select is(
-  (select private.obtener_credencial_conexion((select val from t_ids where key = 'conexion_x'))),
+  (select public.obtener_credencial_conexion((select val from t_ids where key = 'conexion_x'))),
   'credencial-rotada-x',
   'el administrador de X puede leer (descifrada) la credencial rotada de su propia conexión'
 );
 
 select throws_ok(
-  format($$select private.obtener_credencial_conexion('%s')$$, (select val from t_ids where key = 'conexion_y')),
+  format($$select public.obtener_credencial_conexion('%s')$$, (select val from t_ids where key = 'conexion_y')),
   '42501',
   null,
   'el administrador de X no puede leer la credencial de una conexión de Y'
@@ -327,7 +327,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  format($$select private.obtener_credencial_conexion('%s')$$, (select val from t_ids where key = 'conexion_x')),
+  format($$select public.obtener_credencial_conexion('%s')$$, (select val from t_ids where key = 'conexion_x')),
   '42501',
   null,
   'un miembro sin rol administrador de X no puede leer la credencial de una conexión de X'
@@ -336,20 +336,20 @@ select throws_ok(
 reset role;
 
 select throws_ok(
-  format($$select private.obtener_credencial_conexion('%s')$$, (select val from t_ids where key = 'conexion_x')),
+  format($$select public.obtener_credencial_conexion('%s')$$, (select val from t_ids where key = 'conexion_x')),
   '42501',
   null,
   'llamar obtener_credencial_conexion como postgres (dueño de la función) también se rechaza — el chequeo interno no confía implícitamente en el dueño'
 );
 
 select is(
-  has_function_privilege('kestra_orquestacion', 'private.obtener_credencial_conexion(uuid)', 'EXECUTE'),
+  has_function_privilege('kestra_orquestacion', 'public.obtener_credencial_conexion(uuid)', 'EXECUTE'),
   true,
   'kestra_orquestacion tiene EXECUTE de obtener_credencial_conexion'
 );
 
 select is(
-  has_function_privilege('anon', 'private.obtener_credencial_conexion(uuid)', 'EXECUTE'),
+  has_function_privilege('anon', 'public.obtener_credencial_conexion(uuid)', 'EXECUTE'),
   false,
   'anon no tiene EXECUTE de obtener_credencial_conexion'
 );
@@ -362,13 +362,13 @@ select set_config(
 set local role authenticated;
 
 select is(
-  (select private.obtener_credencial_servidor('d1111111-1111-1111-1111-111111111111')),
+  (select public.obtener_credencial_servidor('d1111111-1111-1111-1111-111111111111')),
   'clave-ssh-x',
   'el administrador de X puede leer la credencial SSH de su propio servidor'
 );
 
 select throws_ok(
-  $$select private.obtener_credencial_servidor('d2222222-2222-2222-2222-222222222222')$$,
+  $$select public.obtener_credencial_servidor('d2222222-2222-2222-2222-222222222222')$$,
   '42501',
   null,
   'el administrador de X no puede leer la credencial del servidor de Y'
@@ -377,9 +377,44 @@ select throws_ok(
 reset role;
 
 select is(
-  has_function_privilege('kestra_orquestacion', 'private.obtener_credencial_servidor(uuid)', 'EXECUTE'),
+  has_function_privilege('kestra_orquestacion', 'public.obtener_credencial_servidor(uuid)', 'EXECUTE'),
   true,
   'kestra_orquestacion tiene EXECUTE de obtener_credencial_servidor'
+);
+
+-- ============================================================================
+-- private.datos_despacho_conexion (T015, resolución de host/puerto/usuario
+-- para la tarea SSH del flow — kestra_orquestacion no tiene select directo
+-- sobre servidores_organizacion/conexiones, mismo criterio que kestra_backups)
+-- ============================================================================
+
+select is(
+  has_function_privilege('kestra_orquestacion', 'private.datos_despacho_conexion(uuid, text)', 'EXECUTE'),
+  true,
+  'kestra_orquestacion tiene EXECUTE de datos_despacho_conexion'
+);
+select is(
+  has_function_privilege('authenticated', 'private.datos_despacho_conexion(uuid, text)', 'EXECUTE'),
+  false,
+  'authenticated no tiene EXECUTE de datos_despacho_conexion — solo kestra_orquestacion la necesita'
+);
+
+select is(
+  (select host from private.datos_despacho_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba')),
+  'host-x.example.com',
+  'datos_despacho_conexion resuelve el host del servidor de X para su conexión a sistema-de-prueba'
+);
+select is(
+  (select conexion_id from private.datos_despacho_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba')),
+  (select val from t_ids where key = 'conexion_x'),
+  'y el conexion_id es el de la conexión de X, no otro'
+);
+
+select throws_ok(
+  $$select private.datos_despacho_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-sin-conexion')$$,
+  'P0002',
+  null,
+  'datos_despacho_conexion falla si la organización no tiene conexión a ese sistema_externo'
 );
 
 -- ============================================================================

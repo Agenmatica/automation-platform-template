@@ -17,6 +17,8 @@ import { SiderConSeccionesSuperadmin } from './components/SiderConSeccionesSuper
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
 import { OrganizacionList } from './pages/organizaciones/list'
+import { ServidorCreate } from './pages/servidores/create'
+import { ServidorList } from './pages/servidores/list'
 import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
@@ -148,6 +150,12 @@ function App() {
                 meta: { label: 'Organizaciones' },
               },
               {
+                name: 'servidores',
+                list: '/servidores',
+                create: '/servidores/create',
+                meta: { label: 'Servidores' },
+              },
+              {
                 name: 'clientes',
                 list: '/clientes',
                 create: '/clientes/create',
@@ -193,6 +201,8 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="/organizaciones" element={<OrganizacionList />} />
                 <Route path="/organizaciones/create" element={<OrganizacionCreate />} />
+                <Route path="/servidores" element={<ServidorList />} />
+                <Route path="/servidores/create" element={<ServidorCreate />} />
                 <Route
                   path="/clientes"
                   element={
