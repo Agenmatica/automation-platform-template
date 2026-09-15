@@ -3,16 +3,23 @@ import react from '@vitejs/plugin-react'
 // so build and tests share this one file instead of two configs to keep in sync.
 import { defineConfig } from 'vitest/config'
 
+// Puerto configurable (spec 015, contracts/variables-puerto.md) — este
+// archivo corre en Node al arrancar, no en el bundle del navegador, así que
+// process.env está disponible directo (sin el prefijo VITE_, que es solo
+// para variables expuestas al código de cliente). Fallback al puerto actual
+// para que un checkout sin WEB_PORT definido arranque igual que hoy (FR-009).
+const webPort = Number(process.env.WEB_PORT) || 3100
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    port: 3100,
+    port: webPort,
   },
   preview: {
     host: '0.0.0.0',
-    port: 3100,
+    port: webPort,
   },
   test: {
     environment: 'jsdom',

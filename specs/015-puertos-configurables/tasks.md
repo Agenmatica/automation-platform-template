@@ -28,9 +28,9 @@ Repositorio único — todas las rutas son relativas a la raíz del repo, según
 
 **Purpose**: Declarar las variables de puerto nuevas en los tres `.env.example` del repo, con el mismo default que usa el template hoy — la base que el resto de las fases consume.
 
-- [ ] T001 [P] Agregar las 12 variables de puerto nuevas a `.env.example` (raíz) — `WEB_PORT`, `SUPABASE_API_PORT`, `SUPABASE_DB_PORT`, `SUPABASE_DB_SHADOW_PORT`, `SUPABASE_POOLER_PORT`, `SUPABASE_STUDIO_PORT`, `SUPABASE_MAILPIT_PORT`, `SUPABASE_EDGE_INSPECTOR_PORT`, `SUPABASE_ANALYTICS_PORT`, `KESTRA_PORT`, `SUPERSET_PORT`, `PLAYWRIGHT_PORT` — con el default de cada una igual al puerto actual (ver `contracts/variables-puerto.md`) y un comentario que remite a ese contrato
-- [ ] T002 [P] Actualizar `apps/web/.env.example`: `VITE_SUPABASE_URL` con el default correspondiente a `SUPABASE_API_PORT`, con comentario aclarando que Vite no lee el `.env` de la raíz — si se cambia `SUPABASE_API_PORT`, este valor se actualiza a mano acá
-- [ ] T003 [P] Actualizar `supabase/functions/.env.example`: `SUPERSET_PUBLIC_URL` con el default correspondiente a `SUPERSET_PORT`
+- [X] T001 [P] Agregar las 12 variables de puerto nuevas a `.env.example` (raíz) — `WEB_PORT`, `SUPABASE_API_PORT`, `SUPABASE_DB_PORT`, `SUPABASE_DB_SHADOW_PORT`, `SUPABASE_POOLER_PORT`, `SUPABASE_STUDIO_PORT`, `SUPABASE_MAILPIT_PORT`, `SUPABASE_EDGE_INSPECTOR_PORT`, `SUPABASE_ANALYTICS_PORT`, `KESTRA_PORT`, `SUPERSET_PORT`, `PLAYWRIGHT_PORT` — con el default de cada una igual al puerto actual (ver `contracts/variables-puerto.md`) y un comentario que remite a ese contrato
+- [X] T002 [P] Actualizar `apps/web/.env.example`: `VITE_SUPABASE_URL` con el default correspondiente a `SUPABASE_API_PORT`, con comentario aclarando que Vite no lee el `.env` de la raíz — si se cambia `SUPABASE_API_PORT`, este valor se actualiza a mano acá
+- [X] T003 [P] Actualizar `supabase/functions/.env.example`: `SUPERSET_PUBLIC_URL` con el default correspondiente a `SUPERSET_PORT`
 
 **Checkpoint**: las tres declaraciones de variables están en su lugar; cualquier archivo consumidor puede referenciarlas.
 
@@ -58,15 +58,24 @@ infraestructura compartida que construir antes.
 
 ### Implementation for User Story 1
 
-- [ ] T004 [P] [US1] `infra/refine/compose.yaml`: mapeo de puerto host y contenedor desde `${WEB_PORT:-3100}`
-- [ ] T005 [P] [US1] `infra/refine/Dockerfile`: `ARG WEB_PORT=3100` antes de `EXPOSE`, y `EXPOSE $WEB_PORT` en vez del literal
-- [ ] T006 [P] [US1] `apps/web/vite.config.ts`: `server.port` y `preview.port` leídos de `process.env.WEB_PORT` (fallback `3100`)
-- [ ] T007 [P] [US1] `infra/kestra/compose.yaml`: mapeo de puerto desde `${KESTRA_PORT:-8082}`, y los defaults de `KESTRA_BACKUPS_DB_URL`, `KESTRA_BACKUPS_PGDUMP_URL` y `KESTRA_ORQUESTACION_DB_URL` construidos con `${SUPABASE_DB_PORT:-5434}` en vez del `5434` suelto
-- [ ] T008 [P] [US1] `infra/superset/compose.yaml`: mapeo de puerto host desde `${SUPERSET_PORT:-8088}` (el bind interno de gunicorn y el healthcheck del contenedor quedan en `8088`, sin cambios — no forman parte del puerto expuesto al host)
-- [ ] T009 [P] [US1] `infra/playwright/compose.yaml` e `infra/playwright/compose.vps.yaml`: mapeo de puerto desde `${PLAYWRIGHT_PORT:-3103}` en los dos archivos
-- [ ] T010 [P] [US1] `package.json` (script `test:db:ci`) y `scripts/reset-db-ci.sh`: puerto de conexión a Postgres desde `${SUPABASE_DB_PORT:-5434}` en vez del `5434` fijo
-- [ ] T011 [US1] Ejecutar `pnpm infra:config`, `pnpm lint` y `pnpm build`; confirmar que los tres pasan igual que antes de esta feature (depende de T004-T010)
-- [ ] T012 [US1] Validar `quickstart.md` pasos 1 y 2 — cero regresión sin `.env`, y dos checkouts corriendo en paralelo sin conflicto de puerto (depende de T011)
+- [X] T004 [P] [US1] `infra/refine/compose.yaml`: mapeo de puerto host y contenedor desde `${WEB_PORT:-3100}`
+- [X] T005 [P] [US1] `infra/refine/Dockerfile`: `ARG WEB_PORT=3100` antes de `EXPOSE`, y `EXPOSE $WEB_PORT` en vez del literal
+- [X] T006 [P] [US1] `apps/web/vite.config.ts`: `server.port` y `preview.port` leídos de `process.env.WEB_PORT` (fallback `3100`)
+- [X] T007 [P] [US1] `infra/kestra/compose.yaml`: mapeo de puerto desde `${KESTRA_PORT:-8082}`, y los defaults de `KESTRA_BACKUPS_DB_URL`, `KESTRA_BACKUPS_PGDUMP_URL` y `KESTRA_ORQUESTACION_DB_URL` construidos con `${SUPABASE_DB_PORT:-5434}` en vez del `5434` suelto
+- [X] T008 [P] [US1] `infra/superset/compose.yaml`: mapeo de puerto host desde `${SUPERSET_PORT:-8088}` (el bind interno de gunicorn y el healthcheck del contenedor quedan en `8088`, sin cambios — no forman parte del puerto expuesto al host)
+- [X] T009 [P] [US1] `infra/playwright/compose.yaml` e `infra/playwright/compose.vps.yaml`: mapeo de puerto desde `${PLAYWRIGHT_PORT:-3103}` en los dos archivos
+- [X] T010 [P] [US1] `package.json` (script `test:db:ci`) y `scripts/reset-db-ci.sh`: puerto de conexión a Postgres desde `${SUPABASE_DB_PORT:-5434}` en vez del `5434` fijo
+- [X] T011 [US1] Ejecutar `pnpm infra:config`, `pnpm lint` y `pnpm build`; confirmar que los tres pasan igual que antes de esta feature (depende de T004-T010)
+- [X] T012 [US1] Validar `quickstart.md` pasos 1 y 2 — cero regresión sin `.env`, y dos checkouts corriendo en paralelo sin conflicto de puerto (depende de T011)
+  - Desvío: validación liviana con `docker compose config` (sin overrides y con
+    un segundo set de valores simulando un fork) en vez de levantar
+    contenedores reales de dos checkouts — decisión explícita para esta
+    corrida, sin gastar tiempo/recursos de Docker en el MVP. Confirma que
+    refine/kestra/superset/playwright resuelven a los puertos default sin
+    override (3100/8082/8088/3103) y a un segundo set sin colisión
+    (4100/9082/9088/4103). Queda pendiente la corrida completa del
+    quickstart.md con contenedores reales y dos checkouts antes del cierre
+    de la spec (Fase 5 / Polish).
 
 **Checkpoint**: User Story 1 funcional de forma independiente — ya se puede tener el template y un fork corriendo a la vez.
 

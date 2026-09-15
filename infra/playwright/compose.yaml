@@ -9,5 +9,7 @@ services:
     command: >
       /bin/sh -c "npx -y playwright@1.61.0 run-server --port 3000 --host 0.0.0.0"
     ports:
-      - "127.0.0.1:3103:3000"
+      # Puerto host configurable (spec 015); el 3000 interno del servidor de
+      # Playwright no necesita variar.
+      - "127.0.0.1:${PLAYWRIGHT_PORT:-3103}:3000"
     restart: unless-stopped

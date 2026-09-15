@@ -18,8 +18,12 @@ services:
       # dependencia en package.json. Encontrado corriendo el quickstart de
       # la spec 007 (T023) tras agregar @superset-ui/embedded-sdk.
       CI: "true"
+      # Puerto configurable (spec 015) — vite.config.ts lo lee dentro del
+      # contenedor vía process.env.WEB_PORT; sin esto acá, solo el mapeo de
+      # host cambiaría y Vite seguiría escuchando en el puerto por defecto.
+      WEB_PORT: ${WEB_PORT:-3100}
     ports:
-      - "127.0.0.1:3100:3100"
+      - "127.0.0.1:${WEB_PORT:-3100}:${WEB_PORT:-3100}"
     volumes:
       - ../..:/workspace
       - refine-node-modules:/workspace/node_modules

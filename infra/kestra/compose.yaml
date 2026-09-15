@@ -53,14 +53,14 @@ services:
       # KESTRA_BACKUPS_DB_PASSWORD sigue siendo el nombre "humano" en
       # .env.example, este es solo el nombre con el que llega al proceso.
       ENV_KESTRA_BACKUPS_DB_PASSWORD: ${KESTRA_BACKUPS_DB_PASSWORD:-change-me-local}
-      ENV_KESTRA_BACKUPS_DB_URL: ${KESTRA_BACKUPS_DB_URL:-jdbc:postgresql://host.docker.internal:5434/postgres}
-      ENV_KESTRA_BACKUPS_PGDUMP_URL: ${KESTRA_BACKUPS_PGDUMP_URL:-postgres://postgres:postgres@host.docker.internal:5434/postgres}
+      ENV_KESTRA_BACKUPS_DB_URL: ${KESTRA_BACKUPS_DB_URL:-jdbc:postgresql://host.docker.internal:${SUPABASE_DB_PORT:-5434}/postgres}
+      ENV_KESTRA_BACKUPS_PGDUMP_URL: ${KESTRA_BACKUPS_PGDUMP_URL:-postgres://postgres:postgres@host.docker.internal:${SUPABASE_DB_PORT:-5434}/postgres}
       # Leídas por infra/kestra/flows/plantilla-generico.yml/plantilla-dedicado.yml
       # (spec 013) vía {{ envs.kestra_orquestacion_db_password }} /
       # {{ envs.kestra_orquestacion_db_url }} — mismo motivo de prefijo ENV_
       # que las de arriba.
       ENV_KESTRA_ORQUESTACION_DB_PASSWORD: ${KESTRA_ORQUESTACION_DB_PASSWORD:-change-me-local}
-      ENV_KESTRA_ORQUESTACION_DB_URL: ${KESTRA_ORQUESTACION_DB_URL:-jdbc:postgresql://host.docker.internal:5434/postgres}
+      ENV_KESTRA_ORQUESTACION_DB_URL: ${KESTRA_ORQUESTACION_DB_URL:-jdbc:postgresql://host.docker.internal:${SUPABASE_DB_PORT:-5434}/postgres}
       ENV_KESTRA_ORQUESTACION_CONCURRENCIA: ${KESTRA_ORQUESTACION_CONCURRENCIA:-10}
       # `secret()` lee exclusivamente variables de proceso con prefijo SECRET_.
       # El valor real vive exclusivamente en infra/kestra/.env o en el gestor
@@ -70,7 +70,9 @@ services:
       # en infra/kestra/.env; no se versiona ningun token de proveedor.
       ENV_KESTRA_ALERTAS_WEBHOOK_URL: ${KESTRA_ALERTAS_WEBHOOK_URL:-http://host.docker.internal:8099/alertas}
     ports:
-      - "127.0.0.1:8082:8080"
+      # Puerto host configurable (spec 015); el 8080 es el puerto interno fijo
+      # de Kestra, no necesita variar.
+      - "127.0.0.1:${KESTRA_PORT:-8082}:8080"
     volumes:
       - kestra-data:/app/storage
       - kestra-work:/tmp/kestra-wd

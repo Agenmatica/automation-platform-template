@@ -23,7 +23,7 @@
     "test": "pnpm --filter @platform/web test && pnpm test:db",
     "test:web": "pnpm --filter @platform/web test",
     "test:db": "supabase test db --local",
-    "test:db:ci": "PGPASSWORD=postgres PGSSLMODE=disable pg_prove --host host.docker.internal --port 5434 --username postgres --dbname postgres supabase/tests/database/*.sql",
+    "test:db:ci": "PGPASSWORD=postgres PGSSLMODE=disable pg_prove --host host.docker.internal --port ${SUPABASE_DB_PORT:-5434} --username postgres --dbname postgres supabase/tests/database/*.sql",
     "db:reset:ci": "bash scripts/reset-db-ci.sh",
     "preview": "pnpm --filter @platform/web preview",
     "supabase": "supabase",

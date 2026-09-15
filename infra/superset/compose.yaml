@@ -81,7 +81,9 @@ services:
       --limit-request-field_size 0 "superset.app:create_app()"
     environment: *superset-environment
     ports:
-      - "127.0.0.1:8088:8088"
+      # Puerto host configurable (spec 015); el bind interno de gunicorn y el
+      # healthcheck siguen en 8088 dentro del contenedor, sin cambios.
+      - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
     volumes:
       - ./superset_config.py:/app/pythonpath/superset_config.py:ro
     depends_on:
