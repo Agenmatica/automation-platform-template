@@ -53,7 +53,7 @@ centrales — una por cada tipo de registro distinto que produzca — y un mismo
 conector puede escribir en más de una si el dato que trae mezcla más de un
 concepto de negocio.
 
-La tabla central sigue el mismo esquema conceptual sin importar el dominio:
+La tabla central sigue la misma estructura conceptual sin importar el dominio:
 
 - Una columna que identifica la **organización** dueña del registro — como
   cualquier tabla expuesta del template, no es una excepción al aislamiento
@@ -78,10 +78,17 @@ una asigna sus propios `id_externo` — pueden coincidir en número sin ser el
 mismo dato. Reimportar un período ya procesado no debe generar filas
 duplicadas para la misma combinación.
 
-Esto es una convención de diseño, no un esquema que el template provea
-directamente: los nombres de columnas de dominio, los tipos de datos
-específicos y el esquema SQL real son responsabilidad de cada implementación
-que adapte el patrón a su propio dominio de negocio.
+Esto es una convención de diseño, no una estructura de columnas que el
+template provea directamente: los nombres de columnas de dominio, los tipos
+de datos específicos y la estructura SQL real son responsabilidad de cada
+implementación que adapte el patrón a su propio dominio de negocio.
+
+La tabla central vive en su propio esquema de base de datos (`dominio`),
+separado del esquema de plataforma (`public`) donde vive el resto del
+template — organizaciones, perfiles, membresías, feature flags, backups,
+etc. Cada implementación crea sus tablas de dominio ahí, no en `public`;
+el template solo habilita el esquema vacío, sin tablas, hasta que una
+implementación cree la primera.
 
 ### Fuera de alcance
 
