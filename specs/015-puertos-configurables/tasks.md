@@ -89,15 +89,12 @@ infraestructura compartida que construir antes.
     puerto ahora sale de `WEB_PORT` en vez de quedar fijo en `3100`; hizo
     falta además pasar `WEB_PORT` al entorno del contenedor en
     `infra/superset/compose.yaml` para que el fallback lo vea (ver commit
-    pendiente).
+    12fb7d1).
 - [X] T014 [US2] `supabase/config.toml`: comentario explícito junto a `site_url` y `additional_redirect_urls` (bloque `[auth]`) indicando que deben mantenerse alineados a mano con `WEB_PORT` — la excepción documentada por FR-006 para este bloque específico
 - [X] T015 [US2] Validar `quickstart.md` paso 4 (depende de T013, T014, y de que Fase 3 esté completa para tener un segundo stack corriendo en puertos no-default)
-  - Desvío: validación liviana con `docker compose config` (`WEB_PORT=4100`,
-    `REFINE_ORIGIN=http://localhost:4100`) confirmando que `superset_config.py`
-    recibe el `WEB_PORT` no-default y que el caso sin override sigue en 3100
-    — no el flujo real de "olvidé mi contraseña" + reporte embebido con un
-    segundo checkout (mismo criterio que T012, ver commit pendiente).
-    Pendiente la corrida completa antes del cierre de la spec.
+  - Desvío: validación liviana con `docker compose config` en vez del flujo
+    real con dos checkouts (ver commit 12fb7d1). Pendiente la corrida
+    completa antes del cierre de la spec (junto con la de T012).
 
 **Checkpoint**: cambiar `WEB_PORT` en un fork ya no deja Auth ni CORS rotos en silencio.
 
