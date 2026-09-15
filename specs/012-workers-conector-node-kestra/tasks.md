@@ -98,10 +98,10 @@ Todas las tareas de contenido editan `workers/README.md` (raíz del repo). Las t
 
 **Propósito**: Validación final de punta a punta, no específica de ninguna historia.
 
-- [ ] T017 Correr la validación completa de `quickstart.md` (las 13 preguntas de `contracts/workers-readme-contract.md`, más la búsqueda de términos prohibidos) sobre el `workers/README.md` final.
-- [ ] T018 Confirmar que la sección nueva se lee como una extensión del contrato de worker ya existente, no como una segunda fuente de verdad paralela (Paso 4 de `quickstart.md`).
-- [ ] T019 Actualizar el campo `**Status**` de `spec.md` de `Draft` a `Implemented`.
-- [ ] T020 [P] Actualizar `checklists/requirements.md` (sección Feature Readiness) dejando registrado que la implementación se completó y validó contra el contrato.
+- [X] T017 Correr la validación completa de `quickstart.md` (las 13 preguntas de `contracts/workers-readme-contract.md`, más la búsqueda de términos prohibidos) sobre el `workers/README.md` final.
+- [X] T018 Confirmar que la sección nueva se lee como una extensión del contrato de worker ya existente, no como una segunda fuente de verdad paralela (Paso 4 de `quickstart.md`).
+- [X] T019 Actualizar el campo `**Status**` de `spec.md` de `Draft` a `Implemented`.
+- [X] T020 [P] Actualizar `checklists/requirements.md` (sección Feature Readiness) dejando registrado que la implementación se completó y validó contra el contrato.
 
 ---
 

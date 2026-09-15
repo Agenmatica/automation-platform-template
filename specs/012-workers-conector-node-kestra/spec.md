@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-14
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Convención de workers técnicos para automatizaciones de integración: Node.js como lenguaje del worker (conectores que traen datos de sistemas externos vía API o automatización de navegador con Playwright), orquestado por Kestra (scheduling, reintentos, alertas — Kestra no reemplaza al worker, lo supervisa). Cada sistema externo tiene su propio conector. Los datos importados se normalizan en una tabla central por dominio, preservando el origen (columna `origen` + `id_externo` para idempotencia) y guardando los campos particulares de cada sistema en una columna `jsonb`, en vez de una tabla por sistema. Alcance basado en dos casos reales de dominios independientes ya confirmados en conversación (integración con Mercado Libre y con sistemas contables como Xubio/Colppy/Tango) — la spec documenta la convención y el contrato de worker (estructura de carpeta, Dockerfile, idempotencia, healthcheck) en `workers/README.md` y como guía reusable, sin incluir el dominio de negocio de ninguno de los dos casos (ni Mercado Libre ni contable)."
 
