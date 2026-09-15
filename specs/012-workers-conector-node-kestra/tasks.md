@@ -23,7 +23,7 @@ Todas las tareas de contenido editan `workers/README.md` (raíz del repo). Las t
 
 **Propósito**: Entender el contrato de worker ya existente antes de extenderlo, para no duplicarlo ni contradecirlo (FR-006).
 
-- [ ] T001 Leer el contenido completo actual de `workers/README.md` e identificar dónde insertar la sección nueva de convención de integración sin duplicar el contrato ya existente (carpeta propia, Dockerfile, salida idempotente, healthcheck, pruebas).
+- [X] T001 Leer el contenido completo actual de `workers/README.md` e identificar dónde insertar la sección nueva de convención de integración sin duplicar el contrato ya existente (carpeta propia, Dockerfile, salida idempotente, healthcheck, pruebas).
 
 **Checkpoint**: Se conoce la estructura actual del archivo y el punto de inserción.
 
@@ -35,7 +35,7 @@ Todas las tareas de contenido editan `workers/README.md` (raíz del repo). Las t
 
 **⚠️ CRÍTICO**: Ninguna historia empieza antes de este paso.
 
-- [ ] T002 Agregar en `workers/README.md` el encabezado y una introducción breve de la sección "Convención de workers de integración" (sin contenido de historias todavía), dejando lugar para las subsecciones siguientes.
+- [X] T002 Agregar en `workers/README.md` el encabezado y una introducción breve de la sección "Convención de workers de integración" (sin contenido de historias todavía), dejando lugar para las subsecciones siguientes.
 
 **Checkpoint**: El esqueleto existe — las tres historias pueden completarse en orden de prioridad.
 
@@ -49,11 +49,11 @@ Todas las tareas de contenido editan `workers/README.md` (raíz del repo). Las t
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Escribir en `workers/README.md` la subsección de runtime por defecto: Node.js + TypeScript, no obligatorio si un caso puntual justifica otro lenguaje (FR-001).
-- [ ] T004 [US1] Escribir en `workers/README.md` la subsección de organización worker/conector: un worker se dedica a un único sistema externo; cada tipo de dato o reporte de ese sistema es un conector propio y aislado, con su propio método de acceso — API o automatización de navegador (FR-002).
-- [ ] T005 [US1] Escribir en `workers/README.md` la subsección de relación Kestra/worker: Kestra programa, reintenta y alerta; el worker ejecuta el trabajo técnico; uno no reemplaza al otro (FR-003).
-- [ ] T006 [US1] Escribir en `workers/README.md`, integrada al contrato de worker ya existente (no como sección aparte), la aclaración de qué es healthcheck para un worker de ejecución puntual disparado por Kestra: código de salida/estado, sin endpoint HTTP separado (FR-006).
-- [ ] T007 [US1] Verificar manualmente las preguntas 1, 2, 3 y 6 de `contracts/workers-readme-contract.md` contra el texto recién escrito — cada una debe responderse sin ambigüedad.
+- [X] T003 [US1] Escribir en `workers/README.md` la subsección de runtime por defecto: Node.js + TypeScript, no obligatorio si un caso puntual justifica otro lenguaje (FR-001).
+- [X] T004 [US1] Escribir en `workers/README.md` la subsección de organización worker/conector: un worker se dedica a un único sistema externo; cada tipo de dato o reporte de ese sistema es un conector propio y aislado, con su propio método de acceso — API o automatización de navegador (FR-002).
+- [X] T005 [US1] Escribir en `workers/README.md` la subsección de relación Kestra/worker: Kestra programa, reintenta y alerta; el worker ejecuta el trabajo técnico; uno no reemplaza al otro (FR-003).
+- [X] T006 [US1] Escribir en `workers/README.md`, integrada al contrato de worker ya existente (no como sección aparte), la aclaración de qué es healthcheck para un worker de ejecución puntual disparado por Kestra: código de salida/estado, sin endpoint HTTP separado (FR-006).
+- [X] T007 [US1] Verificar manualmente las preguntas 1, 2, 3 y 6 de `contracts/workers-readme-contract.md` contra el texto recién escrito — cada una debe responderse sin ambigüedad.
 
 **Checkpoint**: User Story 1 completa y verificable de forma independiente — ya es un incremento entregable (MVP).
 
