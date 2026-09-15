@@ -195,6 +195,21 @@ Task: "package.json + scripts/reset-db-ci.sh: puerto Postgres desde ${SUPABASE_D
 
 Tareas agregadas por `/speckit-converge` tras comparar el código contra spec.md/plan.md/tasks.md. Ver el resumen de hallazgos de esa corrida para el detalle de evidencia.
 
-- [ ] T021 [US2] Declarar `APP_URL` en `supabase/functions/.env.example` (mismo patrón que `SUPERSET_PUBLIC_URL`, default alineado a `WEB_PORT`) y alinear el fallback literal `http://127.0.0.1:3100` de `supabase/functions/invitar-miembro/index.ts` con esa variable per SC-002 (missing)
-- [ ] T022 [US1] Ejecutar `quickstart.md` pasos 1, 2 y 4 con dos checkouts reales corriendo en paralelo (no solo `docker compose config`) y confirmar sin conflicto de puertos ni error de CORS/redirect — cierra el pendiente dejado en las notas de desvío de T012/T015/T017 per US1/AC2 (partial)
-- [ ] T023 [P] [US1] Agregar `args: WEB_PORT: ${WEB_PORT:-3100}` al `build:` de `infra/refine/compose.yaml` para que el `ARG` de `infra/refine/Dockerfile` refleje el `WEB_PORT` real en vez de construir siempre con el default per FR-005 (partial)
+- [X] T021 [US2] Declarar `APP_URL` en `supabase/functions/.env.example` (mismo patrón que `SUPERSET_PUBLIC_URL`, default alineado a `WEB_PORT`) y alinear el fallback literal `http://127.0.0.1:3100` de `supabase/functions/invitar-miembro/index.ts` con esa variable per SC-002 (missing)
+- [X] T022 [US1] Ejecutar `quickstart.md` pasos 1, 2 y 4 con dos checkouts reales corriendo en paralelo (no solo `docker compose config`) y confirmar sin conflicto de puertos ni error de CORS/redirect — cierra el pendiente dejado en las notas de desvío de T012/T015/T017 per US1/AC2 (partial)
+  - Desvío: `infra/refine/compose.yaml` e `infra/superset/compose.yaml`
+    fijan `name:` (identidad de producto, Constitución Principio IV) —
+    un segundo checkout del *mismo* template no puede correr esos dos
+    servicios en paralelo vía Compose sin renombrar el proyecto (eso sí
+    lo tiene un fork real). Validado igual: Supabase en paralelo genuino
+    (project-id propio, sin choque de puerto), Refine del segundo
+    checkout vía `dev:refine:host` (WEB_PORT=4100, sin Docker), y el
+    redirect de "olvidé mi contraseña" confirmado de punta a punta
+    (GoTrue + Mailpit reales) apuntando a :4100. El CORS de Superset se
+    verificó con la misma lógica de `superset_config.py` corrida en un
+    contenedor `docker run --rm` aislado (WEB_PORT=4100 → orígenes
+    correctos) en vez de un segundo Superset compose, para no arriesgar
+    el Superset del checkout original (que sí sufrió un `Recreate`
+    accidental por el nombre de proyecto compartido, restaurado sin
+    pérdida de datos).
+- [X] T023 [P] [US1] Agregar `args: WEB_PORT: ${WEB_PORT:-3100}` al `build:` de `infra/refine/compose.yaml` para que el `ARG` de `infra/refine/Dockerfile` refleje el `WEB_PORT` real en vez de construir siempre con el default per FR-005 (partial)

@@ -5,6 +5,11 @@ services:
     build:
       context: ../..
       dockerfile: infra/refine/Dockerfile
+      args:
+        # Sin esto, el ARG del Dockerfile siempre construye con su default
+        # (3100) sin importar el WEB_PORT real — el EXPOSE quedaría
+        # desalineado en silencio (spec 015, convergencia T023).
+        WEB_PORT: ${WEB_PORT:-3100}
     working_dir: /workspace
     command: >-
       sh -c "pnpm install --frozen-lockfile && pnpm --filter @platform/web dev --host 0.0.0.0"

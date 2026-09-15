@@ -8,7 +8,7 @@ template usa hoy — ningún checkout sin `.env` cambia de comportamiento
 
 | Variable | Default | Archivos que la consumen |
 |---|---|---|
-| `WEB_PORT` | `3100` | `infra/refine/compose.yaml` (host y contenedor), `infra/refine/Dockerfile` (`ARG`/`EXPOSE`), `apps/web/vite.config.ts` (`server.port`, `preview.port`), `infra/superset/superset_config.py` (`REFINE_ORIGIN` fallback + orígenes CORS), `.env.example` (`REFINE_ORIGIN` default) |
+| `WEB_PORT` | `3100` | `infra/refine/compose.yaml` (host y contenedor), `infra/refine/Dockerfile` (`ARG`/`EXPOSE`), `apps/web/vite.config.ts` (`server.port`, `preview.port`), `infra/superset/superset_config.py` (`REFINE_ORIGIN` fallback + orígenes CORS), `.env.example` (`REFINE_ORIGIN` default), `supabase/functions/.env.example` (`APP_URL` default, usado por `invitar-miembro` para el link de invitación) |
 | `SUPABASE_API_PORT` | `8100` | `apps/web/.env.example` (`VITE_SUPABASE_URL`) |
 | `SUPABASE_DB_PORT` | `5434` | `package.json` (`test:db:ci`), `scripts/reset-db-ci.sh`, `infra/kestra/compose.yaml` (defaults de `KESTRA_BACKUPS_DB_URL`, `KESTRA_BACKUPS_PGDUMP_URL`, `KESTRA_ORQUESTACION_DB_URL`), `.env.example` (mismos defaults) |
 | `SUPABASE_DB_SHADOW_PORT` | `5433` | — (solo excepción, ver abajo) |
