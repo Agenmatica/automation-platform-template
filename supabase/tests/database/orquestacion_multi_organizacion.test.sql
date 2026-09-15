@@ -16,7 +16,7 @@
 -- de punta a punta es responsabilidad de quickstart.md, no de esta suite.
 begin;
 
-select plan(70);
+select plan(93);
 
 -- ============================================================================
 -- Fixture
@@ -207,6 +207,114 @@ select is(
   (select private.organizacion_del_rol_actual()),
   null,
   'organizacion_del_rol_actual() da null para session_user = postgres (no matchea ningún rol_db real)'
+);
+
+-- ============================================================================
+-- private.obtener_credencial_para_worker (spec 014): el grupo de workers
+-- recibe el único EXECUTE y la función vincula session_user con su organización.
+-- La suite no puede abrir una segunda conexión como worker_*; el recorrido
+-- autenticado con ese rol queda en quickstart.md. Aquí se prueba la membresía,
+-- los grants efectivos, el mapeo cruzado y que postgres tampoco evade el guard.
+-- ============================================================================
+
+select ok(
+  exists (select 1 from pg_catalog.pg_roles where rolname = 'workers_orquestacion' and not rolcanlogin),
+  'workers_orquestacion existe como rol de grupo sin login'
+);
+select ok(
+  pg_has_role(
+    (select rol_db from servidores_organizacion where organizacion_id = 'd1111111-1111-1111-1111-111111111111'),
+    'workers_orquestacion',
+    'member'
+  ),
+  'el worker de X pertenece a workers_orquestacion al aprovisionarlo'
+);
+select ok(
+  pg_has_role(
+    (select rol_db from servidores_organizacion where organizacion_id = 'd2222222-2222-2222-2222-222222222222'),
+    'workers_orquestacion',
+    'member'
+  ),
+  'el worker de Y pertenece a workers_orquestacion al aprovisionarlo'
+);
+select ok(
+  not pg_has_role('kestra_orquestacion', 'workers_orquestacion', 'member'),
+  'kestra_orquestacion no pertenece al grupo de workers'
+);
+select is(
+  has_function_privilege('workers_orquestacion', 'private.obtener_credencial_para_worker(uuid)', 'EXECUTE'),
+  true,
+  'workers_orquestacion tiene EXECUTE sobre la función de credencial efímera'
+);
+select is(
+  has_function_privilege(
+    (select rol_db from servidores_organizacion where organizacion_id = 'd1111111-1111-1111-1111-111111111111'),
+    'private.obtener_credencial_para_worker(uuid)',
+    'EXECUTE'
+  ),
+  true,
+  'el worker de X hereda EXECUTE de la función'
+);
+select is(
+  has_function_privilege('kestra_orquestacion', 'private.obtener_credencial_para_worker(uuid)', 'EXECUTE'),
+  false,
+  'kestra_orquestacion no puede obtener credenciales de workers'
+);
+select is(
+  has_function_privilege('anon', 'private.obtener_credencial_para_worker(uuid)', 'EXECUTE'),
+  false,
+  'anon no puede obtener credenciales de workers'
+);
+select is(
+  has_function_privilege('authenticated', 'private.obtener_credencial_para_worker(uuid)', 'EXECUTE'),
+  false,
+  'authenticated no puede obtener credenciales de workers'
+);
+select is(
+  has_table_privilege(
+    (select rol_db from servidores_organizacion where organizacion_id = 'd1111111-1111-1111-1111-111111111111'),
+    'public.conexiones',
+    'SELECT'
+  ),
+  false,
+  'el worker de X no tiene SELECT directo sobre conexiones'
+);
+select is(
+  has_table_privilege(
+    (select rol_db from servidores_organizacion where organizacion_id = 'd1111111-1111-1111-1111-111111111111'),
+    'vault.decrypted_secrets',
+    'SELECT'
+  ),
+  false,
+  'el worker de X no tiene SELECT directo sobre Vault'
+);
+select is(
+  (select rol_db from servidores_organizacion where organizacion_id = 'd1111111-1111-1111-1111-111111111111'),
+  'worker_d1111111111111111111111111111111',
+  'el rol de worker X queda ligado a su organización antes de crear conexiones'
+);
+select is(
+  (
+    select count(*)::integer
+    from servidores_organizacion s
+    join servidores_organizacion otra on otra.rol_db = s.rol_db
+    where s.rol_db = (select rol_db from servidores_organizacion where organizacion_id = 'd1111111-1111-1111-1111-111111111111')
+      and otra.organizacion_id = 'd2222222-2222-2222-2222-222222222222'
+  ),
+  0,
+  'el rol worker X no puede quedar ligado al servidor de Y'
+);
+select throws_ok(
+  $$select private.obtener_credencial_para_worker('00000000-0000-0000-0000-000000000000')$$,
+  '42501',
+  null,
+  'postgres no evita el guard de membresía antes de cualquier lectura'
+);
+select throws_ok(
+  $$select private.obtener_credencial_para_worker('ffffffff-ffff-ffff-ffff-ffffffffffff')$$,
+  '42501',
+  null,
+  'el guard no revela si una conexión solicitada existe'
 );
 
 -- ============================================================================
@@ -547,6 +655,64 @@ select lives_ok(
 );
 
 -- ============================================================================
+-- private.procesar_falla_orquestacion — motivo seguro y tipo explícito (014)
+-- ============================================================================
+
+select is(
+  has_function_privilege('kestra_orquestacion', 'private.procesar_falla_orquestacion(uuid, uuid, text, text)', 'EXECUTE'),
+  true,
+  'kestra_orquestacion puede ejecutar el handler seguro de cuatro argumentos'
+);
+
+select is(
+  has_function_privilege('authenticated', 'private.procesar_falla_orquestacion(uuid, uuid, text, text)', 'EXECUTE'),
+  false,
+  'authenticated no puede ejecutar el handler seguro de cuatro argumentos'
+);
+
+select lives_ok(
+  format(
+    $$select private.procesar_falla_orquestacion('d1111111-1111-1111-1111-111111111111', '%s', 'credencial', 'CREDENCIAL_INVALIDA:%s')$$,
+    (select val from t_ids where key = 'conexion_x'),
+    (select val from t_ids where key = 'conexion_x')
+  ),
+  'el handler conserva una clasificación de credencial y un motivo seguro'
+);
+
+select is(
+  (select estado from conexiones where id = (select val from t_ids where key = 'conexion_x')),
+  'credencial_invalida',
+  'el handler seguro conserva el estado de credencial inválida'
+);
+
+select is(
+  (select motivo from alertas where conexion_id = (select val from t_ids where key = 'conexion_x') order by id desc limit 1),
+  'CREDENCIAL_INVALIDA:' || (select val::text from t_ids where key = 'conexion_x'),
+  'el handler persiste únicamente el motivo seguro de credencial'
+);
+
+select lives_ok(
+  format(
+    $$select private.procesar_falla_orquestacion('d1111111-1111-1111-1111-111111111111', '%s', 'tecnica', 'FALLA_TECNICA_SANITIZADA')$$,
+    (select val from t_ids where key = 'conexion_x')
+  ),
+  'el handler conserva una clasificación técnica con un motivo sanitizado'
+);
+
+select is(
+  (select tipo || ':' || motivo from alertas where conexion_id = (select val from t_ids where key = 'conexion_x') order by id desc limit 1),
+  'tecnica:FALLA_TECNICA_SANITIZADA',
+  'el diagnóstico técnico persiste solo tipo y motivo permitidos, sin credencial'
+);
+
+select throws_ok(
+  $$select private.procesar_falla_orquestacion('d1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'tecnica', 'detalle no sanitizado')$$,
+  '22023',
+  null,
+  'el handler rechaza un motivo técnico que no pertenece al contrato sanitizado'
+);
+
+-- ============================================================================
 -- Columnas *_vault_id: nunca legibles directo por authenticated (R4)
 -- ============================================================================
 
@@ -714,8 +880,8 @@ set local role authenticated;
 
 select is(
   (select count(*)::int from alertas where tipo = 'credencial'),
-  1,
-  'el administrador de X ve la alerta de credencial de su propia organización'
+  2,
+  'el administrador de X ve las alertas de credencial de su propia organización'
 );
 select is(
   (select count(*)::int from alertas where tipo = 'tecnica'),
