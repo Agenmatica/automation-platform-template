@@ -42,3 +42,43 @@ código de salida/estado que Kestra ya registra por cada ejecución; no hace
 falta un endpoint HTTP separado. Un worker que en cambio sea un servicio
 persistente necesita un healthcheck tradicional — ese caso queda fuera de esta
 convención.
+
+### Tabla central: normalizar datos de varias fuentes sin una tabla por sistema
+
+Cuando un worker importa un tipo de registro de negocio que también puede
+llegar por otros sistemas externos (otros workers, u otros conectores del
+mismo worker), ese tipo de registro se normaliza en una **tabla central** en
+vez de crear una tabla por sistema. Cada worker puede tener varias tablas
+centrales — una por cada tipo de registro distinto que produzca — y un mismo
+conector puede escribir en más de una si el dato que trae mezcla más de un
+concepto de negocio.
+
+La tabla central sigue el mismo esquema conceptual sin importar el dominio:
+
+- Una columna que identifica la **organización** dueña del registro — como
+  cualquier tabla expuesta del template, no es una excepción al aislamiento
+  multi-tenant: requiere RLS igual que si las filas las escribiera un usuario
+  desde la UI en vez de un worker. La organización de cada registro es la
+  dueña de la conexión/credencial que el worker usó en esa ejecución; el
+  worker la propaga a cada fila que escribe, no es algo que el conector deba
+  inferir de los datos en sí.
+- Una columna `origen` que identifica de qué conector/sistema vino el
+  registro.
+- Una columna `id_externo` con el identificador que el sistema de origen le
+  asignó.
+- Una columna `jsonb` (por ejemplo `datos_originales`) para los campos
+  particulares de cada fuente que no comparten las demás — evita forzar todo
+  a una estructura común.
+
+La clave de idempotencia es la combinación **`(organización, origen,
+id_externo)`** — los tres campos juntos, nunca `id_externo` solo ni
+`origen` + `id_externo` sin la organización: dos organizaciones distintas
+pueden conectar cada una su propia cuenta del mismo sistema externo, y cada
+una asigna sus propios `id_externo` — pueden coincidir en número sin ser el
+mismo dato. Reimportar un período ya procesado no debe generar filas
+duplicadas para la misma combinación.
+
+Esto es una convención de diseño, no un esquema que el template provea
+directamente: los nombres de columnas de dominio, los tipos de datos
+específicos y el esquema SQL real son responsabilidad de cada implementación
+que adapte el patrón a su propio dominio de negocio.

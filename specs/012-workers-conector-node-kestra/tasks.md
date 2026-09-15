@@ -67,10 +67,10 @@ Todas las tareas de contenido editan `workers/README.md` (raíz del repo). Las t
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] Escribir en `workers/README.md` el patrón de tabla central: columna de organización, columna `origen`, columna `id_externo`, columna `jsonb` para datos particulares, y la clave compuesta de idempotencia `(organización, origen, id_externo)` (FR-004, FR-011).
-- [ ] T009 [US2] Escribir en `workers/README.md` la aclaración de que un worker puede alimentar más de una tabla central — una por cada tipo de dato que su sistema externo exponga, a través de sus distintos conectores (FR-004b).
-- [ ] T010 [US2] Escribir en `workers/README.md` la aclaración de que la tabla central es una convención de diseño que cada implementación adapta a su propio dominio — no un esquema que el template provee directamente (FR-005).
-- [ ] T011 [US2] Verificar manualmente las preguntas 4, 4b, 4c, 5 y 11 de `contracts/workers-readme-contract.md` contra el texto recién escrito.
+- [X] T008 [US2] Escribir en `workers/README.md` el patrón de tabla central: columna de organización, columna `origen`, columna `id_externo`, columna `jsonb` para datos particulares, y la clave compuesta de idempotencia `(organización, origen, id_externo)` (FR-004, FR-011).
+- [X] T009 [US2] Escribir en `workers/README.md` la aclaración de que un worker puede alimentar más de una tabla central — una por cada tipo de dato que su sistema externo exponga, a través de sus distintos conectores (FR-004b).
+- [X] T010 [US2] Escribir en `workers/README.md` la aclaración de que la tabla central es una convención de diseño que cada implementación adapta a su propio dominio — no un esquema que el template provee directamente (FR-005).
+- [X] T011 [US2] Verificar manualmente las preguntas 4, 4b, 4c, 5 y 11 de `contracts/workers-readme-contract.md` contra el texto recién escrito.
 
 **Checkpoint**: User Stories 1 y 2 funcionan juntas y de forma independiente.
 
