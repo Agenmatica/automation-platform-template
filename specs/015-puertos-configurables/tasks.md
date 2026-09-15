@@ -67,15 +67,9 @@ infraestructura compartida que construir antes.
 - [X] T010 [P] [US1] `package.json` (script `test:db:ci`) y `scripts/reset-db-ci.sh`: puerto de conexión a Postgres desde `${SUPABASE_DB_PORT:-5434}` en vez del `5434` fijo
 - [X] T011 [US1] Ejecutar `pnpm infra:config`, `pnpm lint` y `pnpm build`; confirmar que los tres pasan igual que antes de esta feature (depende de T004-T010)
 - [X] T012 [US1] Validar `quickstart.md` pasos 1 y 2 — cero regresión sin `.env`, y dos checkouts corriendo en paralelo sin conflicto de puerto (depende de T011)
-  - Desvío: validación liviana con `docker compose config` (sin overrides y con
-    un segundo set de valores simulando un fork) en vez de levantar
-    contenedores reales de dos checkouts — decisión explícita para esta
-    corrida, sin gastar tiempo/recursos de Docker en el MVP. Confirma que
-    refine/kestra/superset/playwright resuelven a los puertos default sin
-    override (3100/8082/8088/3103) y a un segundo set sin colisión
-    (4100/9082/9088/4103). Queda pendiente la corrida completa del
-    quickstart.md con contenedores reales y dos checkouts antes del cierre
-    de la spec (Fase 5 / Polish).
+  - Desvío: validación liviana con `docker compose config` en vez de
+    contenedores reales de dos checkouts (ver commit 35a63a5). Pendiente la
+    corrida completa antes del cierre de la spec (Fase 5).
 
 **Checkpoint**: User Story 1 funcional de forma independiente — ya se puede tener el template y un fork corriendo a la vez.
 
