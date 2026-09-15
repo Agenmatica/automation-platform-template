@@ -124,9 +124,11 @@ infraestructura compartida que construir antes.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T018 [P] Revisar que `.env.example`, `apps/web/.env.example` y `supabase/functions/.env.example` queden con los mismos defaults que `contracts/variables-puerto.md`
-- [ ] T019 Ejecutar `pnpm test` completo (requiere `pnpm dev:supabase` corriendo) y confirmar que no hay regresión funcional
-- [ ] T020 Si algo se resolvió distinto a lo planeado, agregar la nota de desvío corta en este archivo con referencia al commit (regla del proyecto — sin repetir el párrafo del commit)
+- [X] T018 [P] Revisar que `.env.example`, `apps/web/.env.example` y `supabase/functions/.env.example` queden con los mismos defaults que `contracts/variables-puerto.md`
+- [X] T019 Ejecutar `pnpm test` completo (requiere `pnpm dev:supabase` corriendo) y confirmar que no hay regresión funcional
+- [X] T020 Si algo se resolvió distinto a lo planeado, agregar la nota de desvío corta en este archivo con referencia al commit (regla del proyecto — sin repetir el párrafo del commit)
+  - Sin desvíos en esta fase: T018 y T019 se ejecutaron tal como estaban
+    planeados.
 
 ---
 
