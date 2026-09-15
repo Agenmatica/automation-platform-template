@@ -30,7 +30,7 @@ pnpm dev:down:refine
 pnpm dev:down:supabase
 ```
 
-## 2. Dos stacks en paralelo (US1, SC-001)
+## 2. Dos stacks en paralelo (US1, SC-001, SC-004)
 
 En el segundo checkout, copiar `.env.example` a `.env` (y a
 `infra/<producto>/.env` donde corresponda) y sobreescribir únicamente las

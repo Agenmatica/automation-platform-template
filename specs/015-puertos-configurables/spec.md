@@ -65,7 +65,7 @@ Quien revisa un cambio futuro en el template necesita poder confirmar que ningú
 
 ### Functional Requirements
 
-- **FR-001**: El sistema MUST definir el puerto de cada servicio de desarrollo local (Refine, API de Supabase, base de datos de Supabase, base sombra de Supabase, pooler de Supabase, Studio de Supabase, servidor de pruebas de correo de Supabase, inspector de Edge Functions, Kestra, Superset, Playwright, webhook local de alertas de orquestación) como una variable de entorno independiente, cada una con un valor por defecto igual al puerto que usa el template hoy.
+- **FR-001**: El sistema MUST definir el puerto de cada servicio de desarrollo local (Refine, API de Supabase, base de datos de Supabase, base sombra de Supabase, pooler de Supabase, Studio de Supabase, servidor de pruebas de correo de Supabase, inspector de Edge Functions, analítica de Supabase, Kestra, Superset, Playwright, webhook local de alertas de orquestación) como una variable de entorno independiente, cada una con un valor por defecto igual al puerto que usa el template hoy.
 - **FR-002**: Cada `infra/*/compose.yaml` (y su variante `.vps.yaml` cuando exista un puerto expuesto en desarrollo local) MUST tomar el mapeo de puerto hacia el host desde la variable de entorno correspondiente en vez de tener el número fijo escrito en el archivo.
 - **FR-003**: `apps/web/vite.config.ts` MUST tomar el puerto del servidor de desarrollo y de previsualización desde variable de entorno.
 - **FR-004**: `infra/superset/superset_config.py` MUST tomar los orígenes permitidos de CORS desde variable de entorno, sin dejar ningún origen local como literal fijo además del que ya toma de `REFINE_ORIGIN`.
