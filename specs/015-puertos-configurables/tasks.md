@@ -108,8 +108,15 @@ infraestructura compartida que construir antes.
 
 ### Implementation for User Story 3
 
-- [ ] T016 [P] [US3] `supabase/config.toml`: comentario junto a cada puerto restante (`[api] port`, `[db] port` y `shadow_port`, `[db.pooler] port`, `[studio] port`, `[local_smtp] port`, `[edge_runtime] inspector_port`, `[analytics] port`) señalando su variable equivalente de `contracts/variables-puerto.md`
-- [ ] T017 [US3] Ejecutar la búsqueda de texto de `quickstart.md` paso 3 para cada puerto de `contracts/variables-puerto.md` y confirmar que las únicas apariciones fuera de su variable están en `supabase/config.toml` (depende de T004-T010, T013, T014, T016)
+- [X] T016 [P] [US3] `supabase/config.toml`: comentario junto a cada puerto restante (`[api] port`, `[db] port` y `shadow_port`, `[db.pooler] port`, `[studio] port`, `[local_smtp] port`, `[edge_runtime] inspector_port`, `[analytics] port`) señalando su variable equivalente de `contracts/variables-puerto.md`
+- [X] T017 [US3] Ejecutar la búsqueda de texto de `quickstart.md` paso 3 para cada puerto de `contracts/variables-puerto.md` y confirmar que las únicas apariciones fuera de su variable están en `supabase/config.toml` (depende de T004-T010, T013, T014, T016)
+  - Desvío: un hallazgo no-violación — `infra/superset/compose.yaml` trae su
+    propio fallback `${REFINE_ORIGIN:-http://localhost:3100}`, duplicando el
+    3100 de `.env.example` fuera de las tres categorías permitidas en la
+    letra estricta de la regla. Se acepta: mismo patrón ya usado para
+    `KESTRA_ALERTAS_WEBHOOK_URL` (URL completa overrideable, no un puerto
+    aislado), y sin impacto funcional porque las variantes de loopback de
+    `CORS_OPTIONS.origins` (T013) ya derivan de `WEB_PORT` por su cuenta.
 
 **Checkpoint**: SC-002 verificado — ningún puerto hardcodeado suelto fuera de la excepción documentada.
 
