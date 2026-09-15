@@ -43,11 +43,25 @@ falta un endpoint HTTP separado. Un worker que en cambio sea un servicio
 persistente necesita un healthcheck tradicional — ese caso queda fuera de esta
 convención.
 
-Si el fallo es una credencial invalida, el worker DEBE escribir en stderr el
-marcador `CREDENCIAL_INVALIDA:<conexion_id>` y terminar con error. Kestra usa
-esa señal para marcar exclusivamente esa conexión como inválida y alertar a
-su organización; cualquier otro error se trata como técnico. `conexion_id` se
-recibe como variable de entorno de despacho, nunca contiene una credencial.
+Si el fallo es una credencial invalida, el worker DEBE escribir en stderr solo
+el marcador `CREDENCIAL_INVALIDA:<conexion_id>` y terminar con error. Kestra
+usa esa señal para marcar exclusivamente esa conexión como inválida y alertar
+a su organización; cualquier otro error se trata como técnico. `conexion_id`
+se recibe como variable de entorno de despacho, nunca contiene una credencial.
+
+### Acceso efímero y salida sanitizada
+
+Kestra solo entrega `ORGANIZACION_ID`, `SISTEMA_EXTERNO` y `CONEXION_ID`; nunca
+entrega `CREDENCIAL`. Ya dentro de su proceso, el worker autenticado como el
+rol `worker_<organizacion_id>` obtiene el valor estrictamente necesario con
+`private.obtener_credencial_para_worker(CONEXION_ID)`, lo usa para la
+autenticación externa y descarta la referencia al terminar el intento.
+
+Antes de emitir stdout, stderr, métricas, traces o una excepción persistible,
+el worker debe reemplazar el valor literal de la credencial y sus variantes
+URL y Base64 comunes por `[REDACTADO]`. Para una credencial inválida no debe
+imprimir la causa del proveedor: solo `CREDENCIAL_INVALIDA:<conexion_id>`; para
+una falla técnica debe emitir una causa ya sanitizada.
 
 ### Tabla central: normalizar datos de varias fuentes sin una tabla por sistema
 
