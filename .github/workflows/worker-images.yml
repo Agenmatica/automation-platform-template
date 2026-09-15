@@ -1,0 +1,63 @@
+name: Worker images
+
+# Orquestación de workers multi-organización (spec 013, T014, R11): publica
+# la imagen de cada worker de integración en ghcr.io usando el GITHUB_TOKEN
+# ya disponible en el runner self-hosted — sin credencial nueva que
+# gestionar. El comando SSH de despacho (infra/kestra/flows/plantilla-*.yml)
+# hace `docker pull` antes de `docker run`, así que una actualización de
+# versión no requiere ningún paso de despliegue activo hacia cada servidor
+# de organización (FR-016): el próximo disparo de Kestra ya trae la imagen
+# vigente.
+#
+# Corre solo en push a main que toque workers/ (no en cada PR: publicar una
+# imagen por cada intento de PR no aporta y consume minutos/almacenamiento
+# de más). Si todavía no existe ningún workers/<carpeta>/Dockerfile (caso de
+# esta spec, que no crea ningún worker real), el paso de build recorre cero
+# carpetas y el job termina sin hacer nada — sin fallar.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/**"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-publish:
+    runs-on: [self-hosted, platform-local]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir y publicar cada workers/<carpeta>/Dockerfile
+        env:
+          REGISTRY: ghcr.io
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          dockerfiles=(workers/*/Dockerfile)
+          if [ ${#dockerfiles[@]} -eq 0 ]; then
+            echo "Ningún workers/<carpeta>/Dockerfile todavía — nada que publicar."
+            exit 0
+          fi
+
+          echo "$TOKEN" | docker login "$REGISTRY" -u "$ACTOR" --password-stdin
+
+          repo_lower=$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')
+
+          for dockerfile in "${dockerfiles[@]}"; do
+            dir=$(dirname "$dockerfile")
+            name=$(basename "$dir")
+            image="$REGISTRY/${repo_lower}-worker-${name}"
+
+            echo "Publicando $image (carpeta $dir)"
+            docker build -t "$image:latest" -t "$image:$SHA" "$dir"
+            docker push "$image:latest"
+            docker push "$image:$SHA"
+          done

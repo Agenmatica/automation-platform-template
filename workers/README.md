@@ -43,6 +43,12 @@ falta un endpoint HTTP separado. Un worker que en cambio sea un servicio
 persistente necesita un healthcheck tradicional — ese caso queda fuera de esta
 convención.
 
+Si el fallo es una credencial invalida, el worker DEBE escribir en stderr el
+marcador `CREDENCIAL_INVALIDA:<conexion_id>` y terminar con error. Kestra usa
+esa señal para marcar exclusivamente esa conexión como inválida y alertar a
+su organización; cualquier otro error se trata como técnico. `conexion_id` se
+recibe como variable de entorno de despacho, nunca contiene una credencial.
+
 ### Tabla central: normalizar datos de varias fuentes sin una tabla por sistema
 
 Cuando un worker importa un tipo de registro de negocio que también puede
@@ -89,6 +95,25 @@ template — organizaciones, perfiles, membresías, feature flags, backups,
 etc. Cada implementación crea sus tablas de dominio ahí, no en `public`;
 el template solo habilita el esquema vacío, sin tablas, hasta que una
 implementación cree la primera.
+
+La lectura de esas filas importadas queda disponible para cualquier miembro de
+la organización, mediante las políticas RLS de la tabla de dominio. No exige
+el rol de administrador que sí se necesita para gestionar la conexión que
+trajo los datos: `conexiones` y sus credenciales son recursos operativos,
+mientras que los datos ya normalizados forman parte del dominio compartido de
+la organización.
+
+### Testing de la normalización
+
+Cada conector conserva fixtures JSON del dato crudo que recibe del sistema
+externo y los usa en CI para probar la normalización hacia sus tablas
+centrales. Las pruebas deben cubrir transformaciones e idempotencia sin
+requerir acceso en vivo al sistema externo ni credenciales reales.
+
+La automatización de navegador no busca una cobertura automatizada realista
+contra el sistema externo real. Su resultado se controla por el estado y el
+código de salida que Kestra registra en cada ejecución; los fixtures cubren la
+lógica determinista que sí puede verificarse de manera repetible.
 
 ### Fuera de alcance
 

@@ -72,6 +72,10 @@ posteriores.
 
 ## Backlog priorizado
 
+### ActualizaciÃ³n 2026-09-15 — Spec 013
+
+La capacidad de orquestaciÃ³n de workers multi-organizaciÃ³n queda registrada como implementada: Supabase, Kestra, Refine y Superset compartidos; workers aislados por organizaciÃ³n despachados por SSH; flows genÃ©ricos paralelos con tope configurable y flows dedicados; secretos en Vault; RLS, alertas centralizadas y aprovisionamiento manual documentado. PgTAP, lint, build, Compose y una ejecuciÃ³n real del flow en Kestra fueron verificados. Queda pendiente una corrida E2E con servidor SSH de prueba y una organizaciÃ³n aprovisionada.
+
 ### Qué significa cada campo
 
 - **Prioridad:** P0 bloquea trabajo posterior una vez que aparece su

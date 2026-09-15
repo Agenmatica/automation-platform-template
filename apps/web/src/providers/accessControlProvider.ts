@@ -7,9 +7,10 @@ import { RECURSOS_CONDICIONADOS_A_FEATURE } from '../lib/recursosCondicionadosAF
 
 // Gatea tres categorías de recurso:
 // - "organizaciones" (spec 003, US2/AC2, FR-008, FR-010),
-//   "analitica-administrar" (spec 007, US1, FR-001/FR-013) y
-//   "features-administrar" (spec 009, US1, FR-002/FR-010): solo superadmin,
-//   sin importar organización activa — sus catálogos son globales.
+//   "analitica-administrar" (spec 007, US1, FR-001/FR-013),
+//   "features-administrar" (spec 009, US1, FR-002/FR-010) y "servidores"
+//   (spec 013, US5, FR-014): solo superadmin, sin importar organización
+//   activa — sus catálogos son globales.
 // - RECURSOS_DEPENDIENTES_DE_ORGANIZACION (spec 004, FR-001/FR-002): para
 //   administrador/miembro no cambia nada (siempre los ven); para
 //   superadmin, solo si tiene una organización activa — si no, ni
@@ -24,7 +25,12 @@ import { RECURSOS_CONDICIONADOS_A_FEATURE } from '../lib/recursosCondicionadosAF
 // bloqueada — el navegar no debería ni ofrecer la opción.
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ resource }) => {
-    if (resource === 'organizaciones' || resource === 'analitica-administrar' || resource === 'features-administrar') {
+    if (
+      resource === 'organizaciones' ||
+      resource === 'analitica-administrar' ||
+      resource === 'features-administrar' ||
+      resource === 'servidores'
+    ) {
       const { data } = await supabaseClient.auth.getUser()
       if (!data?.user) {
         return { can: false }
@@ -46,7 +52,7 @@ export const accessControlProvider: AccessControlProvider = {
 
       const esSuperadmin = await checkIsSuperadmin(data.user.id)
       if (!esSuperadmin) {
-        if (resource === 'miembros') {
+        if (resource === 'miembros' || resource === 'conexiones') {
           const { data: membresia } = await supabaseClient
             .from('usuarios_organizacion')
             .select('rol_id')

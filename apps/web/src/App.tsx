@@ -17,6 +17,11 @@ import { SiderConSeccionesSuperadmin } from './components/SiderConSeccionesSuper
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
 import { OrganizacionList } from './pages/organizaciones/list'
+import { ServidorCreate } from './pages/servidores/create'
+import { ServidorList } from './pages/servidores/list'
+import { ConexionCreate } from './pages/conexiones/create'
+import { ConexionEdit } from './pages/conexiones/edit'
+import { ConexionList } from './pages/conexiones/list'
 import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
@@ -148,12 +153,19 @@ function App() {
                 meta: { label: 'Organizaciones' },
               },
               {
+                name: 'servidores',
+                list: '/servidores',
+                create: '/servidores/create',
+                meta: { label: 'Servidores' },
+              },
+              {
                 name: 'clientes',
                 list: '/clientes',
                 create: '/clientes/create',
                 edit: '/clientes/edit/:id',
                 meta: { label: 'Clientes' },
               },
+              { name: 'conexiones', list: '/conexiones', create: '/conexiones/create', edit: '/conexiones/edit/:id', meta: { label: 'Conexiones' } },
               {
                 name: 'analitica-administrar',
                 list: '/analitica/administrar',
@@ -193,6 +205,11 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="/organizaciones" element={<OrganizacionList />} />
                 <Route path="/organizaciones/create" element={<OrganizacionCreate />} />
+                <Route path="/servidores" element={<ServidorList />} />
+                <Route path="/servidores/create" element={<ServidorCreate />} />
+                <Route path="/conexiones" element={<RequiereOrganizacionActiva><ConexionList /></RequiereOrganizacionActiva>} />
+                <Route path="/conexiones/create" element={<RequiereOrganizacionActiva><ConexionCreate /></RequiereOrganizacionActiva>} />
+                <Route path="/conexiones/edit/:id" element={<RequiereOrganizacionActiva><ConexionEdit /></RequiereOrganizacionActiva>} />
                 <Route
                   path="/clientes"
                   element={
