@@ -82,3 +82,28 @@ Esto es una convención de diseño, no un esquema que el template provea
 directamente: los nombres de columnas de dominio, los tipos de datos
 específicos y el esquema SQL real son responsabilidad de cada implementación
 que adapte el patrón a su propio dominio de negocio.
+
+### Fuera de alcance
+
+Esta convención no resuelve procesamiento en tiempo real disparado por eventos
+de usuario (colas como Redis/BullMQ) ni un backend HTTP síncrono que sirva a
+un frontend. Si una implementación puntual necesita alguna de las dos cosas,
+es una decisión propia de esa implementación — no algo que esta convención
+cubra ni que deba forzarse dentro de un worker de integración.
+
+### Origen de esta convención
+
+Esta convención no se diseñó de antemano: surge de que al menos dos
+automatizaciones de dominios de negocio independientes llegaron al mismo
+patrón (runtime, división worker/conector, relación con Kestra, tabla
+central) sin coordinación entre sí. Por eso se documenta acá, a nivel de
+template, en vez de quedar dentro de una implementación puntual.
+
+### Credenciales de un conector
+
+Un conector necesita credenciales para acceder a su sistema externo (API
+keys, una sesión de navegador logueada, u otro secreto equivalente). Esas
+credenciales siguen el manejo de secretos ya establecido para el proyecto:
+nunca en Git, solo en gestores de variables o vault por entorno (ver
+`.env.example` en la raíz y en cada `infra/<producto>/`). Esta convención no
+define un mecanismo de almacenamiento nuevo ni específico para conectores.

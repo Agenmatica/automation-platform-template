@@ -84,11 +84,11 @@ Todas las tareas de contenido editan `workers/README.md` (raíz del repo). Las t
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Escribir en `workers/README.md` el alcance excluido: procesamiento en tiempo real (colas como Redis/BullMQ) y backend HTTP síncrono para un frontend — decisiones propias de cada implementación (FR-008).
-- [ ] T013 [US3] Escribir en `workers/README.md` el origen de la convención: surge de al menos dos automatizaciones de dominios de negocio independientes, sin nombrar ninguno de los dos (FR-009).
-- [ ] T014 [US3] Escribir en `workers/README.md` la remisión al manejo de secretos ya existente en el proyecto para las credenciales de cada conector, sin definir un mecanismo nuevo (FR-010).
-- [ ] T015 [US3] Revisar el texto completo agregado en `workers/README.md` y confirmar que no aparece ninguna marca, empresa, sistema externo concreto ni terminología propia de un dominio de negocio puntual (FR-007, SC-003).
-- [ ] T016 [US3] Verificar manualmente las preguntas 7, 8, 9 y 10 de `contracts/workers-readme-contract.md` contra el texto recién escrito.
+- [X] T012 [US3] Escribir en `workers/README.md` el alcance excluido: procesamiento en tiempo real (colas como Redis/BullMQ) y backend HTTP síncrono para un frontend — decisiones propias de cada implementación (FR-008).
+- [X] T013 [US3] Escribir en `workers/README.md` el origen de la convención: surge de al menos dos automatizaciones de dominios de negocio independientes, sin nombrar ninguno de los dos (FR-009).
+- [X] T014 [US3] Escribir en `workers/README.md` la remisión al manejo de secretos ya existente en el proyecto para las credenciales de cada conector, sin definir un mecanismo nuevo (FR-010).
+- [X] T015 [US3] Revisar el texto completo agregado en `workers/README.md` y confirmar que no aparece ninguna marca, empresa, sistema externo concreto ni terminología propia de un dominio de negocio puntual (FR-007, SC-003).
+- [X] T016 [US3] Verificar manualmente las preguntas 7, 8, 9 y 10 de `contracts/workers-readme-contract.md` contra el texto recién escrito.
 
 **Checkpoint**: Las tres historias de usuario funcionan, de forma independiente y en conjunto.
 
