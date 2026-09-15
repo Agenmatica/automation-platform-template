@@ -8,7 +8,7 @@
 
 ## Summary
 
-Ampliar `workers/README.md` con la convención para workers técnicos de integración: Node.js + TypeScript como runtime por defecto, un conector aislado por sistema externo, Kestra como orquestador (programa/reintenta/alerta) sin reemplazar al worker (que ejecuta el trabajo técnico), el patrón de "tabla central" para normalizar datos de múltiples fuentes de un mismo dominio (columna `origen` + `id_externo` como clave compuesta de idempotencia + columna `jsonb` para lo particular de cada fuente), remisión al manejo de secretos ya existente en el proyecto para las credenciales de cada conector, y la aclaración de qué es un healthcheck para un worker de ejecución puntual disparado por Kestra. No hay código de producto: el entregable es exclusivamente una edición de documentación, sin dependencias, servicios ni migraciones nuevas.
+Ampliar `workers/README.md` con la convención para workers técnicos de integración: Node.js + TypeScript como runtime por defecto, un worker dedicado a un único sistema externo con un conector por cada tipo de dato o reporte que ese sistema expone, Kestra como orquestador (programa/reintenta/alerta) sin reemplazar al worker (que ejecuta el trabajo técnico), el patrón de "tabla central" para normalizar datos de múltiples fuentes que representan el mismo tipo de registro de negocio (columna de organización + `origen` + `id_externo` como clave compuesta de idempotencia + columna `jsonb` para lo particular de cada fuente), remisión al manejo de secretos ya existente en el proyecto para las credenciales de cada conector, y la aclaración de qué es un healthcheck para un worker de ejecución puntual disparado por Kestra. No hay código de producto: el entregable es exclusivamente una edición de documentación, sin dependencias, servicios ni migraciones nuevas.
 
 ## Technical Context
 
@@ -38,7 +38,7 @@ Ampliar `workers/README.md` con la convención para workers técnicos de integra
 |---|---|
 | I. Aislamiento multi-tenant por diseño | Cumplido — corregido durante el diseño de Fase 1: la tabla central que esta convención documenta **sí** es una tabla de datos, y por lo tanto hereda este principio sin excepción. FR-011 exige columna de organización + RLS; la clave de idempotencia pasó de `(origen, id_externo)` a `(organización, origen, id_externo)` (ver `research.md` R4). |
 | II. Especificar antes de implementar | Cumplido — esta es la spec (`spec.md`, clarificada) que precede a cualquier cambio en `workers/README.md`. |
-| III. Automatizaciones idempotentes y auditables | Cumplido y reforzado — la convención documentada es, precisamente, la forma concreta de cumplir este principio para workers futuros (idempotencia vía origen + id_externo, registro de estado vía Kestra). |
+| III. Automatizaciones idempotentes y auditables | Cumplido y reforzado — la convención documentada es, precisamente, la forma concreta de cumplir este principio para workers futuros (idempotencia vía organización + origen + id_externo, registro de estado vía Kestra). |
 | IV. Un monorepo, despliegues independientes | N/A — no se agrega ningún servicio ni Compose nuevo. |
 | V. Simplicidad operativa | Cumplido — es el caso más simple posible: una edición de documentación, sin infraestructura nueva, justificada por dos casos reales de dominios independientes (FR-009). |
 | Technology and Quality Gates (stack base, migraciones aditivas) | N/A — no hay migraciones ni cambio de stack; no se agrega Redis/BullMQ/backend síncrono (excluido a propósito, FR-008). |

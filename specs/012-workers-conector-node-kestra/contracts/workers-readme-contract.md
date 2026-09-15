@@ -7,8 +7,8 @@ Esta feature no expone una API ni una CLI — su única "interfaz" es el documen
 1. **¿En qué lenguaje se escribe un worker de integración por defecto, y es obligatorio?**
    → Node.js + TypeScript por defecto; no obligatorio si un caso puntual justifica otro runtime. (FR-001)
 
-2. **¿Cómo se organiza un worker que integra más de un sistema externo?**
-   → Un conector por sistema externo, aislado de los demás. (FR-002)
+2. **¿Un worker puede integrar más de un sistema externo? ¿Cómo se organiza cuando ese sistema expone más de un tipo de dato?**
+   → No, un worker se dedica a un único sistema externo. Cuando ese sistema expone varios tipos de dato o reporte, cada uno se implementa como un conector propio dentro del worker, aislado de los demás, cada uno con su propio método de acceso. (FR-002)
 
 3. **¿Kestra reemplaza al worker, o lo complementa? ¿Cómo se dividen las responsabilidades?**
    → Kestra programa/reintenta/alerta; el worker ejecuta el trabajo técnico (API, automatización de navegador, descarga/procesamiento de archivos, validación e importación). No hay redundancia. (FR-003)
