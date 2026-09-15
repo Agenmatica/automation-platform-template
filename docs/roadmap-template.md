@@ -50,6 +50,7 @@ reemplaza las prioridades históricas de sus specs.
 | P1        | Integraciones   | Convención de workers de integración      | Ninguna                                  | `workers/README.md` documenta runtime por defecto (Node.js + TypeScript), organización worker/conector, relación Kestra/worker, patrón de tabla central multi-tenant para normalizar datos de varias fuentes, y alcance explícitamente excluido (colas, backend síncrono). No agrega infraestructura ni código de producto — es la convención que las specs de integración futuras (como la spec 013) siguen. [Spec 012](../specs/012-workers-conector-node-kestra/spec.md) | Implementado |
 | P0        | Seguridad       | Blindaje de secretos en la orquestación   | Orquestación multi-organización (spec 013) | Acceso efímero y de mínimo privilegio a credenciales vía `private.obtener_credencial_para_worker(uuid)` (rol `workers_orquestacion`, sin `SELECT` directo a Vault ni a otras organizaciones); flows genérico y dedicado despachan por `secret()` sin resolver la credencial en Kestra; diagnóstico de fallas clasificado (técnica/credencial) con motivo sanitizado, sin `errorLogs()` ni valores secretos en alertas; arnés de regresión y recorrido E2E automatizado con credencial centinela que confirman cero apariciones (literal/URL/Base64) en outputs, logs y artefactos. [Spec 014](../specs/014-blindaje-secretos-kestra/spec.md) | Implementado |
 | P2        | Infraestructura | Puertos de desarrollo local configurables | Separación local por producto            | Cada puerto de desarrollo local (Refine, Supabase API/DB/Studio/Mailpit/pooler/analítica/inspector, Kestra, Superset, Playwright) es una variable de entorno con default igual al puerto actual — permite correr el template y un producto derivado en paralelo en la misma máquina cambiando solo esas variables, con `supabase/config.toml` como única excepción documentada (limitación confirmada del CLI de Supabase). [Spec 015](../specs/015-puertos-configurables/spec.md) | Implementado |
+| P0        | Infraestructura | Creador de productos derivados (guía)     | Puertos de desarrollo local configurables | Resuelto como documento, no como script ni spec: guía de proceso con la lista exacta de referencias de identidad a renombrar (Compose, `package.json`, `project_id` de Supabase), qué NO traer del template, y una verificación final por búsqueda de texto. Se gradúa a script solo si un segundo o tercer fork real muestra pasos mecánicos repetidos. [docs/crear-producto-derivado.md](./crear-producto-derivado.md) | Implementado |
 
 
  La spec 003 conserva una tarea abierta de comprobación inicial de entorno;
@@ -142,11 +143,10 @@ necesitando justo esta función".
 
 | # | Prioridad | Capacidad | Horizonte | Dependencias | Disparador | Tipo de disparador | Resultado de salida | Estado |
 | - | --------- | --------- | --------- | ------------- | ---------- | ------------------- | -------------------- | ------ |
-| 1  | P0 | Creador de productos derivados | H1 | Ninguna | Primer producto derivado. | Inevitable | Crear un repo nuevo con nombre, servicios, variables y documentación propios. | Exploración |
-| 2  | P0 | Gestión de entornos | H1 | Creador de productos derivados | Primer despliegue de producto. | Inevitable | Contrato claro de variables, secretos, URLs y responsabilidades por entorno. | Exploración |
+| 2  | P0 | Gestión de entornos | H1 | Creador de productos derivados (ver Backlog entregado) | Primer despliegue de producto. | Inevitable | Contrato claro de variables, secretos, URLs y responsabilidades por entorno. | Exploración |
 | 3  | P0 | Seguridad continua | H2 | Ninguna | Antes de producción y de forma continua. | Inevitable | Chequeos automatizados de dependencias, imágenes, secretos y configuración. | Exploración |
 | 4  | P0 | Política de datos IA | H3 | Gestión de entornos y seguridad continua | Antes de datos reales en IA. | Condicional (solo si usa IA) | Reglas explícitas de datos permitidos, excluidos y tratamiento de errores. | Exploración |
-| 5  | P0 | Versión de origen | H1 | Creador de productos derivados | Primer producto derivado. | Inevitable | Cada producto registra el tag o commit de origen. | Exploración |
+| 5  | P0 | Versión de origen | H1 | Creador de productos derivados (ver Backlog entregado) | Primer producto derivado. | Inevitable | Cada producto registra el tag o commit de origen. | Exploración |
 | 6  | P0 | Restauración | H2 | Backups (entregado, spec 011) | Antes de operar datos reales. | Inevitable | Restauración verificada en un entorno aislado. | Exploración |
 | 7  | P0 | E2E en CI | H2 | Gestión de entornos | Primer flujo crítico de negocio. | Inevitable | Suite Playwright versionada que corre en CI para recorridos críticos. | Exploración |
 | 8  | P0 | Monitoreo, alertas y errores | H2 | Gestión de entornos | Primer servicio de producción. | Inevitable | Healthchecks, registro central de errores y alertas ante fallos críticos. | Exploración |
@@ -225,18 +225,6 @@ a convertir una capacidad elegida en una spec concreta, pero no reemplaza esa
 spec.
 
 ### Horizonte 1 — Base derivable
-
-#### Creador de productos derivados
-
-Debe iniciar un repositorio nuevo desde el template sin dejar referencias al
-nombre, dominio, proyecto Docker o configuración de otro producto. Puede ser
-un script interactivo, un generador o una guía ejecutable. Debe generar los
-archivos de variables de ejemplo, actualizar nombres de Compose y dejar una
-lista explícita de recursos externos a crear.
-
-No debe crear proveedores cloud reales, secretos reales ni tablas del dominio
-del producto. Su resultado es un repositorio independiente, listo para abrir
-la primera spec de negocio.
 
 #### Versión de origen
 
