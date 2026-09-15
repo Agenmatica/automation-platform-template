@@ -61,6 +61,10 @@ services:
       SUPERSET_GUEST_TOKEN_USERNAME: ${SUPERSET_GUEST_TOKEN_USERNAME:-guest-token-service}
       SUPERSET_GUEST_TOKEN_PASSWORD: ${SUPERSET_GUEST_TOKEN_PASSWORD:-change-me-local}
       REFINE_ORIGIN: ${REFINE_ORIGIN:-http://localhost:3100}
+      # Puerto de las variantes de loopback de CORS_OPTIONS.origins en
+      # superset_config.py (spec 015) — sin esto, el contenedor nunca ve el
+      # WEB_PORT del host y esas variantes quedan fijas en 3100.
+      WEB_PORT: ${WEB_PORT:-3100}
     volumes:
       - ./superset_config.py:/app/pythonpath/superset_config.py:ro
       - ./crear_cuenta_servicio_guest_token.py:/app/pythonpath/crear_cuenta_servicio_guest_token.py:ro
@@ -81,7 +85,9 @@ services:
       --limit-request-field_size 0 "superset.app:create_app()"
     environment: *superset-environment
     ports:
-      - "127.0.0.1:8088:8088"
+      # Puerto host configurable (spec 015); el bind interno de gunicorn y el
+      # healthcheck siguen en 8088 dentro del contenedor, sin cambios.
+      - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
     volumes:
       - ./superset_config.py:/app/pythonpath/superset_config.py:ro
     depends_on:

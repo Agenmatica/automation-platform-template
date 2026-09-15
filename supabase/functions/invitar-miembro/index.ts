@@ -2,6 +2,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+// Puerto por defecto alineado a WEB_PORT (spec 015, contracts/variables-puerto.md)
+// — igual que SUPERSET_PUBLIC_URL en este mismo .env.example, se actualiza a
+// mano acá si se cambia WEB_PORT (esta función no puede leer variables de
+// entorno del Refine que la invoca, solo las propias del contenedor de Edge
+// Functions).
 const appUrl = (Deno.env.get('APP_URL') ?? 'http://127.0.0.1:3100').replace(/\/$/, '')
 
 Deno.serve(async (req) => {

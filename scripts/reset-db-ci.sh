@@ -18,7 +18,7 @@ cd "$(dirname "$0")/.."
 
 psql_ci() {
   PGPASSWORD=postgres PGSSLMODE=disable psql \
-    --host host.docker.internal --port 5434 \
+    --host host.docker.internal --port "${SUPABASE_DB_PORT:-5434}" \
     --username postgres --dbname postgres \
     --set ON_ERROR_STOP=1 --quiet "$@"
 }
