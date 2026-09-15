@@ -73,6 +73,12 @@ services:
       # Puerto host configurable (spec 015); el 8080 es el puerto interno fijo
       # de Kestra, no necesita variar.
       - "127.0.0.1:${KESTRA_PORT:-8082}:8080"
+    extra_hosts:
+      # host.docker.internal ya lo resuelve Docker Desktop (Windows/Mac) solo;
+      # en Docker Engine nativo de Linux hace falta esta entrada explícita
+      # (host-gateway, soportado desde Docker 20.10) para que las URLs de
+      # backups/orquestación de más arriba conecten igual en los dos.
+      - "host.docker.internal:host-gateway"
     volumes:
       - kestra-data:/app/storage
       - kestra-work:/tmp/kestra-wd
