@@ -155,10 +155,15 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
+# El CLI de Supabase no admite env() en este campo (es un array/string
+# literal, no un campo string individual) — excepción documentada en
+# specs/015-puertos-configurables/research.md #5. Si se cambia WEB_PORT en
+# .env, este puerto (3100) se actualiza a mano acá.
 site_url = "http://127.0.0.1:3100"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+# Mismo puerto que site_url arriba — misma excepción, mismo WEB_PORT a mano.
 additional_redirect_urls = [
   "http://127.0.0.1:3100",
   "http://localhost:3100",

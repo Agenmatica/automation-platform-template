@@ -74,12 +74,18 @@ GUEST_ROLE_NAME = "Guest"
 # (encontrado corriendo el quickstart de la spec 007, T023). En producción
 # esto no habilita nada real: nadie externo puede pegarle a
 # localhost/127.0.0.1 del servidor.
+#
+# El puerto de esas dos variantes sale de WEB_PORT (spec 015) en vez de
+# quedar como literal fijo — si un fork corre Refine en otro puerto y
+# olvida setear REFINE_ORIGIN, las variantes de loopback igual apuntan al
+# puerto correcto en vez de quedarse en el 3100 del template.
+_web_port = os.environ.get("WEB_PORT", "3100")
 ENABLE_CORS = True
 CORS_OPTIONS = {
     "supports_credentials": True,
     "origins": [
-        os.environ.get("REFINE_ORIGIN", "http://localhost:3100"),
-        "http://localhost:3100",
-        "http://127.0.0.1:3100",
+        os.environ.get("REFINE_ORIGIN", f"http://localhost:{_web_port}"),
+        f"http://localhost:{_web_port}",
+        f"http://127.0.0.1:{_web_port}",
     ],
 }
