@@ -37,6 +37,39 @@ supere el plan gratuito de Vercel/Supabase ni sea necesario ampliar el VPS.
 No se promueven bases copiando datos. Se promueven código, migraciones y
 configuración; las credenciales son distintas en cada entorno.
 
+## Servidores de organización
+
+Supabase, Kestra, Refine y Superset siguen siendo instancias centrales
+compartidas; cada worker de integración se ejecuta, en cambio, en el
+servidor aislado de su organización. El alta de ese servidor es un
+procedimiento manual: hoy no requiere ni justifica una herramienta de
+aprovisionamiento propia.
+
+1. Preparar el VPS de la organización con Docker y `sshd`. Crear un usuario
+   de despacho acotado para Kestra, restringido a la operación del worker;
+   no usar una cuenta administrativa general del VPS.
+2. Registrar desde la pantalla de superadmin
+   `apps/web/src/pages/servidores/create.tsx` la organización, host, puerto
+   SSH, usuario y credencial SSH de ese usuario. La llamada
+   `private.aprovisionar_servidor_organizacion` crea el rol de base de datos
+   `worker_*` limitado a esa organización y guarda tanto la credencial SSH
+   como la de base en Supabase Vault.
+3. Copiar y almacenar de forma segura la contraseña del rol de base de datos
+   que la pantalla muestra una sola vez. No se puede volver a obtener en texto
+   plano: queda cifrada en Vault y solo se usa durante el despacho.
+4. Verificar el alta con el flujo de prueba de
+   `specs/013-orquestacion-multi-organizacion/quickstart.md`: Kestra debe
+   conectar por SSH, descargar la imagen del worker desde GHCR y ejecutarla
+   en ese VPS, no en la infraestructura central.
+
+### Continuidad tras restaurar un backup
+
+Si se restaura una copia de la base compartida en un proyecto Supabase distinto,
+las credenciales cifradas de Vault no son recuperables. La respuesta operativa
+aceptada es reconectar cada sistema externo y volver a aprovisionar cada
+servidor de organización para generar sus nuevas credenciales SSH y de base.
+No se debe intentar copiar ni reconstruir claves de cifrado desde el backup.
+
 ## CI
 
 `.github/workflows/validate.yml` corre en un runner self-hosted (no en

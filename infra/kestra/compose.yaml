@@ -61,6 +61,10 @@ services:
       # que las de arriba.
       ENV_KESTRA_ORQUESTACION_DB_PASSWORD: ${KESTRA_ORQUESTACION_DB_PASSWORD:-change-me-local}
       ENV_KESTRA_ORQUESTACION_DB_URL: ${KESTRA_ORQUESTACION_DB_URL:-jdbc:postgresql://host.docker.internal:5434/postgres}
+      ENV_KESTRA_ORQUESTACION_CONCURRENCIA: ${KESTRA_ORQUESTACION_CONCURRENCIA:-10}
+      # Router HTTP centralizado de alertas (spec 013). La URL real vive solo
+      # en infra/kestra/.env; no se versiona ningun token de proveedor.
+      ENV_KESTRA_ALERTAS_WEBHOOK_URL: ${KESTRA_ALERTAS_WEBHOOK_URL:-http://host.docker.internal:8099/alertas}
     ports:
       - "127.0.0.1:8082:8080"
     volumes:

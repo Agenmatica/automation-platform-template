@@ -8,16 +8,16 @@ desde el Kestra local) — no requiere una organización ni un servidor real.
 
 - `pnpm dev:supabase` y `pnpm dev:kestra` corriendo.
 - La migración de esta spec aplicada (`supabase/migrations/<timestamp>_orquestacion_multi_organizacion.sql`).
-- Los flows de `infra/kestra/flows/` (`plantilla-generico.yml`, `alertas.yml`) aplicados vía la API/CLI de Kestra (mismo procedimiento que `research.md` R7 de la spec 011).
+- Los flows de `infra/kestra/flows/` aplicados vía la API/CLI de Kestra. Antes de importar `plantilla-generico.yml`, renderizarlo con `infra/kestra/renderizar-flow.ps1`, tomando `KESTRA_ORQUESTACION_CONCURRENCIA` del entorno (Kestra 1.3.35 exige un entero literal en `concurrencyLimit`).
 - Un contenedor de prueba con `sshd` expuesto, jugando el rol de "servidor de organización" (documentado en el paso 1).
 
 ## Pasos
 
 1. **Levantar un servidor de organización de prueba**: un contenedor Docker con `sshd` y el propio Docker-in-Docker (o el socket montado) para poder correr `docker run` remotamente. Anotar host/puerto/usuario.
 
-2. **Aprovisionar la organización de prueba**: llamar a `private.aprovisionar_servidor_organizacion(...)` (contrato en `contracts/gestion-conexiones-y-servidores.md`) con los datos del paso 1. Confirmar que devuelve la credencial del rol de base una sola vez, y que `servidores_organizacion` tiene la fila nueva.
+2. **Aprovisionar la organización de prueba**: llamar a `public.aprovisionar_servidor_organizacion(...)` (contrato en `contracts/gestion-conexiones-y-servidores.md`) con los datos del paso 1. Confirmar que devuelve la credencial del rol de base una sola vez, y que `servidores_organizacion` tiene la fila nueva.
 
-3. **Crear una conexión de prueba**: insertar una conexión para esa organización con un `sistema_externo` ficticio y una credencial de negocio cualquiera. Confirmar que un miembro sin rol de administrador no puede verla (RLS) — solo el administrador/superadmin.
+3. **Crear una conexión de prueba**: llamar a `public.crear_conexion(...)` para esa organización con un `sistema_externo` ficticio y una credencial de negocio cualquiera. Confirmar que un miembro sin rol de administrador no puede verla (RLS) — solo el administrador/superadmin.
 
 4. **Disparar el flow genérico**: ejecutarlo con al menos dos organizaciones de prueba (crear una segunda igual que en el paso 1-3) y confirmar:
    - Ambas ejecuciones corren superpuestas en el tiempo (log de Kestra), no una después de la otra (FR-004).
@@ -35,6 +35,28 @@ desde el Kestra local) — no requiere una organización ni un servidor real.
 8. **Excepción con flow dedicado**: insertar una fila en `excepciones_flow_generico` para una de las organizaciones de prueba y ese conector. Re-ejecutar el flow genérico y confirmar que esa organización queda excluida (FR-005).
 
 9. **RLS con pgTAP**: correr `pnpm test` (o el subconjunto de pgTAP de esta spec) y confirmar que un miembro sin rol de administrador no puede leer `conexiones` ni `servidores_organizacion` de su organización, y que no puede leer ninguna fila de otra organización.
+
+## Ejecución registrada (2026-09-15)
+
+Se ejecutaron los pasos 1-4 y 9 con dos servidores SSH+DIND efímeros
+(`spec013-ssh-x`/`spec013-ssh-y`) y dos organizaciones de prueba. El flow
+`platform.orquestacion.plantilla-generico`, revisión 4, terminó en `SUCCESS`
+con ambas tareas `despacho_ssh` y `marcar_conexion_activa` en `SUCCESS`; la
+consulta previa y los dos despachos se ejecutaron superpuestos. `pnpm test`
+quedó en verde (53 pruebas web y 269 pruebas pgTAP). El subflow
+`platform.alertas.alertas` registró una alerta `tecnica` de prueba y quedó en
+`WARNING` porque el webhook local no estaba atendiendo.
+
+El paso 7 (falla técnica) quedó verificado: tras los tres reintentos, el flow
+registró una alerta `tecnica` y conservó la conexión en estado `activa`. Para
+los pasos 5-6, el handler JDBC usa `errorLogs()` en contexto Worker y la
+función SQL `private.procesar_falla_orquestacion` fue verificada con el marcador
+`CREDENCIAL_INVALIDA:`: cambió el estado a `credencial_invalida` y registró la
+alerta `credencial`. El worker real debe emitir ese marcador según el contrato
+de la spec 012. El paso 8 se verificó por la consulta de exclusión
+y el contrato de RLS, sin dejar una fila persistente en
+la fixture efímera. Los contenedores y filas de prueba se eliminan al terminar
+la validación.
 
 ## Resultado esperado
 

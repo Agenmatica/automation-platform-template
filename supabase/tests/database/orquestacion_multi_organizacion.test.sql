@@ -16,7 +16,7 @@
 -- de punta a punta es responsabilidad de quickstart.md, no de esta suite.
 begin;
 
-select plan(65);
+select plan(70);
 
 -- ============================================================================
 -- Fixture
@@ -41,8 +41,10 @@ insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
 
 create temporary table t_ids (key text primary key, val uuid);
 create temporary table t_txt (key text primary key, val text);
+create temporary table t_rpc (key text primary key, payload jsonb);
 grant all on t_ids to authenticated;
 grant all on t_txt to authenticated;
+grant all on t_rpc to authenticated;
 
 -- ============================================================================
 -- private.es_administrador_de (FR-009)
@@ -241,13 +243,21 @@ select throws_ok(
   'el administrador de X no puede crear una conexión para Y'
 );
 
+insert into t_rpc (key, payload)
+select 'conexion_x', public.crear_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba', 'credencial-secreta-x');
+
 insert into t_ids (key, val)
-select 'conexion_x', (public.crear_conexion('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba', 'credencial-secreta-x')).id;
+select 'conexion_x', ((select payload from t_rpc where key = 'conexion_x')->>'id')::uuid;
 
 select is(
   (select estado from conexiones where id = (select val from t_ids where key = 'conexion_x')),
   'activa',
   'crear_conexion crea la fila con estado activa'
+);
+
+select ok(
+  not ((select payload from t_rpc where key = 'conexion_x') ? 'credencial_vault_id'),
+  'crear_conexion no devuelve credencial_vault_id en su respuesta RPC (FR-006)'
 );
 
 select throws_ok(
@@ -289,7 +299,7 @@ select set_config(
 set local role authenticated;
 
 insert into t_ids (key, val)
-select 'conexion_y', (public.crear_conexion('d2222222-2222-2222-2222-222222222222', 'sistema-de-prueba', 'credencial-secreta-y')).id;
+select 'conexion_y', ((public.crear_conexion('d2222222-2222-2222-2222-222222222222', 'sistema-de-prueba', 'credencial-secreta-y')->>'id')::uuid);
 
 reset role;
 
@@ -416,6 +426,40 @@ select throws_ok(
   null,
   'datos_despacho_conexion falla si la organización no tiene conexión a ese sistema_externo'
 );
+
+-- ============================================================================
+-- private.organizaciones_activas_para_conector (T018): el universo del flow
+-- genérico se limita a conexiones activas y excluye flows dedicados (FR-005).
+-- ============================================================================
+
+select is(
+  has_function_privilege('kestra_orquestacion', 'private.organizaciones_activas_para_conector(text)', 'EXECUTE'),
+  true,
+  'kestra_orquestacion puede enumerar organizaciones activas para un conector'
+);
+select is(
+  has_function_privilege('authenticated', 'private.organizaciones_activas_para_conector(text)', 'EXECUTE'),
+  false,
+  'authenticated no puede enumerar el universo de despacho del flow'
+);
+select is(
+  (select count(*)::int from private.organizaciones_activas_para_conector('sistema-de-prueba')),
+  2,
+  'el universo incluye las dos organizaciones con conexión activa'
+);
+
+insert into excepciones_flow_generico (organizacion_id, conector_id)
+values ('d1111111-1111-1111-1111-111111111111', 'sistema-de-prueba');
+
+select is(
+  (select count(*)::int from private.organizaciones_activas_para_conector('sistema-de-prueba')),
+  1,
+  'el universo excluye una organización atendida por flow dedicado'
+);
+
+delete from excepciones_flow_generico
+where organizacion_id = 'd1111111-1111-1111-1111-111111111111'
+  and conector_id = 'sistema-de-prueba';
 
 -- ============================================================================
 -- private.marcar_conexion_activa / marcar_conexion_credencial_invalida /

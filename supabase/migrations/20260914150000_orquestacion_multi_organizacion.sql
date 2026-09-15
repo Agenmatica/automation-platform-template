@@ -441,6 +441,38 @@ comment on function private.datos_despacho_conexion(uuid, text) is
 revoke execute on function private.datos_despacho_conexion(uuid, text) from public, authenticated, anon;
 grant execute on function private.datos_despacho_conexion(uuid, text) to kestra_orquestacion;
 
+-- Fase 4 (US2, T018): Kestra necesita el universo de organizaciones activas
+-- para un conector, pero no SELECT sobre las tablas de dominio. La funcion
+-- devuelve solo UUIDs y aplica la exclusion de flows dedicados (FR-005), sin
+-- exponer credenciales ni columnas *_vault_id.
+create or replace function private.organizaciones_activas_para_conector(
+  p_sistema_externo text
+)
+returns table (organizacion_id uuid)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select distinct c.organizacion_id
+  from public.conexiones c
+  where c.sistema_externo = p_sistema_externo
+    and c.estado = 'activa'
+    and not exists (
+      select 1
+      from public.excepciones_flow_generico e
+      where e.organizacion_id = c.organizacion_id
+        and e.conector_id = p_sistema_externo
+    )
+  order by c.organizacion_id;
+$$;
+
+comment on function private.organizaciones_activas_para_conector(text) is
+  'Contrato: specs/013-orquestacion-multi-organizacion/contracts/orquestacion-kestra.md (US2, FR-005). Devuelve los UUID de organizaciones con una conexion activa para el conector, excluyendo las que tienen flow dedicado. Kestra no recibe SELECT directo sobre conexiones ni excepciones_flow_generico.';
+
+revoke execute on function private.organizaciones_activas_para_conector(text) from public, authenticated, anon;
+grant execute on function private.organizaciones_activas_para_conector(text) to kestra_orquestacion;
+
 create or replace function private.marcar_conexion_activa(p_conexion_id uuid)
 returns void
 language sql

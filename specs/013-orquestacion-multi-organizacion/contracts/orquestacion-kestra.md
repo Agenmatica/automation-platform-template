@@ -29,6 +29,15 @@ arquitectura — la plantilla real vive en `infra/kestra/flows/`.
    credencial): dispara el subflow de alertas con `tipo = tecnica`, sin
    tocar `conexiones.estado`.
 
+## Gestión de excepciones
+
+El alta o baja de una fila de `excepciones_flow_generico` se opera por un
+superadmin directamente en Supabase Studio (o SQL administrativo), no desde
+una pantalla de Refine. Es una decisión de operación de plataforma y no hay
+un caso de uso que justifique esa UI en esta spec (Principio V). Las políticas
+RLS mantienen la escritura fuera del alcance de usuarios `authenticated` no
+superadmin.
+
 ## Flow dedicado (excepción por organización)
 
 Mismo contrato que el genérico (puntos 4-7), pero:

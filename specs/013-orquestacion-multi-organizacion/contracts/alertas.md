@@ -31,6 +31,15 @@ notificación duplicada dentro de esos flows, FR-011).
    que llama, no este subflow) — este subflow no vuelve a tocar
    `conexiones`.
 
+## Router HTTP configurado
+
+El subflow usa `KESTRA_ALERTAS_WEBHOOK_URL`. El receptor recibe un JSON con
+`tipo`, `organizacion_id`, `conexion_id`, `motivo` y `destinatarios`: para
+`tecnica`, `operador_plataforma`; para `credencial`,
+`operador_y_administradores_organizacion`. El router resuelve los canales
+reales sin que los flows versionados contengan correos, URLs por organizacion
+ni secretos de proveedores.
+
 ## Qué NO hace este subflow
 
 - No decide reintentos — eso ya pasó en el flow que lo invoca (R7), antes

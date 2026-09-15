@@ -10,7 +10,7 @@ const RECURSOS_EXCLUSIVOS_SUPERADMIN = new Set([
   'features-administrar',
   'servidores',
 ])
-const RECURSOS_DE_ORGANIZACION = new Set(['clientes', 'miembros', 'analitica'])
+const RECURSOS_DE_ORGANIZACION = new Set(['clientes', 'miembros', 'analitica', 'conexiones'])
 
 function recursoDeItem(item: React.ReactNode) {
   if (!isValidElement(item)) {

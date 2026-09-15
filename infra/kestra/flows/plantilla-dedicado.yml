@@ -1,0 +1,106 @@
+# Plantilla dedicada de spec 013. Cada excepcion real reemplaza id por
+# <producto>.<conector>.<organizacion-slug> y mantiene su fila de exclusion.
+id: plantilla-dedicado
+namespace: platform.orquestacion
+description: "Despacha un worker para una organizacion atendida como excepcion."
+inputs:
+  - id: organizacion_id
+    type: STRING
+  - id: sistema_externo
+    type: STRING
+  - id: imagen
+    type: STRING
+tasks:
+  - id: resolver_despacho
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH_ONE
+    sql: select * from private.datos_despacho_conexion(CAST(:organizacion_id AS uuid), :sistema_externo);
+    parameters:
+      organizacion_id: "{{ inputs.organizacion_id }}"
+      sistema_externo: "{{ inputs.sistema_externo }}"
+  - id: obtener_credencial_servidor
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH_ONE
+    sql: select public.obtener_credencial_servidor(CAST(:organizacion_id AS uuid)) as credencial;
+    parameters:
+      organizacion_id: "{{ inputs.organizacion_id }}"
+  - id: obtener_credencial_conexion
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH_ONE
+    sql: select public.obtener_credencial_conexion(CAST(:conexion_id AS uuid)) as credencial;
+    parameters:
+      conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+  - id: despacho_ssh
+    type: io.kestra.plugin.fs.ssh.Command
+    host: "{{ outputs.resolver_despacho.row.host }}"
+    port: "{{ outputs.resolver_despacho.row.puerto_ssh }}"
+    username: "{{ outputs.resolver_despacho.row.usuario_ssh }}"
+    password: "{{ outputs.obtener_credencial_servidor.row.credencial }}"
+    retry:
+      type: exponential
+      maxAttempts: 3
+      interval: PT30S
+      maxInterval: PT2M
+    commands:
+      - docker pull {{ inputs.imagen }}
+      - |
+        docker run --rm \
+          -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
+          -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
+          -e CONEXION_ID="{{ outputs.resolver_despacho.row.conexion_id }}" \
+          -e CREDENCIAL="{{ outputs.obtener_credencial_conexion.row.credencial }}" \
+          {{ inputs.imagen }}
+  - id: marcar_conexion_activa
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    sql: select private.marcar_conexion_activa(CAST(:conexion_id AS uuid));
+    parameters:
+      conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+errors:
+  - id: clasificar_y_alertar
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ errorLogs() contains 'CREDENCIAL_INVALIDA:' }}"
+    then:
+      - id: marcar_credencial_invalida
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: "{{ envs.kestra_orquestacion_db_url }}"
+        username: kestra_orquestacion
+        password: "{{ envs.kestra_orquestacion_db_password }}"
+        sql: select private.marcar_conexion_credencial_invalida(CAST(:conexion_id AS uuid), :motivo);
+        parameters:
+          conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+          motivo: "{{ errorLogs() }}"
+      - id: alertar_credencial
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: platform.alertas
+        flowId: alertas
+        wait: true
+        transmitFailed: false
+        inputs:
+          tipo: credencial
+          organizacion_id: "{{ inputs.organizacion_id }}"
+          conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+          motivo: "{{ errorLogs() }}"
+    else:
+      - id: alertar_tecnica
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: platform.alertas
+        flowId: alertas
+        wait: true
+        transmitFailed: false
+        inputs:
+          tipo: tecnica
+          organizacion_id: "{{ inputs.organizacion_id }}"
+          conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+          motivo: "{{ errorLogs() }}"

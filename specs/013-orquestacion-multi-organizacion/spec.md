@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-14
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Arquitectura de despliegue y orquestación para workers de integración multi-organización, como capacidad del template complementaria a la convención de código de la spec 012 (workers-conector-node-kestra). A diferencia de la 012, esta spec no surge de dos casos independientes convergiendo — es una decisión explícita de incorporar esta arquitectura al template ahora. Alcance: Supabase, Kestra (una sola instancia central), Refine y Superset son compartidos entre organizaciones, reusando el multi-tenant ya existente del template (organizaciones + RLS). Los workers de integración, en cambio, se despliegan aislados por organización, cada uno en su propio servidor. Kestra despacha la ejecución del worker al servidor de la organización correspondiente mediante un task SSH (no mediante Kestra Worker Groups, que es función Enterprise no disponible en la edición open-source que usa este template). Dos niveles de flows: genéricos compartidos por tipo de conector (paralelo, no secuencial) y dedicados por organización para casos excepcionales. Gestión de secretos en tres niveles vía Supabase Vault. Control de acceso admin/superadmin para conexiones. Alertas centralizadas que distinguen falla técnica de falla de credencial. Aprovisionamiento manual documentado de una organización nueva. Código de workers en el mismo repo del producto, imagen construida una vez y distribuida bajo demanda. Testing de normalización con fixtures, sin perseguir cobertura realista de automatización de navegador. Continuidad documentada ante restauración de backups en un proyecto distinto."
 
