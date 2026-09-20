@@ -63,6 +63,56 @@ URL y Base64 comunes por `[REDACTADO]`. Para una credencial inválida no debe
 imprimir la causa del proveedor: solo `CREDENCIAL_INVALIDA:<conexion_id>`; para
 una falla técnica debe emitir una causa ya sanitizada.
 
+### Ciclo de ejecuciones (spec 016): inicio
+
+Cuando el producto adoptó el ciclo de ejecuciones del template, cada
+disparo de Kestra ocurre dentro de una ejecución auditada
+(`specs/016-ciclo-ejecuciones-workers/contracts/ciclo-ejecuciones.md`):
+
+- Kestra inicia la ejecución por JDBC **antes** de despachar el contenedor
+  (`select iniciar_ejecucion_worker(CONEXION_ID, CAPACIDAD, ORIGEN)`); el worker no
+  la inicia él mismo. Si la capacidad ya tiene una ejecución activa para esa
+  organización, el inicio falla con `YA_EN_CURSO` y Kestra no despacha nada:
+  el worker nunca corre duplicado por este motivo.
+- El contenedor recibe, además de las variables ya documentadas,
+  `CAPACIDAD` (la clave registrada y habilitada para esa conexión) y
+  `EJECUCION_ID` (el intento auditable al que pertenece este trabajo). El
+  worker propaga `EJECUCION_ID` a sus logs y a las rutas de evidencia que
+  suba, para que el cierre pueda atarlos al intento correcto.
+- `CAPACIDAD` nunca es un valor arbitrario del cliente: es una de las claves
+  registradas en `capacidades_ejecucion` para esa conexión. Un worker que
+  necesite exponer una capacidad nueva la registra primero (el inicio
+  rechaza cualquier otra con `CAPACIDAD_NO_HABILITADA`).
+
+El cierre y la evidencia se documentan en la subsección siguiente.
+
+### Ciclo de ejecuciones (spec 016): cierre y evidencia
+
+Al terminar el trabajo técnico, el worker cierra su ejecución por JDBC con
+el rol `worker_<organizacion_id>` (solo su propia organización, FR-008):
+
+```sql
+select cerrar_ejecucion_worker(EJECUCION_ID, ESTADO, MOTIVO, DETALLE, ARCHIVO, EVIDENCIA);
+-- ESTADO: solo 'exitosa' o 'fallida'. MOTIVO: causa ya sanitizada
+-- (ver sección siguiente). DETALLE: jsonb extensible, sin secretos.
+-- ARCHIVO/EVIDENCIA: rutas del bucket, solo si exitosa.
+```
+
+- **Evidencia primero, cierre después**: el worker sube el archivo original
+  y la evidencia a `evidencias-ejecuciones/<ORGANIZACION_ID>/<CAPACIDAD>/
+  <EJECUCION_ID>/...` y recién entonces cierra pasando esas rutas. Si la
+  subida falla después de que el trabajo terminó, cierra como `fallida` sin
+  rutas — el último éxito previo de esa capacidad sigue intacto y
+  descargable (FR-006).
+- **Cierre único**: un segundo cierre de la misma ejecución falla con
+  `YA_CERRADA` sin modificar nada; el worker no necesita lógica propia de
+  "terminar dos veces".
+- **Motivo sanitizado en origen**: antes de cerrar, el worker aplica la
+  misma redacción documentada en "Acceso efímero y salida sanitizada". La
+  función además rechaza por forma (`SECRETO_DETECTADO`) cualquier motivo o
+  detalle con pinta de credencial, sesión o token — defensa en profundidad,
+  no sustituto de sanitizar en origen.
+
 ### Tabla central: normalizar datos de varias fuentes sin una tabla por sistema
 
 Cuando un worker importa un tipo de registro de negocio que también puede

@@ -22,6 +22,8 @@ import { ServidorList } from './pages/servidores/list'
 import { ConexionCreate } from './pages/conexiones/create'
 import { ConexionEdit } from './pages/conexiones/edit'
 import { ConexionList } from './pages/conexiones/list'
+import { EjecucionList } from './pages/ejecuciones/list'
+import { EjecucionShow } from './pages/ejecuciones/show'
 import { ClienteCreate } from './pages/clientes/create'
 import { ClienteEdit } from './pages/clientes/edit'
 import { ClienteList } from './pages/clientes/list'
@@ -166,6 +168,7 @@ function App() {
                 meta: { label: 'Clientes' },
               },
               { name: 'conexiones', list: '/conexiones', create: '/conexiones/create', edit: '/conexiones/edit/:id', meta: { label: 'Conexiones' } },
+              { name: 'ejecuciones', list: '/ejecuciones', show: '/ejecuciones/:id', meta: { label: 'Ejecuciones' } },
               {
                 name: 'analitica-administrar',
                 list: '/analitica/administrar',
@@ -210,6 +213,8 @@ function App() {
                 <Route path="/conexiones" element={<RequiereOrganizacionActiva><ConexionList /></RequiereOrganizacionActiva>} />
                 <Route path="/conexiones/create" element={<RequiereOrganizacionActiva><ConexionCreate /></RequiereOrganizacionActiva>} />
                 <Route path="/conexiones/edit/:id" element={<RequiereOrganizacionActiva><ConexionEdit /></RequiereOrganizacionActiva>} />
+                <Route path="/ejecuciones" element={<RequiereOrganizacionActiva><EjecucionList /></RequiereOrganizacionActiva>} />
+                <Route path="/ejecuciones/:id" element={<RequiereOrganizacionActiva><EjecucionShow /></RequiereOrganizacionActiva>} />
                 <Route
                   path="/clientes"
                   element={
