@@ -11,10 +11,6 @@ importers:
       supabase:
         specifier: ^2.57.2
         version: 2.116.0
-    optionalDependencies:
-      '@supabase/cli-linux-x64':
-        specifier: 2.116.0
-        version: 2.116.0
 
   apps/web:
     dependencies:
