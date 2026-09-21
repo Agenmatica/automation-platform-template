@@ -86,6 +86,11 @@ El template no define el dominio del producto (Constitución, Principio II y
 lo que sea que resuelva para su negocio — se especifica con Spec Kit *en el
 repo del fork*, no acá.
 
+Si esa funcionalidad integra un sistema externo, usar también la guía
+[`docs/disenar-conector.md`](./disenar-conector.md): mantiene las tablas y
+reglas de negocio en `dominio` y evita convertir detalles de un proveedor en
+una abstracción prematura del template.
+
 ## Qué no traer del template
 
 - Nada de `specs/` del template (es su propia bitácora de decisiones, no la
