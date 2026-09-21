@@ -29,7 +29,8 @@ export const accessControlProvider: AccessControlProvider = {
       resource === 'organizaciones' ||
       resource === 'analitica-administrar' ||
       resource === 'features-administrar' ||
-      resource === 'servidores'
+      resource === 'servidores' ||
+      resource === 'ia'
     ) {
       const { data } = await supabaseClient.auth.getUser()
       if (!data?.user) {

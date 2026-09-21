@@ -13,6 +13,12 @@ inputs:
   - id: conexion_id
     type: STRING
     required: false
+  - id: interaccion_id
+    type: STRING
+    required: false
+  - id: estado_ia
+    type: STRING
+    required: false
   - id: motivo_sanitizado
     type: STRING
 tasks:
@@ -41,6 +47,8 @@ tasks:
         "tipo": inputs.tipo,
         "organizacion_id": inputs.organizacion_id,
         "conexion_id": inputs.conexion_id,
+        "interaccion_id": inputs.interaccion_id,
+        "estado_ia": inputs.estado_ia,
         "motivo": inputs.motivo_sanitizado,
         "destinatarios": (inputs.tipo == 'credencial' ? 'operador_y_administradores_organizacion' : 'operador_plataforma')
       } | toJson }}
