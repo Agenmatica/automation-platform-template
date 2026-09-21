@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Capacidad de IA gobernada para navegación
+# Specification Quality Checklist: Capacidad de IA gobernada
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-09-20

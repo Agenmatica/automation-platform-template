@@ -35,6 +35,12 @@ import { DefinirContrasenaPage } from './pages/acceso/definir-contrasena'
 import { SolicitarRecuperacionPage } from './pages/acceso/solicitar-recuperacion'
 import { CambiarContrasenaPage } from './pages/cuenta/cambiar-contrasena'
 import { PerfilPage } from './pages/cuenta/perfil'
+import { IaList } from './pages/ia/list'
+import { IaModelos } from './pages/ia/modelos'
+import { IaProveedores } from './pages/ia/proveedores'
+import { IaContratos } from './pages/ia/contratos'
+import { IaPoliticas } from './pages/ia/politicas'
+import { IaInteracciones } from './pages/ia/interacciones'
 import './App.css'
 
 const theme = createTheme({
@@ -183,6 +189,7 @@ function App() {
               },
               { name: 'miembros', list: '/miembros', create: '/miembros/create', meta: { label: 'Miembros' } },
               { name: 'cuenta', list: '/cuenta/perfil', meta: { label: 'Mi cuenta' } },
+              { name: 'ia', list: '/ia', meta: { label: 'IA gobernada' } },
             ]}
             options={{
               syncWithLocation: true,
@@ -256,6 +263,12 @@ function App() {
                   }
                 />
                 <Route path="/features/administrar" element={<FeaturesAdministrar />} />
+                <Route path="/ia" element={<IaList />} />
+                <Route path="/ia/proveedores" element={<IaProveedores />} />
+                <Route path="/ia/modelos" element={<IaModelos />} />
+                <Route path="/ia/contratos" element={<IaContratos />} />
+                <Route path="/ia/politicas" element={<IaPoliticas />} />
+                <Route path="/ia/interacciones" element={<IaInteracciones />} />
               </Route>
 
               <Route
