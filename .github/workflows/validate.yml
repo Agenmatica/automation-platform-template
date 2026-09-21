@@ -49,7 +49,13 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm supabase start
+      # El paquete npm de Supabase no extrae su binario nativo de forma
+      # confiable en runners Linux persistentes; usamos el release oficial.
+      - name: Instalar Supabase CLI
+        run: |
+          curl -fsSL https://github.com/supabase/cli/releases/download/v2.116.0/supabase_2.116.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin supabase
+          supabase --version
+      - run: supabase start
       # El runner self-hosted mantiene el stack de Supabase corriendo entre
       # ejecuciones (no es efímero como un runner de GitHub). `supabase
       # start` sobre un stack ya iniciado no vuelve a aplicar migraciones
