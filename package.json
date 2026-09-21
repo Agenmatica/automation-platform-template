@@ -37,5 +37,8 @@
   },
   "devDependencies": {
     "supabase": "^2.57.2"
+  },
+  "optionalDependencies": {
+    "@supabase/cli-linux-x64": "2.116.0"
   }
 }
