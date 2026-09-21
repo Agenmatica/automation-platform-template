@@ -1,0 +1,52 @@
+# `@platform/ia`
+
+Biblioteca interna para consumidores de IA de la plataforma. Se ejecuta dentro
+de cada aplicación o worker de dominio; no existe un worker central de IA.
+La configuración, políticas y auditoría son globales en Supabase, pero el
+consumidor conserva la responsabilidad de invocar su adaptador de proveedor.
+
+## Antes de adoptar
+
+1. Crear una spec del consumidor y declarar su contrato: esquema de entrada y
+   salida, campos permitidos, presupuesto y tratamiento del resultado.
+2. El superadmin registra el contrato y habilita una política global con un
+   perfil principal y, opcionalmente, uno de fallback. Ambos perfiles pueden
+   pertenecer al mismo proveedor o a proveedores distintos.
+3. Aprovisionar la clave fuera de Refine y Kestra mediante
+   `infra/ia/aprovisionar-proveedores.ps1`. La clave queda en Vault y sólo el
+   runtime autorizado la recupera de manera efímera.
+4. El consumidor valida política y presupuesto con `prepararInvocacion`,
+   sanitiza antes de persistir o alertar y registra cada transición mediante
+   las RPC de interacción.
+
+No incluir claves, tokens, payloads sin sanitizar ni datos que el contrato
+excluye en logs, eventos Kestra, respuestas HTTP o evidencia persistida.
+
+## Flujo de una interacción
+
+`iniciarInteraccion` crea el estado local. `iniciarInvocacion` consume un
+intento; ante fallo técnico, timeout o respuesta inválida,
+`registrarFallo` permite un único fallback dentro del presupuesto de la
+política. Un incumplimiento de contrato o verificador se rechaza sin fallback.
+Al agotarse los intentos, la interacción pasa a `revision_humana`, visible y
+resoluble sólo por superadmin. Una respuesta correcta se cierra con
+`completarInteraccion`.
+
+Para evidencias, implementar el repositorio de `purgarEvidenciasVencidas` con
+la API de Storage: primero eliminar el objeto privado y después confirmar la
+limpieza en base. Nunca borrar `storage.objects` desde SQL.
+
+## Límites de esta capacidad
+
+La biblioteca no elige casos de negocio, no implementa navegación ni expone
+un endpoint común. Cada producto o worker que la consuma define su propio
+adaptador de ejecución y su contrato versionado. Kestra recibe únicamente el
+evento sanitizado cuando una interacción requiere revisión.
+
+## Configuración de claves
+
+Las variables `IA_PROVEEDOR_CODIGO`, `IA_PROVEEDOR_CREDENCIAL` e
+`IA_PROVEEDOR_CLAVE` se usan sólo durante el aprovisionamiento. Cargarlas desde
+un archivo local ignorado o desde el gestor de secretos del despliegue; no son
+variables de Refine, Kestra ni de los workers en ejecución. Ver `.env.example`
+e `infra/ia/aprovisionar-proveedores.ps1`.
