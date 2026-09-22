@@ -59,8 +59,21 @@ foreach ($path in $FlowPath) {
         $violations.Add("${path}: el comando docker recibe CREDENCIAL")
     }
 
-    if ($content -notmatch '(?m)^\s*--env-file\s+/opt/automation-platform/worker\.env') {
-        $violations.Add("${path}: el worker no recibe su configuracion desde el archivo local del host")
+    if ($content -notmatch '(?m)^\s*set -a\s*$' -or $content -notmatch '(?m)^\s*\. /opt/automation-platform/worker\.env\s*$') {
+        $violations.Add("${path}: el host SSH no carga la configuracion local del worker")
+    }
+
+    # Docker corre en el daemon del servidor remoto; --env-file se resolvería
+    # allí y no dentro de la sesión SSH. Se heredan solo nombres de variables
+    # ya exportadas: el valor secreto nunca aparece en el comando de Kestra.
+    foreach ($variable in @('PGHOST','PGPORT','PGDATABASE','PGUSER','PGPASSWORD')) {
+        if ($content -notmatch "--env\s+$variable(?:\s|\\)") {
+            $violations.Add("${path}: el worker no hereda $variable desde el entorno local del host")
+        }
+    }
+
+    if ($content -match '--env-file\s+/opt/automation-platform/worker\.env') {
+        $violations.Add("${path}: --env-file no es seguro para un daemon Docker remoto")
     }
 
     if ($content -match '\{\{\s*outputs\.obtener_credencial_') {

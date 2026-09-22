@@ -1,5 +1,35 @@
 # Workers
 
+## Alta de un worker nuevo
+
+Cada worker nuevo debe vivir en `workers/<nombre>/` y declarar un paquete
+privado `@workers/<nombre>` con scripts `build`, `lint`, `test` y `start`.
+El pipeline descubre automáticamente esas carpetas; no hay que editar una
+lista central ni copiar un Dockerfile propio — `workers/Dockerfile` ya es la
+plantilla parametrizada por `WORKER` que usa el workflow de publicación
+(spec 017). El nombre solo puede usar minúsculas, números y guiones.
+
+Antes de publicar, el worker debe tener:
+
+- código compilable y tests deterministas sin credenciales reales;
+- contrato de entrada/salida y códigos de error sanitizados (ver `CONTRATO.md`);
+- allowlist de egress documentada para el proveedor que necesita;
+- flow de Kestra o configuración de flow que apunte a su imagen por digest;
+- idempotencia para reintentos de la misma ejecución.
+
+La allowlist se declara en `workers/egress-allowlists.json`. La red de cada
+worker sigue `worker-egress-<sistema>` y se aplica fuera de Docker mediante el
+firewall/proxy del servidor: Docker no ofrece allowlist de dominios por sí solo.
+El `worker.env` local del servidor debe fijar esa red y las variables de base;
+el flow solo transmite los nombres de variables ya cargadas, no secretos.
+
+Validación local del descubrimiento:
+
+```powershell
+pnpm workers:discover
+pnpm test:workers:discover
+```
+
 Cada worker futuro vive en su propia carpeta con Dockerfile, contrato de entrada,
 salida idempotente, healthcheck y pruebas. No se crea un worker hasta identificar
 una automatización concreta que Kestra necesite ejecutar.
