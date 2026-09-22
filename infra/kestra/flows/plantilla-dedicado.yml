@@ -2,6 +2,10 @@
 # <producto>.<conector>.<organizacion-slug> y mantiene su fila de exclusion.
 id: plantilla-dedicado
 namespace: platform.orquestacion
+labels:
+  capa: core
+  dominio: plataforma
+  componente: plantilla-dedicada
 description: "Despacha un worker para una organizacion atendida como excepcion."
 inputs:
   - id: organizacion_id
@@ -28,6 +32,7 @@ tasks:
     username: "{{ outputs.resolver_despacho.row.usuario_ssh }}"
     authMethod: PUBLIC_KEY
     privateKey: "{{ secret('ORQUESTACION_SSH_PRIVATE_KEY') }}"
+    timeout: PT30M
     retry:
       type: exponential
       maxAttempts: 3
@@ -36,8 +41,22 @@ tasks:
     commands:
       - docker image inspect {{ inputs.imagen }} >/dev/null 2>&1 || docker pull {{ inputs.imagen }}
       - |
+        set -a
+        . /opt/automation-platform/worker.env
+        set +a
+        SISTEMA_EXTERNO="{{ inputs.sistema_externo }}"
+        WORKER_NETWORK_ESPERADA="worker-egress-$SISTEMA_EXTERNO"
+        case "$SISTEMA_EXTERNO" in fixture-*) WORKER_NETWORK_ESPERADA=bridge ;; esac
+        [ "$WORKER_NETWORK" = "$WORKER_NETWORK_ESPERADA" ] || { echo 'Red de egress no autorizada' >&2; exit 64; }
         docker run --rm \
-          --env-file /opt/automation-platform/worker.env \
+          --read-only \
+          --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+          --cap-drop=ALL \
+          --security-opt=no-new-privileges:true \
+          --cpus "${WORKER_CPUS:-1}" \
+          --memory "${WORKER_MEMORY:-512m}" \
+          --network "${WORKER_NETWORK:?Debe configurarse una red con egress allowlist}" \
+          --env PGHOST --env PGPORT --env PGDATABASE --env PGUSER --env PGPASSWORD \
           -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
           -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
           -e CONEXION_ID="{{ outputs.resolver_despacho.row.conexion_id }}" \

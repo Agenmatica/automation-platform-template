@@ -7,3 +7,7 @@ feature.json
 
 # Per-machine extension config overrides.
 extensions/*/local-config.yml
+
+# Catálogos descargados para consultas locales de extensiones, integraciones,
+# presets y workflows. Se regeneran y no forman parte del proceso del proyecto.
+**/.cache/

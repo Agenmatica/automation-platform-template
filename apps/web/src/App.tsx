@@ -11,9 +11,12 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router'
 import { authProvider } from './providers/authProvider'
 import { accessControlProvider } from './providers/accessControlProvider'
+import { i18nProvider } from './providers/i18nProvider'
 import { supabaseClient } from './lib/supabase'
 import { RequiereOrganizacionActiva } from './components/RequiereOrganizacionActiva'
-import { SiderConSeccionesSuperadmin } from './components/SiderConSeccionesSuperadmin'
+import { ContextoPanelProvider } from './context/ContextoPanel'
+import { SiderPanel } from './components/navegacion/SiderPanel'
+import { EncabezadoPanel } from './components/navegacion/EncabezadoPanel'
 import { LoginPage } from './pages/login'
 import { OrganizacionCreate } from './pages/organizaciones/create'
 import { OrganizacionList } from './pages/organizaciones/list'
@@ -151,6 +154,7 @@ function App() {
             dataProvider={supabaseDataProvider(supabaseClient)}
             authProvider={authProvider}
             accessControlProvider={accessControlProvider}
+            i18nProvider={i18nProvider}
             routerProvider={routerProvider}
             notificationProvider={useNotificationProvider}
             resources={[
@@ -200,13 +204,14 @@ function App() {
               disableTelemetry: true,
             }}
           >
+            <ContextoPanelProvider>
             <Routes>
               <Route path="/acceso/definir-contrasena" element={<DefinirContrasenaPage />} />
               <Route path="/acceso/solicitar-recuperacion" element={<SolicitarRecuperacionPage />} />
               <Route
                 element={
                   <Authenticated key="protegido" fallback={<CatchAllNavigate to="/login" />}>
-                    <ThemedLayout Sider={SiderConSeccionesSuperadmin}>
+                    <ThemedLayout Sider={SiderPanel} Header={EncabezadoPanel}>
                       <Outlet />
                     </ThemedLayout>
                   </Authenticated>
@@ -289,7 +294,7 @@ function App() {
               <Route
                 element={
                   <Authenticated key="catch-all">
-                    <ThemedLayout Sider={SiderConSeccionesSuperadmin}>
+                    <ThemedLayout Sider={SiderPanel} Header={EncabezadoPanel}>
                       <Outlet />
                     </ThemedLayout>
                   </Authenticated>
@@ -298,6 +303,7 @@ function App() {
                 <Route path="*" element={<ErrorComponent />} />
               </Route>
             </Routes>
+            </ContextoPanelProvider>
             <UnsavedChangesNotifier />
             <DocumentTitleHandler />
           </Refine>

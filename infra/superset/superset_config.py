@@ -40,7 +40,13 @@ WTF_CSRF_EXEMPT_LIST = _WTF_CSRF_EXEMPT_LIST_BASE + [
 # Analítica embebida por organización (spec 007). El propio SDK
 # (@superset-ui/embedded-sdk) requiere este feature flag para servir un
 # dashboard dentro de un iframe ajeno a Superset.
-FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True}
+#
+# EMBEDDABLE_CHARTS en False por default: su default real de Superset es
+# True, y agrupa "Embed code" en el mismo menú que "Copy permalink"/"Share
+# by email" de cada chart — un producto derivado que lo necesite lo prende
+# a propósito, pero por defecto nadie debería poder generar un embed nuevo
+# desde la UI de Superset sin decisión explícita (ver docs/operar-superset.md).
+FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True, "EMBEDDABLE_CHARTS": False}
 
 # Firma los guest tokens de embedding (research.md #3/#5 de la spec 007) —
 # distinto de SECRET_KEY, para no acoplar la rotación de uno con la del
@@ -61,7 +67,10 @@ GUEST_TOKEN_JWT_SECRET = os.environ["SUPERSET_GUEST_TOKEN_JWT_SECRET"]
 #   - `can_read` sobre `Dashboard` (`GET /api/v1/dashboard/<id>`)
 # Se crea a mano una vez en Superset (Settings > List Roles > Add,
 # permisos por `POST /api/v1/security/roles/<id>/permissions` — ver
-# research.md #10.3).
+# research.md #10.3). Esto alcanza para que el bootstrap del SDK no falle,
+# pero cada chart embebido individual todavía necesita una segunda capa de
+# permisos para que su pedido de datos no dé "Forbidden" — ver
+# docs/operar-superset.md.
 GUEST_ROLE_NAME = "Guest"
 
 # Habilita que el navegador de Refine (otro origen) pueda pedir el iframe
