@@ -1,63 +1,101 @@
 name: Worker images
 
-# Orquestación de workers multi-organización (spec 013, T014, R11): publica
-# la imagen de cada worker de integración en ghcr.io usando el GITHUB_TOKEN
-# ya disponible en el runner self-hosted — sin credencial nueva que
-# gestionar. El comando SSH de despacho (infra/kestra/flows/plantilla-*.yml)
-# hace `docker pull` antes de `docker run`, así que una actualización de
-# versión no requiere ningún paso de despliegue activo hacia cada servidor
-# de organización (FR-016): el próximo disparo de Kestra ya trae la imagen
-# vigente.
+# Orquestación de workers multi-organización (spec 013): publica la imagen de
+# cada worker de integración en ghcr.io usando el GITHUB_TOKEN ya disponible
+# en el runner self-hosted — sin credencial nueva que gestionar. El comando
+# SSH de despacho (infra/kestra/flows/plantilla-*.yml) hace `docker pull`
+# antes de `docker run`, así que una actualización de versión no requiere
+# ningún paso de despliegue activo hacia cada servidor de organización: el
+# próximo disparo de Kestra ya trae la imagen vigente.
 #
 # Corre solo en push a main que toque workers/ (no en cada PR: publicar una
-# imagen por cada intento de PR no aporta y consume minutos/almacenamiento
-# de más). Si todavía no existe ningún workers/<carpeta>/Dockerfile (caso de
-# esta spec, que no crea ningún worker real), el paso de build recorre cero
-# carpetas y el job termina sin hacer nada — sin fallar.
+# imagen por cada intento de PR no aporta y consume minutos/almacenamiento de
+# más). Blindaje de imágenes (spec 017): imagen única parametrizada por
+# WORKER en vez de un Dockerfile por carpeta, escaneo de vulnerabilidades
+# bloqueante, SBOM y provenance. Si todavía no hay ningún worker bajo
+# `workers/<carpeta>/package.json`, `descubrir-workers.mjs` no imprime nada
+# por stdout: el bucle de abajo no itera y el job termina sin hacer nada, sin
+# fallar (el error que el script escribe por stderr en ese caso no se
+# propaga a través de la sustitución de proceso).
 on:
   push:
     branches: [main]
     paths:
       - "workers/**"
+      - "scripts/descubrir-workers.mjs"
+      - "scripts/validar-scan-worker.mjs"
+      - "scripts/validar-egress-workers.mjs"
+      - "workers/egress-allowlists.json"
+      - "scripts/smoke-imagenes-workers.mjs"
+      - ".github/worker-vulnerability-exceptions.json"
+      - ".github/workflows/worker-images.yml"
+      - ".github/worker-release-policy.yml"
 
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   build-and-publish:
     runs-on: [self-hosted, platform-local]
+    environment: worker-images-production
     steps:
       - uses: actions/checkout@v4
 
-      - name: Construir y publicar cada workers/<carpeta>/Dockerfile
+      - name: Construir, escanear y publicar workers
         env:
           REGISTRY: ghcr.io
           REPOSITORY: ${{ github.repository }}
           SHA: ${{ github.sha }}
           ACTOR: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-
-          dockerfiles=(workers/*/Dockerfile)
-          if [ ${#dockerfiles[@]} -eq 0 ]; then
-            echo "Ningún workers/<carpeta>/Dockerfile todavía — nada que publicar."
-            exit 0
-          fi
-
+          node scripts/validar-egress-workers.mjs
           echo "$TOKEN" | docker login "$REGISTRY" -u "$ACTOR" --password-stdin
-
           repo_lower=$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')
 
-          for dockerfile in "${dockerfiles[@]}"; do
-            dir=$(dirname "$dockerfile")
-            name=$(basename "$dir")
-            image="$REGISTRY/${repo_lower}-worker-${name}"
+          if ! docker buildx version >/dev/null 2>&1; then
+            echo "BuildKit/buildx es obligatorio para provenance y SBOM" >&2
+            exit 1
+          fi
+          if ! docker scout version >/dev/null 2>&1; then
+            echo "Docker Scout es obligatorio para bloquear vulnerabilidades" >&2
+            exit 1
+          fi
 
-            echo "Publicando $image (carpeta $dir)"
-            docker build -t "$image:latest" -t "$image:$SHA" "$dir"
-            docker push "$image:latest"
-            docker push "$image:$SHA"
-          done
+          while IFS= read -r worker; do
+            [ -n "$worker" ] || continue
+            image="$REGISTRY/${repo_lower}-worker-${worker}"
+            echo "Construyendo $image"
+            docker buildx build \
+              --platform linux/amd64 \
+              --file workers/Dockerfile \
+              --build-arg WORKER="$worker" \
+              --build-arg SOURCE_COMMIT="$SHA" \
+              --build-arg REPO_URL="https://github.com/${REPOSITORY}" \
+              --tag "local/worker-$worker:$SHA" \
+              --load .
+
+            report=$(mktemp)
+            docker scout cves --format json --only-severity critical,high "local/worker-$worker:$SHA" > "$report" || true
+            node scripts/validar-scan-worker.mjs "$report" .github/worker-vulnerability-exceptions.json
+            docker tag "local/worker-$worker:$SHA" "local/worker-$worker:test"
+            node scripts/smoke-imagenes-workers.mjs "local/worker-" "$worker"
+
+            docker buildx build \
+              --platform linux/amd64 \
+              --file workers/Dockerfile \
+              --build-arg WORKER="$worker" \
+              --build-arg SOURCE_COMMIT="$SHA" \
+              --build-arg REPO_URL="https://github.com/${REPOSITORY}" \
+              --tag "$image:$SHA" \
+              --tag "$image:latest" \
+              --provenance=true \
+              --sbom=true \
+              --push .
+            docker buildx imagetools inspect "$image:$SHA" >/dev/null
+            rm -f "$report"
+          done < <(node scripts/descubrir-workers.mjs)

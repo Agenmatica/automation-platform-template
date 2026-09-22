@@ -16,9 +16,17 @@ param()
 # la raiz del repo.
 $ErrorActionPreference = 'Stop'
 $tag = 'automation-platform-template/spec014-fixture-worker:local'
-$db = 'supabase_db_automation-platform-template-supabase-de'
-$kestra = 'automation-platform-template-kestra-dev-kestra-1'
-$kestraBase = 'http://localhost:8082/api/v1/main'
+$db = (docker ps --filter 'name=^/supabase_db_automation-platform-template-supabase-dev$' --format '{{.ID}}' | Select-Object -First 1).Trim()
+$kestra = (docker compose -f infra/kestra/compose.yaml ps -q kestra).Trim()
+if ([string]::IsNullOrWhiteSpace($db) -or [string]::IsNullOrWhiteSpace($kestra)) {
+  throw 'Supabase o Kestra local no están levantados para el fixture E2E.'
+}
+$kestraPort = (docker port $kestra 8080/tcp | Select-Object -First 1).Trim()
+if ([string]::IsNullOrWhiteSpace($kestraPort)) { throw 'No se pudo resolver el puerto HTTP de Kestra.' }
+$supabasePortBinding = (docker port $db 5432/tcp | Select-Object -First 1).Trim()
+if ($supabasePortBinding -notmatch ':(\d+)$') { throw 'No se pudo resolver el puerto PostgreSQL de Supabase.' }
+$supabasePort = $Matches[1]
+$kestraBase = "http://$kestraPort/api/v1/main"
 $sentinel = 'CENTINELA_014_NO_PERSISTIR'
 $work = Join-Path $env:TEMP ("spec014-" + [guid]::NewGuid())
 $artifactDir = Join-Path $work 'artifacts'
@@ -74,19 +82,26 @@ function Remove-WorkerRole([string] $OrganizacionId) {
 }
 
 function Get-KestraAuthHeader {
-  # Lee infra/kestra/.env (no versionado) en vez de preguntarle al contenedor:
-  # KESTRA_CONFIGURATION es una sola variable YAML embebida multilinea y el
-  # cruce Windows -> docker exec -> sh le pierde los saltos de linea. Cae en
-  # los defaults documentados en compose.yaml si el archivo o las claves no
-  # existen.
-  $user = 'admin@local.test'
-  $pass = 'change-me-local'
+  # Toma primero overrides explícitos y el .env local. Si el proceso fue
+  # levantado con otro contexto de Compose, consulta su configuración efectiva
+  # sin escribir nunca las credenciales en stdout/stderr.
+  $user = if ($env:KESTRA_BASIC_AUTH_USERNAME) { $env:KESTRA_BASIC_AUTH_USERNAME } else { 'admin@local.test' }
+  $pass = if ($env:KESTRA_BASIC_AUTH_PASSWORD) { $env:KESTRA_BASIC_AUTH_PASSWORD } else { 'change-me-local' }
   $envFile = 'infra/kestra/.env'
   if (Test-Path -LiteralPath $envFile) {
     foreach ($line in Get-Content -LiteralPath $envFile) {
       if ($line -match '^KESTRA_BASIC_AUTH_USERNAME=(.*)$') { $user = $Matches[1].Trim() }
       if ($line -match '^KESTRA_BASIC_AUTH_PASSWORD=(.*)$') { $pass = $Matches[1].Trim() }
     }
+  }
+  # Kestra materializa la configuración efectiva en este archivo al iniciar;
+  # leerlo dentro del proceso evita depender de cómo Docker serializa una
+  # variable multilínea en Windows.
+  $configuration = (& docker exec $kestra cat /app/confs/application.yml | Out-String)
+  $match = [regex]::Match($configuration, 'basic-auth:\s*\r?\n\s*enabled:\s*true\s*\r?\n\s*username:\s*([^\s]+)\s*\r?\n\s*password:\s*([^\s]+)', [Text.RegularExpressions.RegexOptions]::Singleline)
+  if ($match.Success) {
+    $user = $match.Groups[1].Value.Trim()
+    $pass = $match.Groups[2].Value.Trim()
   }
   $token = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${user}:${pass}"))
   return @{ Authorization = "Basic $token" }
@@ -129,6 +144,20 @@ function Wait-KestraExecution([string] $Id, [hashtable] $Headers) {
     Start-Sleep -Seconds 5
   }
   throw "La ejecucion $Id no llego a un estado terminal a tiempo."
+}
+
+function Wait-TcpPort([int] $Port, [string] $Label) {
+  for ($attempt = 1; $attempt -le 30; $attempt++) {
+    $client = [Net.Sockets.TcpClient]::new()
+    try {
+      $async = $client.BeginConnect('127.0.0.1', $Port, $null, $null)
+      if ($async.AsyncWaitHandle.WaitOne(1000) -and $client.Connected) { return }
+    } finally {
+      $client.Dispose()
+    }
+    Start-Sleep -Seconds 1
+  }
+  throw "$Label no quedo disponible en 127.0.0.1:$Port dentro de 30 segundos."
 }
 
 function Save-KestraArtifacts([string] $Id, [string] $Label, [hashtable] $Headers) {
@@ -200,12 +229,15 @@ try {
   $conTecnica = [guid]::NewGuid().ToString(); $conCredencial = [guid]::NewGuid().ToString()
   Invoke-Db "insert into public.conexiones(id,organizacion_id,sistema_externo,credencial_vault_id) values ('$conX','$orgX','fixture-exito','$credX'),('$conY','$orgY','fixture-exito','$credY'),('$conTecnica','$orgX','fixture-tecnica','$credTecnica'),('$conCredencial','$orgX','fixture-credencial','$credCredencial');" | Out-Null
 
-  # Sin -NoNewline: con un array de entrada, ese modificador no solo omite
-  # el salto final sino que pega todas las lineas entre si sin separador.
-  @("PGHOST=host.docker.internal", "PGPORT=5434", "PGDATABASE=postgres", "PGUSER=worker_$($orgX -replace '-','')", "PGPASSWORD=$pwX") | Set-Content (Join-Path $work 'x.env')
-  @("PGHOST=host.docker.internal", "PGPORT=5434", "PGDATABASE=postgres", "PGUSER=worker_$($orgY -replace '-','')", "PGPASSWORD=$pwY") | Set-Content (Join-Path $work 'y.env')
+  # El host remoto es Linux: escribir LF explícito evita que un valor como
+  # WORKER_NETWORK termine en \r al ser cargado por `sh . worker.env`.
+  $utf8SinBom = [Text.UTF8Encoding]::new($false)
+  [IO.File]::WriteAllText((Join-Path $work 'x.env'), ((@("PGHOST=host.docker.internal", "PGPORT=$supabasePort", "PGDATABASE=postgres", "PGUSER=worker_$($orgX -replace '-','')", "PGPASSWORD=$pwX", "WORKER_NETWORK=bridge") -join "`n")), $utf8SinBom)
+  [IO.File]::WriteAllText((Join-Path $work 'y.env'), ((@("PGHOST=host.docker.internal", "PGPORT=$supabasePort", "PGDATABASE=postgres", "PGUSER=worker_$($orgY -replace '-','')", "PGPASSWORD=$pwY", "WORKER_NETWORK=bridge") -join "`n")), $utf8SinBom)
   docker run -d --name spec014-ssh-x -p 127.0.0.1:22041:2222 -e PUBLIC_KEY="$publicKey" -e USER_NAME=fixture -e PASSWORD_ACCESS=false -v /var/run/docker.sock:/var/run/docker.sock -v "$(Join-Path $work 'x.env'):/opt/automation-platform/worker.env:ro" 'automation-platform-template/spec014-fixture-ssh:local' | Out-Null
   docker run -d --name spec014-ssh-y -p 127.0.0.1:22042:2222 -e PUBLIC_KEY="$publicKey" -e USER_NAME=fixture -e PASSWORD_ACCESS=false -v /var/run/docker.sock:/var/run/docker.sock -v "$(Join-Path $work 'y.env'):/opt/automation-platform/worker.env:ro" 'automation-platform-template/spec014-fixture-ssh:local' | Out-Null
+  Wait-TcpPort -Port 22041 -Label 'SSH fixture X'
+  Wait-TcpPort -Port 22042 -Label 'SSH fixture Y'
 
   Publish-KestraFlow -Path 'infra/kestra/flows/plantilla-generico.yml' -Namespace 'platform.orquestacion' -FlowId 'plantilla-generico' -Headers $headers
   Publish-KestraFlow -Path 'infra/kestra/flows/plantilla-dedicado.yml' -Namespace 'platform.orquestacion' -FlowId 'plantilla-dedicado' -Headers $headers
