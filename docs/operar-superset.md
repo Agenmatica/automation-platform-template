@@ -27,24 +27,30 @@ docker network connect --alias superset <red-supabase> <contenedor-superset>
 contenedores (sí sobrevive un `docker restart` normal de cualquiera de los
 dos).
 
-## El rol `Guest` no trae permisos de datos por defecto
+## El rol `Guest` necesita permisos de datos en dos capas distintas
 
-`GUEST_ROLE_NAME` en `superset_config.py` (`"Guest"`) viene, apenas creado,
-con un único permiso: `can_read` sobre `Dashboard`. Sin permisos
-adicionales, cada chart embebido devuelve `"Data error: Forbidden"` aunque
-el guest token se emita bien — el guest token en sí resuelve *a qué*
-dashboard/recurso accede (vía `resources`/RLS del propio token), no *qué
-puede hacer* ese rol una vez adentro.
+`GUEST_ROLE_NAME` en `superset_config.py` (`"Guest"`) no trae solo, de
+fábrica, todo lo que un dashboard embebido necesita. El comentario que ya
+está junto a `GUEST_ROLE_NAME` documenta la primera capa (bootstrap del
+SDK: `can_read` sobre `CurrentUserRestApi` y sobre `Dashboard`, sin lo cual
+el navegador ni siquiera llega a intentar pintar un chart — falla con
+"Something went wrong with embedded authentication"). Esta sección
+documenta la **segunda capa**, encontrada después en un producto
+derivado: con el bootstrap ya andando, cada chart embebido individual
+seguía devolviendo `"Data error: Forbidden"` al pedir sus datos — el guest
+token resuelve *a qué* dashboard/recurso accede (vía `resources`/RLS del
+propio token), no *qué puede hacer* ese rol una vez adentro pidiendo cada
+chart.
 
-Este permiso vive en la metadata DB de la propia app Superset, **no en
-ningún archivo versionado de este repo todavía** — no sobrevive un volumen
-de Postgres de Superset recreado desde cero. A diferencia de
+Estos permisos de la segunda capa viven en la metadata DB de la propia app
+Superset, **no en ningún archivo versionado todavía** — no sobreviven un
+volumen de Postgres de Superset recreado desde cero. A diferencia de
 `crear_cuenta_servicio_guest_token.py` (que sí automatiza el alta de la
 cuenta de servicio), esto **no tiene automatización propia acá**: se
-otorgó a mano, por API, la primera vez que se ejercitó. Queda documentado
-para que el primer producto derivado que lo necesite decida si lo
-automatiza (`superset shell`, mismo mecanismo que el script existente) o
-lo repite a mano, según le convenga.
+otorgó a mano, por API, la primera vez que se ejercitó en ese producto
+derivado. Queda documentado para que el primer producto que lo necesite
+decida si lo automatiza (`superset shell`, mismo mecanismo que el script
+existente) o lo repite a mano, según le convenga.
 
 Permisos necesarios (otorgados vía
 `POST /api/v1/security/roles/<id>/permissions`, con

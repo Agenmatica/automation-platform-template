@@ -67,7 +67,10 @@ GUEST_TOKEN_JWT_SECRET = os.environ["SUPERSET_GUEST_TOKEN_JWT_SECRET"]
 #   - `can_read` sobre `Dashboard` (`GET /api/v1/dashboard/<id>`)
 # Se crea a mano una vez en Superset (Settings > List Roles > Add,
 # permisos por `POST /api/v1/security/roles/<id>/permissions` — ver
-# research.md #10.3).
+# research.md #10.3). Esto alcanza para que el bootstrap del SDK no falle,
+# pero cada chart embebido individual todavía necesita una segunda capa de
+# permisos para que su pedido de datos no dé "Forbidden" — ver
+# docs/operar-superset.md.
 GUEST_ROLE_NAME = "Guest"
 
 # Habilita que el navegador de Refine (otro origen) pueda pedir el iframe
