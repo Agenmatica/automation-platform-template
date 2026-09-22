@@ -2,6 +2,10 @@
 # recibe la audiencia y el contexto, pero no secretos ni credenciales.
 id: alertas
 namespace: platform.alertas
+labels:
+  capa: core
+  dominio: plataforma
+  componente: alertas
 description: "Registra y enruta alertas tecnicas o de credencial con motivo sanitizado."
 inputs:
   - id: tipo

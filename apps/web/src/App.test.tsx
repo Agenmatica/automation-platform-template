@@ -38,8 +38,10 @@ describe('App', () => {
   it('redirects an unauthenticated visitor to the login screen', async () => {
     render(<App />)
 
+    // i18nProvider traduce el título default de AuthPage al castellano —
+    // ver apps/web/src/providers/i18nProvider.ts.
     expect(
-      await screen.findByRole('heading', { name: /Sign in to your account/i }),
+      await screen.findByRole('heading', { name: /Iniciar sesión/i }),
     ).toBeInTheDocument()
   })
 
