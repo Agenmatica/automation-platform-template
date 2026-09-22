@@ -54,6 +54,18 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/validar-egress-workers.mjs
+
+          # descubrir-workers.mjs termina con error (stderr, stdout vacío) si
+          # no hay ningún worker todavía — se captura antes de exigir
+          # buildx/scout, para que el job realmente termine sin fallar en ese
+          # caso (antes se pedían esas herramientas incondicionalmente, y
+          # este runner todavía no las tiene instaladas).
+          workers=$(node scripts/descubrir-workers.mjs || true)
+          if [ -z "$workers" ]; then
+            echo "Ningún worker todavía — nada que construir ni publicar."
+            exit 0
+          fi
+
           echo "$TOKEN" | docker login "$REGISTRY" -u "$ACTOR" --password-stdin
           repo_lower=$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')
 
@@ -98,4 +110,4 @@ jobs:
               --push .
             docker buildx imagetools inspect "$image:$SHA" >/dev/null
             rm -f "$report"
-          done < <(node scripts/descubrir-workers.mjs)
+          done <<< "$workers"
