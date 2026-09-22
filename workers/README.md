@@ -30,6 +30,13 @@ pnpm workers:discover
 pnpm test:workers:discover
 ```
 
+`pnpm workers:discover` termina con error si todavía no hay ningún worker
+real bajo `workers/` — es intencional (`scripts/descubrir-workers.mjs`
+falla explícito en vez de devolver una lista vacía silenciosa): corrélo
+recién después de agregar el primero. `pnpm test:workers:discover` sí corre
+sin workers reales, porque prueba la función de descubrimiento contra sus
+propios fixtures.
+
 Cada worker futuro vive en su propia carpeta con Dockerfile, contrato de entrada,
 salida idempotente, healthcheck y pruebas. No se crea un worker hasta identificar
 una automatización concreta que Kestra necesite ejecutar.
