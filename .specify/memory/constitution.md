@@ -1,12 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.0 → 1.4.0 (MINOR: formaliza vía Delivery Workflow un
-  flujo de PR obligatorio por spec, con cierre por merge commit reversible y
-  migraciones con camino de vuelta atrás; ninguna regla existente se elimina
-  ni se vuelve incompatible)
-- Modified principles: ninguno (cambios en Delivery Workflow y en Technology
-  and Quality Gates, no en Core Principles)
-- Added sections: ninguna (se extienden secciones existentes)
+- Version change: 1.4.0 → 1.5.0 (MINOR: agrega un principio obligatorio para
+  que toda pantalla o automatización futura respete convenciones de navegación,
+  audiencia, estados UX, identidad visible, accesibilidad y rendimiento.)
+- Modified principles: ninguno
+- Added sections: Principle VI. Panel operable y extensible
 - Removed sections: ninguna
 - Follow-up TODOs: ninguno
 -->
@@ -46,6 +44,18 @@ Se agrega infraestructura sólo cuando existe un caso de uso. Desarrollo es
 local; staging aprovecha previews y recursos gratuitos; los servicios de VPS de
 staging se levantan bajo demanda y se apagan al terminar.
 
+### VI. Panel operable y extensible
+Toda spec que agregue, mueva o rediseñe una pantalla del panel o una
+automatización operable DEBE declarar su ubicación e icono en la navegación,
+audiencia y contexto de organización, rutas canónicas y compatibilidad de
+rutas anteriores cuando corresponda. DEBE usar los patrones compartidos de
+carga, vacío, error y éxito; funcionar con teclado, lector de pantalla y anchos
+de 320 px, 768 px y 1440 px; y no presentar identificadores técnicos como
+identidad visible por defecto. Las funcionalidades que agreguen peso
+significativo fuera del recorrido principal DEBEN justificar su carga inicial o
+usar carga diferida. Estas reglas hacen que el panel crezca sin perder
+orientación, seguridad de datos ni rendimiento percibido.
+
 ## Technology and Quality Gates
 
 El stack base es Refine, Supabase, Kestra, Superset y workers explícitos. Toda
@@ -81,4 +91,4 @@ Esta constitución prevalece sobre decisiones ad hoc de los agentes. Una
 excepción debe quedar documentada en la spec y su plan. Los cambios de principios
 requieren actualizar versión, fecha y artefactos afectados.
 
-**Version**: 1.4.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-08
+**Version**: 1.5.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-22
