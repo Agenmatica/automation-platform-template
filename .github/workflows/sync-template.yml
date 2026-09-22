@@ -1,0 +1,132 @@
+name: Sincronizar con el template
+
+# Corre en un producto derivado (fork) de automation-platform-template, no
+# en el template mismo (no tiene upstream propio — el primer paso sale
+# temprano si lo detecta). Reemplaza "acordarse de mirar cada tanto si el
+# template avanzó" por un chequeo automático semanal: si hay algo nuevo y
+# entra sin conflicto, abre el PR solo; si choca, no improvisa una
+# resolución — abre un issue para que un agente lo reconcilie a mano, mismo
+# trabajo que ya hicieron los PRs de esta sesión.
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # lunes 13:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: [self-hosted, platform-local]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Somos el template? (no aplica acá)
+        id: es-template
+        run: |
+          set -euo pipefail
+          nombre=$(node -p "require('./package.json').name")
+          if [ "$nombre" = "automation-platform-template" ]; then
+            echo "Este repo ES el template — no tiene upstream propio, no hay nada que sincronizar."
+            echo "salir=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "salir=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Traer upstream
+        id: fetch-upstream
+        if: steps.es-template.outputs.salir != 'true'
+        run: |
+          set -euo pipefail
+          if ! git remote get-url upstream > /dev/null 2>&1; then
+            git remote add upstream https://github.com/Agenmatica/automation-platform-template.git
+          fi
+          git fetch upstream main
+          nuevos=$(git log origin/main..upstream/main --oneline | wc -l | tr -d ' ')
+          echo "nuevos=$nuevos" >> "$GITHUB_OUTPUT"
+
+      - name: Nada nuevo — salir sin ruido
+        if: steps.es-template.outputs.salir != 'true' && steps.fetch-upstream.outputs.nuevos == '0'
+        run: echo "upstream/main sin commits nuevos respecto a origin/main — nada que hacer."
+
+      - name: Intentar el merge
+        id: merge
+        if: steps.es-template.outputs.salir != 'true' && steps.fetch-upstream.outputs.nuevos != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "sync-template-bot"
+          git config user.email "actions@users.noreply.github.com"
+
+          fecha=$(date +%Y%m%d)
+          rama="sync/upstream-$fecha"
+
+          commits_nuevos=$(git log origin/main..upstream/main --oneline)
+
+          git checkout -b "$rama" origin/main
+
+          if git merge upstream/main --no-edit; then
+            git push -u origin "$rama"
+
+            gh label create "template-sync" --color "0E8A16" --description "Generado por sync-template.yml" 2>/dev/null || true
+
+            cuerpo=$(cat <<EOF
+          Sincronización automática con \`automation-platform-template\` (${fecha}).
+
+          Commits nuevos traídos:
+
+          \`\`\`
+          $commits_nuevos
+          \`\`\`
+
+          Generado automáticamente por \`sync-template.yml\` — mergeó limpio,
+          sin conflictos. Revisar igual antes de mergear: un merge limpio a
+          nivel de texto no garantiza que el resultado tenga sentido (por
+          ejemplo, dos implementaciones paralelas del mismo concepto con
+          nombres distintos no chocan en git pero sí son redundantes).
+          EOF
+          )
+
+            gh pr create --repo "${{ github.repository }}" --base main --head "$rama" \
+              --title "Sincronizar con automation-platform-template ($fecha)" \
+              --body "$cuerpo" \
+              --label "template-sync"
+          else
+            git merge --abort
+            git checkout main
+            git branch -D "$rama"
+
+            titulo="Sincronización con el template requiere reconciliación manual ($fecha)"
+            ya_existe=$(gh issue list --repo "${{ github.repository }}" --label "template-sync" --state open --search "in:title Sincronización con el template requiere reconciliación manual" --json number --jq 'length')
+
+            if [ "$ya_existe" = "0" ]; then
+              gh label create "template-sync" --color "0E8A16" --description "Generado por sync-template.yml" 2>/dev/null || true
+              cuerpo_issue=$(cat <<EOF
+          \`git merge upstream/main\` no cierra limpio — hay conflictos reales
+          entre lo que ya tiene este repo y lo nuevo del template.
+
+          Commits nuevos en upstream/main sin traer todavía:
+
+          \`\`\`
+          $commits_nuevos
+          \`\`\`
+
+          Necesita que un agente lo reconcilie a mano: \`git fetch upstream\`,
+          \`git merge upstream/main\` en una rama propia, resolver los
+          conflictos con criterio (ver \`docs/wiki/portback-template.md\` si
+          este repo lo tiene, o el proceso general de \`docs/adoptar-*.md\` del
+          template) y abrir el PR.
+          EOF
+              )
+              gh issue create --repo "${{ github.repository }}" --title "$titulo" --body "$cuerpo_issue" --label "template-sync"
+            else
+              echo "Ya hay un issue abierto de sincronización pendiente — no se duplica."
+            fi
+          fi
