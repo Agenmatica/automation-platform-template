@@ -3,14 +3,20 @@ name: Sincronizar con el template
 # Corre en un producto derivado (fork) de automation-platform-template, no
 # en el template mismo (no tiene upstream propio — el primer paso sale
 # temprano si lo detecta). Reemplaza "acordarse de mirar cada tanto si el
-# template avanzó" por un chequeo automático semanal: si hay algo nuevo y
+# template avanzó" por un chequeo automático diario: si hay algo nuevo y
 # entra sin conflicto, abre el PR solo; si choca, no improvisa una
 # resolución — abre un issue para que un agente lo reconcilie a mano, mismo
 # trabajo que ya hicieron los PRs de esta sesión.
+#
+# No hay forma de que el fork se entere al instante de un push al template
+# (son dos repos distintos, sin webhook entre sí, y agregar uno rompería el
+# diseño genérico — el template tendría que llevar una lista de sus forks).
+# Diario es el punto medio: mucho más reactivo que semanal, sin necesitar
+# esa lista.
 
 on:
   schedule:
-    - cron: "0 13 * * 1" # lunes 13:00 UTC
+    - cron: "0 13 * * *" # todos los días 13:00 UTC
   workflow_dispatch: {}
 
 permissions:
