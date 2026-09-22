@@ -15,6 +15,10 @@
 # de un futuro namespace de dominio de un producto derivado.
 id: respaldo-postgres
 namespace: platform.backups
+labels:
+  capa: core
+  dominio: plataforma
+  componente: backups
 
 description: |
   Respalda la base de datos completa del entorno (pg_dump), programado a

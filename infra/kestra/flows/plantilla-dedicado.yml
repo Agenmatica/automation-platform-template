@@ -2,6 +2,10 @@
 # <producto>.<conector>.<organizacion-slug> y mantiene su fila de exclusion.
 id: plantilla-dedicado
 namespace: platform.orquestacion
+labels:
+  capa: core
+  dominio: plataforma
+  componente: plantilla-dedicada
 description: "Despacha un worker para una organizacion atendida como excepcion."
 inputs:
   - id: organizacion_id

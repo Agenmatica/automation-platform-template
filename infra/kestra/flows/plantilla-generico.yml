@@ -2,6 +2,10 @@
 # id/namespace/imagen; el nombre resultante sigue <producto>.<conector>.
 id: plantilla-generico
 namespace: platform.orquestacion
+labels:
+  capa: core
+  dominio: plataforma
+  componente: plantilla-generica
 description: "Despacha en paralelo un worker por cada organizacion elegible."
 inputs:
   - id: sistema_externo

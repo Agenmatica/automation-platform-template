@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from 'react-router'
 import { authProvider } from './providers/authProvider'
 import { accessControlProvider } from './providers/accessControlProvider'
+import { i18nProvider } from './providers/i18nProvider'
 import { supabaseClient } from './lib/supabase'
 import { RequiereOrganizacionActiva } from './components/RequiereOrganizacionActiva'
 import { SiderConSeccionesSuperadmin } from './components/SiderConSeccionesSuperadmin'
@@ -151,6 +152,7 @@ function App() {
             dataProvider={supabaseDataProvider(supabaseClient)}
             authProvider={authProvider}
             accessControlProvider={accessControlProvider}
+            i18nProvider={i18nProvider}
             routerProvider={routerProvider}
             notificationProvider={useNotificationProvider}
             resources={[
