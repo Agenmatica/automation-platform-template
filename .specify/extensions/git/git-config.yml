@@ -2,7 +2,14 @@
 # Copied to .specify/extensions/git/git-config.yml on install
 
 # Branch numbering strategy: "sequential" (001, 002, ...) or "timestamp" (YYYYMMDD-HHMMSS)
-branch_numbering: sequential
+# "sequential" choco dos veces en la historia real de este repo (016 quedo
+# duplicado por dos ramas creadas en paralelo sin coordinacion). "timestamp"
+# es lo que ya adopto por el mismo motivo al menos un producto derivado real
+# (evita chocar contra la numeracion propia del template al traer specs con
+# git merge upstream/main) — dos ramas del mismo repo tambien dejan de
+# colisionar entre si, sin importar cuantas se abran en paralelo. Las specs
+# 001-018 ya existentes no se renumeran.
+branch_numbering: timestamp
 
 # Optional branch name template. Leave empty for the default "{number}-{slug}".
 # Supported tokens: {author}, {app}, {number}, {slug}
