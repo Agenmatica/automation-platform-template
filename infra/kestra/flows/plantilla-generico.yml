@@ -105,7 +105,7 @@ tasks:
             type: io.kestra.plugin.core.flow.If
             # Solo se inspecciona la marca contractual del worker para elegir
             # tipo; errorLogs() nunca se transmite ni se persiste como motivo.
-            condition: "{{ outputs.detectar_tipo_falla.value contains 'CREDENCIAL_INVALIDA:' }}"
+            condition: "{{ outputs.detectar_tipo_falla is defined and outputs.detectar_tipo_falla.value contains 'CREDENCIAL_INVALIDA:' }}"
             then:
               - id: alertar_credencial
                 type: io.kestra.plugin.core.flow.Subflow
