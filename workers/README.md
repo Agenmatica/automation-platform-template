@@ -121,6 +121,9 @@ disparo de Kestra ocurre dentro de una ejecución auditada
   registradas en `capacidades_ejecucion` para esa conexión. Un worker que
   necesite exponer una capacidad nueva la registra primero (el inicio
   rechaza cualquier otra con `CAPACIDAD_NO_HABILITADA`).
+- El contrato de la orden es genérico: no contiene proveedor, URL, credencial
+  ni comando. La capacidad y el detalle se resuelven al reclamar; el flow
+  conserva el fencing por `despacho_id` e `intento` hasta resolver la orden.
 
 El cierre y la evidencia se documentan en la subsección siguiente.
 

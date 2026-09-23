@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(17);
 
 select has_table('public', 'despachos_ejecucion', 'existe la tabla durable de outbox');
 select has_column('public', 'despachos_ejecucion', 'ejecucion_id', 'la orden referencia la ejecución');
@@ -71,7 +71,7 @@ select ok(
 select ok(
   has_function_privilege(
     'kestra_orquestacion',
-    'private.resolver_despacho_ejecucion(uuid, integer, text, text, integer, integer)',
+    'private.resolver_despacho_ejecucion(uuid,integer,text,text,integer,integer)'::regprocedure,
     'execute'
   ),
   'Kestra puede resolver un reclamo cercado por intento'
@@ -94,6 +94,16 @@ select is(
   'el mismo inicio manual persiste exactamente una orden durable'
 );
 reset role;
+
+select throws_ok(
+  $$select * from private.reclamar_despachos_ejecucion(1, 60)$$,
+  'P0001', 'NO_AUTORIZADO: solo kestra_orquestacion reclama despachos',
+  'un rol no técnico no puede reclamar órdenes'
+);
+select is(
+  (select count(*) from public.despachos_ejecucion where estado = 'pendiente'),
+  3::bigint, 'un reclamo rechazado no altera las órdenes pendientes'
+);
 
 select * from finish();
 rollback;

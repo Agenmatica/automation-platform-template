@@ -29,24 +29,24 @@
 
 ## Fase 4 — Historia 2: recuperación
 
-- [ ] T010 [US2] Escribir pgTAP de reclamo concurrente, vencimiento, liberación y agotamiento en `supabase/tests/database/outbox_ejecuciones.test.sql`.
-- [ ] T011 [US2] Implementar RPC técnica de reclamar, confirmar, liberar y agotar en `supabase/migrations/<timestamp>_outbox_ejecuciones.sql`.
-- [ ] T012 [US2] Documentar el uso del contrato en flows de plantilla en `infra/kestra/flows/plantilla-generico.yml` y `infra/kestra/flows/plantilla-dedicado.yml` sin incluir un conector de dominio.
+- [X] T010 [US2] Escribir pgTAP de reclamo concurrente, vencimiento, liberación y agotamiento en `supabase/tests/database/outbox_ejecuciones.test.sql`.
+- [X] T011 [US2] Implementar RPC técnica de reclamar, confirmar, liberar y agotar en `supabase/migrations/<timestamp>_outbox_ejecuciones.sql`.
+- [X] T012 [US2] Documentar el uso del contrato en flows de plantilla en `infra/kestra/flows/plantilla-generico.yml` y `infra/kestra/flows/plantilla-dedicado.yml` sin incluir un conector de dominio.
 
 **Checkpoint**: una caída posterior al reclamo no pierde ni duplica la orden.
 
 ## Fase 5 — Historia 3: adopción segura
 
-- [ ] T013 [US3] Agregar una prueba estática que rechace HTTP saliente desde triggers de ejecuciones en `supabase/tests/database/outbox_ejecuciones.test.sql` o harness equivalente.
-- [ ] T014 [US3] Registrar la versión/contrato de adopción en `docs/adoptar-ciclo-ejecuciones.md`.
-- [ ] T015 [US3] Verificar que los ejemplos no incluyen proveedor, credencial, URL ni lógica de producto en `workers/README.md`.
+- [X] T013 [US3] Agregar una prueba estática que rechace HTTP saliente desde triggers de ejecuciones en `supabase/tests/database/outbox_ejecuciones.test.sql` o harness equivalente.
+- [X] T014 [US3] Registrar la versión/contrato de adopción en `docs/adoptar-ciclo-ejecuciones.md`.
+- [X] T015 [US3] Verificar que los ejemplos no incluyen proveedor, credencial, URL ni lógica de producto en `workers/README.md`.
 
 **Checkpoint**: el template ofrece el mecanismo reutilizable sin acoplarse a un producto.
 
 ## Fase 6 — Validación
 
-- [ ] T016 Ejecutar `pnpm test`, `pnpm lint`, `pnpm build` y `pnpm infra:config`.
-- [ ] T017 Ejecutar la guía `specs/019-outbox-ejecuciones/quickstart.md` y documentar evidencia sanitizada.
+- [ ] T016 Ejecutar `pnpm test`, `pnpm lint`, `pnpm build` y `pnpm infra:config` (lint, build, infra:config y test:db pasan; `pnpm test` queda bloqueado por Vitest web que no finaliza, aunque un test aislado pasa).
+- [X] T017 Ejecutar la guía `specs/019-outbox-ejecuciones/quickstart.md` y documentar evidencia sanitizada.
 
 ## Dependencias
 

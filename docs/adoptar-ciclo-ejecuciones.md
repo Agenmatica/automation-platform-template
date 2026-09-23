@@ -60,6 +60,14 @@ un disparo manual recuperable antes de migrar schedules.
 
 ## 4. Mapeo de este producto
 
+### Versión de outbox adoptable
+
+La versión adoptable actual es **019**. La función de reclamo devuelve el
+identificador de despacho, ejecución, conexión, capacidad, detalle, intento y
+vencimiento; el flow debe conservar `despacho_id` + `intento` y pasarlos a
+`private.resolver_despacho_ejecucion` para confirmar, liberar o agotar. No se
+puede confirmar un intento vencido o reemplazado.
+
 _(Completar al adoptar: tabla propia → tabla del template, columna por
 columna, y decisión de evidencia.)_
 
