@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useTable } from '@refinedev/core'
-import { List } from '@refinedev/mui'
-import {
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from '@mui/material'
+import { CreateButton } from '@refinedev/mui'
+import { Alert, Box } from '@mui/material'
 import { useIsSuperadmin } from '../../hooks/useIsSuperadmin'
+import { useContextoPanel } from '../../hooks/useContextoPanel'
 import { supabaseClient } from '../../lib/supabase'
+import { IdentidadVisible } from '../../components/identidad/IdentidadVisible'
+import { EstadoCargaPagina, EstadoError, EstadoVacio } from '../../components/estados/EstadosPagina'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
+import { ContenedorSeccion } from '../../components/pagina/ContenedorSeccion'
+import { ContenidoAdaptable, type ColumnaAdaptable } from '../../components/pagina/ContenidoAdaptable'
 
 type ServidorOrganizacion = {
   id: string
@@ -30,7 +28,17 @@ type ServidorOrganizacion = {
 // (R4, data-model.md).
 export function ServidorList() {
   const { isSuperadmin, isLoading: checkingSuperadmin } = useIsSuperadmin()
-  const { tableQuery } = useTable<ServidorOrganizacion>({ resource: 'servidores_organizacion' })
+  const { contexto } = useContextoPanel()
+  // meta.select explícito: el GRANT de columna de la migración (R4) no
+  // incluye credencial_ssh_vault_id/credencial_db_vault_id, y Postgres
+  // rechaza toda la consulta (permission denied, 42501) si un `select *`
+  // toca una sola columna sin privilegio — sin esto la pantalla nunca
+  // carga, ni para superadmin.
+  const { tableQuery } = useTable<ServidorOrganizacion>({
+    resource: 'servidores_organizacion',
+    meta: { select: 'id, organizacion_id, host, puerto_ssh, usuario_ssh, created_at' },
+    syncWithLocation: false,
+  })
   const [nombresOrganizacion, setNombresOrganizacion] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -51,7 +59,7 @@ export function ServidorList() {
   }, [])
 
   if (checkingSuperadmin) {
-    return null
+    return <EstadoCargaPagina />
   }
 
   if (!isSuperadmin) {
@@ -64,32 +72,44 @@ export function ServidorList() {
 
   const servidores = tableQuery.data?.data ?? []
 
+  const columnas: ColumnaAdaptable<ServidorOrganizacion>[] = [
+    {
+      clave: 'organizacion',
+      encabezado: 'Organización',
+      render: (servidor) => (
+        <IdentidadVisible
+          nombre={nombresOrganizacion[servidor.organizacion_id] ?? null}
+          tipoOrigen="organizacion"
+          idTecnico={servidor.organizacion_id}
+          puedeCopiarIdTecnico={contexto?.puede_copiar_identificador_tecnico ?? false}
+        />
+      ),
+    },
+    { clave: 'host', encabezado: 'Host', render: (servidor) => servidor.host },
+    { clave: 'puerto', encabezado: 'Puerto SSH', render: (servidor) => servidor.puerto_ssh },
+    { clave: 'usuario', encabezado: 'Usuario SSH', render: (servidor) => servidor.usuario_ssh },
+    { clave: 'alta', encabezado: 'Alta', render: (servidor) => new Date(servidor.created_at).toLocaleString() },
+  ]
+
   return (
-    <List title="Servidores de organización">
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Organización</TableCell>
-              <TableCell>Host</TableCell>
-              <TableCell>Puerto SSH</TableCell>
-              <TableCell>Usuario SSH</TableCell>
-              <TableCell>Alta</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {servidores.map((servidor) => (
-              <TableRow key={servidor.id}>
-                <TableCell>{nombresOrganizacion[servidor.organizacion_id] ?? servidor.organizacion_id}</TableCell>
-                <TableCell>{servidor.host}</TableCell>
-                <TableCell>{servidor.puerto_ssh}</TableCell>
-                <TableCell>{servidor.usuario_ssh}</TableCell>
-                <TableCell>{new Date(servidor.created_at).toLocaleString()}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </List>
+    <Box>
+      <EncabezadoPagina titulo="Servidores de organización" descripcion="Servidores de organización aprovisionados en la plataforma." accion={<CreateButton />} />
+      <ContenedorSeccion>
+        {tableQuery.isLoading ? (
+          <EstadoCargaPagina />
+        ) : tableQuery.isError ? (
+          <EstadoError descripcion="No pudimos cargar los servidores." reintentar={() => tableQuery.refetch()} />
+        ) : servidores.length === 0 ? (
+          <EstadoVacio titulo="Todavía no hay servidores de organización creados." />
+        ) : (
+          <ContenidoAdaptable
+            items={servidores}
+            columnas={columnas}
+            obtenerClave={(servidor) => servidor.id}
+            etiquetaTabla="Servidores de organización"
+          />
+        )}
+      </ContenedorSeccion>
+    </Box>
   )
 }
