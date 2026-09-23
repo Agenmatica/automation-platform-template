@@ -24,7 +24,7 @@ tasks:
     parameters:
       sistema_externo: "{{ inputs.sistema_externo }}"
   # Kestra 1.3.35 deserializa concurrencyLimit antes de evaluar expresiones:
-  # renderizar-flow.ps1 sustituye este literal al importar el flow desde la
+  # renderizar-flow.mjs sustituye este literal al importar el flow desde la
   # variable KESTRA_ORQUESTACION_CONCURRENCIA del entorno.
   - id: despachar_organizaciones
     type: io.kestra.plugin.core.flow.ForEach

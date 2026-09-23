@@ -109,6 +109,6 @@ rama de feature → Preview → staging (si hace falta) → main/producción
 Para cambios sólo visuales se puede omitir el staging completo. Para cambios de
 datos, permisos o automatizaciones, staging es obligatorio.
 
-En el VPS, `./scripts/deploy-vps.sh staging` o `production` despliega Kestra y
+En el VPS, `pnpm deploy:vps -- staging` o `pnpm deploy:vps -- production` despliega Kestra y
 Superset como proyectos Docker separados (`platform-<entorno>-kestra` y
 `platform-<entorno>-superset`).

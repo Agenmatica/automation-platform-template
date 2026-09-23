@@ -2,10 +2,10 @@
 
 ## Fase 1 — Inventario y comandos públicos
 
-- [ ] T001 Inventariar scripts propios y excepciones Docker/terceros en `docs/adoptar-tooling-typescript.md`.
-- [ ] T002 [P] Implementar relevo Node para render/publicación de flows en `infra/kestra/*.mjs`.
-- [ ] T003 [P] Implementar relevo Node para reset CI y despliegue VPS en `scripts/*.mjs`.
-- [ ] T004 Actualizar `package.json`, CI y documentación de comandos públicos.
+- [X] T001 Inventariar scripts propios y excepciones Docker/terceros en `docs/adoptar-tooling-typescript.md`.
+- [X] T002 [P] Implementar relevo Node para render/publicación de flows en `infra/kestra/*.mjs`.
+- [X] T003 [P] Implementar relevo Node para reset CI y despliegue VPS en `scripts/*.mjs`.
+- [X] T004 Actualizar `package.json`, CI y documentación de comandos públicos.
 
 **Checkpoint**: ningún comando público propio requiere Shell o PowerShell.
 

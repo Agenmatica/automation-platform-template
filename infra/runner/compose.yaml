@@ -12,7 +12,7 @@ services:
       RUNNER_LABELS: self-hosted,platform-local
     extra_hosts:
       # Igual motivo que infra/kestra/compose.yaml: pnpm test:db:ci y
-      # scripts/reset-db-ci.sh corren dentro de este contenedor y conectan
+      # scripts/reset-db-ci.mjs corren dentro de este contenedor y conectan
       # por host.docker.internal — sin esto, el job database del CI se
       # rompe apenas el runner se mueva de Docker Desktop a Linux nativo.
       - "host.docker.internal:host-gateway"
