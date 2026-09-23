@@ -5,13 +5,14 @@ import { Edit } from '@refinedev/mui'
 import { usePuedeEscribir } from '../../hooks/usePuedeEscribir'
 import { useOrganizacionDeTrabajo } from '../../hooks/useOrganizacionDeTrabajo'
 import { supabaseClient } from '../../lib/supabase'
+import { EstadoCargaPagina } from '../../components/estados/EstadosPagina'
 
 export function ConexionEdit() {
   const { id } = useParams(); const navigate = useNavigate()
   const { puedeEscribir, isLoading: checkingPermiso } = usePuedeEscribir()
   const { organizacionId, isLoading: checkingOrganizacion } = useOrganizacionDeTrabajo()
   const [nuevaCredencial, setNuevaCredencial] = useState(''); const [loading, setLoading] = useState(false); const [error, setError] = useState<string | null>(null)
-  if (checkingPermiso || checkingOrganizacion) return null
+  if (checkingPermiso || checkingOrganizacion) return <EstadoCargaPagina />
   if (!puedeEscribir || !organizacionId || !id) return <Alert severity="error" sx={{ m: 2 }}>Solo un administrador con una organización activa puede rotar credenciales.</Alert>
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault(); setLoading(true); setError(null)
