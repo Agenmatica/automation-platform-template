@@ -1,22 +1,20 @@
-import type { ReactNode } from 'react'
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useReportesAsignados } from '../../hooks/useReportesAsignados'
 import { AnaliticaList } from './list'
 
-// `List` de @refinedev/mui espera vivir dentro de un árbol <Refine> completo
-// (breadcrumb, recursos, router) — acá no se está probando ese componente,
-// así que se reemplaza por un contenedor simple y se aísla la lógica
-// propia de esta pantalla (FR-011: estado vacío sin reportes asignados).
-vi.mock('@refinedev/mui', () => ({
-  List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}))
+const useContextoPanel = vi.hoisted(() => vi.fn())
 
 vi.mock('../../hooks/useReportesAsignados', () => ({
   useReportesAsignados: vi.fn(),
 }))
+vi.mock('../../hooks/useContextoPanel', () => ({ useContextoPanel }))
 
 describe('AnaliticaList', () => {
+  beforeEach(() => {
+    useContextoPanel.mockReturnValue({ contexto: { organizacion_nombre: 'Acme' } })
+  })
+
   it('muestra el mensaje de "sin reportes configurados" cuando la lista viene vacía', () => {
     vi.mocked(useReportesAsignados).mockReturnValue({ reportes: [], isLoading: false })
 

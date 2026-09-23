@@ -12,10 +12,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { List } from '@refinedev/mui'
 import { useIsSuperadmin } from '../../hooks/useIsSuperadmin'
+import { useContextoPanel } from '../../hooks/useContextoPanel'
 import { supabaseClient } from '../../lib/supabase'
 import { GrillaPermisosPorRol, type RolOrganizacion } from '../../components/GrillaPermisosPorRol'
+import { CopiarIdentificadorTecnico } from '../../components/identidad/IdentidadVisible'
+import { EstadoCargaPagina, EstadoVacio } from '../../components/estados/EstadosPagina'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
+import { ContenedorSeccion } from '../../components/pagina/ContenedorSeccion'
 
 type Organizacion = { id: string; nombre: string }
 
@@ -34,6 +38,7 @@ type Reporte = {
 // embedding ya preparado.
 export function AnaliticaAdministrar() {
   const { isSuperadmin, isLoading: checkingSuperadmin } = useIsSuperadmin()
+  const { contexto } = useContextoPanel()
 
   const [roles, setRoles] = useState<RolOrganizacion[]>([])
   const [organizaciones, setOrganizaciones] = useState<Organizacion[]>([])
@@ -97,7 +102,7 @@ export function AnaliticaAdministrar() {
   }, [isSuperadmin])
 
   if (checkingSuperadmin) {
-    return null
+    return <EstadoCargaPagina />
   }
 
   if (!isSuperadmin) {
@@ -133,7 +138,8 @@ export function AnaliticaAdministrar() {
   }
 
   return (
-    <List title="Analítica — Administrar">
+    <Box>
+      <EncabezadoPagina titulo="Analítica — Administrar" descripcion="Catálogo de reportes, visibilidad por rol y asignación a organizaciones." />
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -176,23 +182,30 @@ export function AnaliticaAdministrar() {
         </Box>
       </Paper>
 
-      {!cargando && reportes.length === 0 && (
-        <Typography color="text.secondary">Todavía no hay reportes registrados.</Typography>
+      {cargando ? (
+        <ContenedorSeccion>
+          <EstadoCargaPagina />
+        </ContenedorSeccion>
+      ) : reportes.length === 0 ? (
+        <ContenedorSeccion>
+          <EstadoVacio titulo="Todavía no hay reportes registrados." />
+        </ContenedorSeccion>
+      ) : (
+        <Stack spacing={2}>
+          {reportes.map((reporte) => (
+            <ReporteRow
+              key={reporte.id}
+              reporte={reporte}
+              roles={roles}
+              organizaciones={organizaciones}
+              onCambio={cargarDatos}
+              onError={setError}
+              puedeCopiarIdTecnico={contexto?.puede_copiar_identificador_tecnico ?? false}
+            />
+          ))}
+        </Stack>
       )}
-
-      <Stack spacing={2}>
-        {reportes.map((reporte) => (
-          <ReporteRow
-            key={reporte.id}
-            reporte={reporte}
-            roles={roles}
-            organizaciones={organizaciones}
-            onCambio={cargarDatos}
-            onError={setError}
-          />
-        ))}
-      </Stack>
-    </List>
+    </Box>
   )
 }
 
@@ -202,9 +215,10 @@ type ReporteRowProps = {
   organizaciones: Organizacion[]
   onCambio: () => Promise<void>
   onError: (mensaje: string) => void
+  puedeCopiarIdTecnico: boolean
 }
 
-function ReporteRow({ reporte, roles, organizaciones, onCambio, onError }: ReporteRowProps) {
+function ReporteRow({ reporte, roles, organizaciones, onCambio, onError, puedeCopiarIdTecnico }: ReporteRowProps) {
   const [rolesDefault, setRolesDefault] = useState(reporte.rolesDefault)
   const [guardandoDefault, setGuardandoDefault] = useState(false)
   const [organizacionAAsignar, setOrganizacionAAsignar] = useState('')
@@ -260,10 +274,15 @@ function ReporteRow({ reporte, roles, organizaciones, onCambio, onError }: Repor
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
-      <Typography variant="subtitle1">{reporte.nombre}</Typography>
-      <Typography variant="caption" color="text.secondary">
-        {reporte.superset_dashboard_uuid}
-      </Typography>
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        <Typography variant="subtitle1">{reporte.nombre}</Typography>
+        {/* El UUID de embedding queda oculto -- copiable solo por superadmin, nunca texto permanente. */}
+        <CopiarIdentificadorTecnico
+          idTecnico={reporte.superset_dashboard_uuid}
+          puedeCopiar={puedeCopiarIdTecnico}
+          etiqueta={reporte.nombre}
+        />
+      </Stack>
 
       <Divider sx={{ my: 1.5 }} />
 
