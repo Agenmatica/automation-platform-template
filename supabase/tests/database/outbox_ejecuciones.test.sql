@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(15);
 
 select has_table('public', 'despachos_ejecucion', 'existe la tabla durable de outbox');
 select has_column('public', 'despachos_ejecucion', 'ejecucion_id', 'la orden referencia la ejecución');
@@ -67,6 +67,14 @@ select ok(
     'execute'
   ),
   'un usuario autenticado no puede reclamar órdenes'
+);
+select ok(
+  has_function_privilege(
+    'kestra_orquestacion',
+    'private.resolver_despacho_ejecucion(uuid, integer, text, text, integer, integer)',
+    'execute'
+  ),
+  'Kestra puede resolver un reclamo cercado por intento'
 );
 
 select set_config('request.jwt.claims', json_build_object('sub', 'd1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
