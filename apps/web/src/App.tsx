@@ -39,6 +39,7 @@ import { MiembroList } from './pages/miembros/list'
 import { DefinirContrasenaPage } from './pages/acceso/definir-contrasena'
 import { SolicitarRecuperacionPage } from './pages/acceso/solicitar-recuperacion'
 import { CambiarContrasenaPage } from './pages/cuenta/cambiar-contrasena'
+import { CambiarCorreoPage } from './pages/cuenta/cambiar-correo'
 import { PerfilPage } from './pages/cuenta/perfil'
 import { IaList } from './pages/ia/list'
 import { IaModelos } from './pages/ia/modelos'
@@ -238,6 +239,7 @@ function App() {
                 <Route path="/miembros" element={<RequiereOrganizacionActiva><MiembroList /></RequiereOrganizacionActiva>} />
                 <Route path="/miembros/create" element={<RequiereOrganizacionActiva><MiembroCreate /></RequiereOrganizacionActiva>} />
                 <Route path="/cuenta/cambiar-contrasena" element={<CambiarContrasenaPage />} />
+                <Route path="/cuenta/cambiar-correo" element={<CambiarCorreoPage />} />
                 <Route path="/cuenta/perfil" element={<PerfilPage />} />
                 <Route
                   path="/clientes/create"
