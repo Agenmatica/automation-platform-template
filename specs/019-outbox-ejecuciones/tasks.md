@@ -45,7 +45,7 @@
 
 ## Fase 6 — Validación
 
-- [ ] T016 Ejecutar `pnpm test`, `pnpm lint`, `pnpm build` y `pnpm infra:config` (lint, build, infra:config y test:db pasan; `pnpm test` queda bloqueado por Vitest web que no finaliza, aunque un test aislado pasa).
+- [X] T016 Ejecutar `pnpm test`, `pnpm lint`, `pnpm build` y `pnpm infra:config` (2026-09-23: lint, build e infra:config pasan; `pnpm test` pasa con 22 archivos/103 pruebas web y 12 archivos/406 pruebas pgTAP).
 - [X] T017 Ejecutar la guía `specs/019-outbox-ejecuciones/quickstart.md` y documentar evidencia sanitizada.
 
 ## Dependencias
