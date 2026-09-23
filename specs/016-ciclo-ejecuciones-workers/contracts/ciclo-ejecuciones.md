@@ -15,7 +15,8 @@ select * from iniciar_ejecucion_worker(
   p_conexion_id := :conexion_id,       -- uuid, de datos_despacho_conexion
   p_clave_capacidad := :capacidad,     -- text, p. ej. 'extraer-reporte-x'
   p_origen := 'kestra',                -- 'manual' | 'programada' | 'kestra'
-  p_actor := NULL                      -- uuid solo si origen = 'manual'
+  p_actor := NULL,                     -- uuid solo si origen = 'manual'
+  p_detalle := '{}'::jsonb             -- opcional, jsonb extensible, sin secretos (default '{}')
 );
 -- Éxito: una fila de ejecuciones_worker en estado 'en_curso' (columna id).
 -- Errores contractuales (SQLSTATE + mensaje, nunca secreto):
@@ -23,6 +24,11 @@ select * from iniciar_ejecucion_worker(
 --   YA_EN_CURSO              — hay una activa para esa organización+capacidad (US1, FR-002).
 -- Nota: antes de insertar, cierra como 'timeout' las vencidas según
 -- tiempo_max_seg (R2); ese cierre queda auditado y no es error.
+-- p_detalle queda disponible en new.detalle para un trigger AFTER INSERT
+-- sobre ejecuciones_worker que necesite datos de la corrida (ej. un rango
+-- de fechas elegido en el disparo) desde el propio INSERT -- un UPDATE
+-- posterior no reactiva ese trigger. cerrar_ejecucion_worker acepta su
+-- propio p_detalle al cerrar; son campos independientes.
 ```
 
 Variables que Kestra entrega al contenedor worker (patrón spec 013/014, R5):

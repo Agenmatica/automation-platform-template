@@ -9,7 +9,7 @@
 -- punta con cada rol de verdad es responsabilidad de quickstart.md.
 begin;
 
-select plan(59);
+select plan(62);
 
 -- ============================================================================
 -- Fixture
@@ -179,6 +179,7 @@ insert into capacidades_ejecucion (id, organizacion_id, conexion_id, clave, habi
   ('e1111111-1111-1111-1111-111111111116', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x3', false),
   ('e1111111-1111-1111-1111-111111111117', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111114', 'reporte-inactivo', true),
   ('e1111111-1111-1111-1111-111111111118', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x4', true),
+  ('e1111111-1111-1111-1111-111111111120', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x6', true),
   ('e2222222-2222-2222-2222-222222222225', 'e2222222-2222-2222-2222-222222222222', 'e2222222-2222-2222-2222-222222222223', 'reporte-y2', true);
 
 select set_config(
@@ -257,6 +258,27 @@ select is(
   'el actor del disparo manual queda auditado'
 );
 
+-- p_detalle (parámetro nuevo): queda en la fila desde el propio INSERT, no
+-- recién al cerrar -- lo necesita un trigger AFTER INSERT sobre
+-- ejecuciones_worker que lea datos de la corrida (motivador real: un rango
+-- de fechas elegido en un disparo manual).
+select lives_ok(
+  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111112', 'reporte-x6', 'kestra', null, '{"rango": "2026-01"}'::jsonb)$$,
+  'p_detalle es un parámetro opcional aceptado por iniciar_ejecucion_worker'
+);
+
+select is(
+  (select detalle from ejecuciones_worker where capacidad_id = 'e1111111-1111-1111-1111-111111111120'),
+  '{"rango": "2026-01"}'::jsonb,
+  'el detalle pasado a iniciar_ejecucion_worker queda en la fila desde el INSERT'
+);
+
+select is(
+  (select detalle from ejecuciones_worker where capacidad_id = 'e1111111-1111-1111-1111-111111111115'),
+  '{}'::jsonb,
+  'sin p_detalle, la fila arranca con detalle vacío (default, compatible con las llamadas existentes)'
+);
+
 reset role;
 
 -- Timeout: la ejecución vigente supera su tiempo máximo (R2/FR-003).
@@ -329,19 +351,19 @@ select throws_ok(
 reset role;
 
 select is(
-  has_function_privilege('kestra_orquestacion', 'public.iniciar_ejecucion_worker(uuid, text, text, uuid)', 'EXECUTE'),
+  has_function_privilege('kestra_orquestacion', 'public.iniciar_ejecucion_worker(uuid, text, text, uuid, jsonb)', 'EXECUTE'),
   true,
   'kestra_orquestacion puede ejecutar iniciar_ejecucion'
 );
 
 select is(
-  has_function_privilege('authenticated', 'public.iniciar_ejecucion_worker(uuid, text, text, uuid)', 'EXECUTE'),
+  has_function_privilege('authenticated', 'public.iniciar_ejecucion_worker(uuid, text, text, uuid, jsonb)', 'EXECUTE'),
   true,
   'authenticated puede ejecutar iniciar_ejecucion (el permiso fino vive adentro)'
 );
 
 select is(
-  has_function_privilege('anon', 'public.iniciar_ejecucion_worker(uuid, text, text, uuid)', 'EXECUTE'),
+  has_function_privilege('anon', 'public.iniciar_ejecucion_worker(uuid, text, text, uuid, jsonb)', 'EXECUTE'),
   false,
   'anon no puede ejecutar iniciar_ejecucion'
 );
