@@ -37,6 +37,8 @@
     "test:workers:scan": "node --test scripts/validar-scan-worker.test.mjs",
     "test:workers:idempotency": "node scripts/validar-idempotencia-workers.mjs",
     "test:workers:audit": "node scripts/validar-auditoria-workers.mjs",
+    "test:kestra:secretos": "node infra/kestra/test-secretos-orquestacion.mjs",
+    "test:kestra:runtime": "node infra/kestra/validar-workers-runtime.mjs",
     "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",
     "infra:config:refine": "docker compose -f infra/refine/compose.yaml config --quiet",
     "infra:config:kestra": "docker compose -f infra/kestra/compose.yaml config --quiet",

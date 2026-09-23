@@ -8,10 +8,9 @@ export function requireEnvironment(name) {
 
 export function redactError(error) {
   const message = error instanceof Error ? error.message : String(error);
-  return message
-    .replaceAll(process.env.KESTRA_BASIC_AUTH_PASSWORD ?? '', '[REDACTADO]')
-    .replaceAll(process.env.KESTRA_WEBHOOK_KEY ?? '', '[REDACTADO]')
-    .replaceAll(process.env.IA_PROVEEDOR_CLAVE ?? '', '[REDACTADO]');
+  return [process.env.KESTRA_BASIC_AUTH_PASSWORD, process.env.KESTRA_WEBHOOK_KEY, process.env.IA_PROVEEDOR_CLAVE]
+    .filter((value) => typeof value === 'string' && value.length > 0)
+    .reduce((redacted, value) => redacted.replaceAll(value, '[REDACTADO]'), message);
 }
 
 export async function run(command, args, options = {}) {
