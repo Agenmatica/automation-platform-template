@@ -11,7 +11,7 @@
 
 ## Fase 2 — Validadores y aprovisionamiento
 
-- [ ] T005 [US1] Migrar aprovisionamiento IA y su prueba a `infra/ia/*.mjs`.
+- [X] T005 [US1] Migrar aprovisionamiento IA y su prueba a `infra/ia/*.mjs`.
 - [ ] T006 [US1] Migrar validadores Kestra/secretos a `infra/kestra/*.mjs`.
 - [ ] T007 [US1] Añadir pruebas Node de validación, sanitización y códigos de salida en `scripts/*.test.mjs`.
 
