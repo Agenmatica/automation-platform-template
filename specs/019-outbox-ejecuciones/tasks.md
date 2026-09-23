@@ -13,9 +13,9 @@
 
 ## Fase 2 — Fundaciones
 
-- [ ] T004 Crear la tabla de outbox, índices, RLS, grants y restricción uno-a-uno en `supabase/migrations/<timestamp>_outbox_ejecuciones.sql`.
-- [ ] T005 Crear funciones internas de reclamo vencible y transición auditada en `supabase/migrations/<timestamp>_outbox_ejecuciones.sql`.
-- [ ] T006 [P] Implementar pgTAP de aislamiento, unicidad y transición terminal en `supabase/tests/database/outbox_ejecuciones.test.sql`.
+- [X] T004 Crear la tabla de outbox, índices, RLS, grants y restricción uno-a-uno en `supabase/migrations/20260923171400_crear_outbox_ejecuciones.sql`.
+- [X] T005 Crear la función interna de reclamo vencible en `supabase/migrations/20260923171252_reclamar_despachos_ejecucion.sql`.
+- [X] T006 [P] Implementar pgTAP de aislamiento, unicidad y permisos del contrato de reclamo en `supabase/tests/database/outbox_ejecuciones.test.sql`.
 
 **Checkpoint**: una orden no puede verse fuera de su organización ni ser reclamada dos veces.
 
