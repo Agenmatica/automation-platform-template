@@ -22,9 +22,9 @@ async function locateContainer() {
   return matches[0];
 }
 
-const sql = `\set proveedor_codigo \`printf %s "$IA_PROVEEDOR_CODIGO"\`
-\set credencial_nombre \`printf %s "$IA_PROVEEDOR_CREDENCIAL"\`
-\set clave \`printf %s "$IA_PROVEEDOR_CLAVE"\`
+const sql = `\\set proveedor_codigo \`printf %s "$IA_PROVEEDOR_CODIGO"\`
+\\set credencial_nombre \`printf %s "$IA_PROVEEDOR_CREDENCIAL"\`
+\\set clave \`printf %s "$IA_PROVEEDOR_CLAVE"\`
 select set_config('app.ia.proveedor_codigo', :'proveedor_codigo', false);
 select set_config('app.ia.credencial_nombre', :'credencial_nombre', false);
 select set_config('app.ia.clave', :'clave', false);
