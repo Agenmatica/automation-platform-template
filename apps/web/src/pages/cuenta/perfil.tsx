@@ -1,7 +1,8 @@
 import { type FormEvent, useEffect, useState } from 'react'
-import { Alert, Avatar, Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Avatar, Box, Button, Card, CardContent, CircularProgress, Divider, Stack, TextField, Typography } from '@mui/material'
 import { Link as RouterLink, Navigate } from 'react-router'
-import { profileRedirectUrl, supabaseClient, verifyCurrentPassword } from '../../lib/supabase'
+import { supabaseClient } from '../../lib/supabase'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
 
 type Perfil = { nombre: string | null; apellido: string | null; foto_path: string | null }
 type Membresia = { rol_id: string; organizaciones: { nombre: string } | null }
@@ -9,18 +10,6 @@ type EventoSeguridad = { id: number; tipo: 'inicio_sesion' | 'contrasena_modific
 type EstadoSesion = 'verificando' | 'lista' | 'ausente'
 const FOTO_MAX_BYTES = 2 * 1024 * 1024
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp']
-
-function esContrasenaActualIncorrecta(error: { code?: string; message?: string }) {
-  return error.code === 'invalid_credentials' || /current password|contrasena actual|incorrect/i.test(error.message ?? '')
-}
-
-function esCorreoNoDisponible(error: { code?: string; message?: string }) {
-  return error.code === 'email_exists' || /already registered|already been registered|email.*exist/i.test(error.message ?? '')
-}
-
-function esCorreoValido(correo: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)
-}
 
 export function PerfilPage() {
   const [estadoSesion, setEstadoSesion] = useState<EstadoSesion>('verificando')
@@ -31,9 +20,6 @@ export function PerfilPage() {
   const [error, setError] = useState<string | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
-  const [contrasenaActual, setContrasenaActual] = useState('')
-  const [correoNuevo, setCorreoNuevo] = useState('')
-  const [solicitandoCorreo, setSolicitandoCorreo] = useState(false)
   const [fotoUrl, setFotoUrl] = useState<string | null>(null)
   const [tieneFoto, setTieneFoto] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
@@ -181,127 +167,107 @@ export function PerfilPage() {
     setGuardando(false)
   }
 
-  const solicitarCambioCorreo = async (event: FormEvent) => {
-    event.preventDefault()
-    const correoLimpio = correoNuevo.trim().toLowerCase()
-    setError(null)
-    setMensaje(null)
-    if (!correoActual || !contrasenaActual) {
-      setError('Ingresa tu contrasena actual para solicitar el cambio de correo.')
-      return
-    }
-    if (!esCorreoValido(correoLimpio)) {
-      setError('Ingresa un correo electronico valido.')
-      return
-    }
-    if (correoLimpio === correoActual.toLowerCase()) {
-      setError('El correo nuevo debe ser distinto del actual.')
-      return
-    }
-
-    setSolicitandoCorreo(true)
-    const { error: errorVerificacion } = await verifyCurrentPassword(correoActual, contrasenaActual)
-    if (errorVerificacion) {
-      setError(
-        esContrasenaActualIncorrecta(errorVerificacion)
-          ? 'La contrasena actual no coincide.'
-          : 'No pudimos verificar la contrasena actual. Intenta nuevamente.',
-      )
-      setSolicitandoCorreo(false)
-      return
-    }
-
-    const { error: errorActualizacion } = await supabaseClient.auth.updateUser(
-      { email: correoLimpio },
-      { emailRedirectTo: profileRedirectUrl(window.location.origin) },
-    )
-    if (errorActualizacion) {
-      setError(
-        esCorreoNoDisponible(errorActualizacion)
-          ? 'No se puede usar ese correo electronico. Elige otro e intenta nuevamente.'
-          : 'No pudimos solicitar el cambio de correo. Intenta nuevamente.',
-      )
-      setSolicitandoCorreo(false)
-      return
-    }
-
-    setContrasenaActual('')
-    setCorreoNuevo('')
-    setMensaje(`Enviamos una confirmacion a ${correoLimpio}. Tu correo actual seguira vigente hasta confirmarla.`)
-    setSolicitandoCorreo(false)
-  }
-
   if (estadoSesion === 'verificando') return <CircularProgress aria-label="Verificando sesion" sx={{ m: 4 }} />
   if (estadoSesion === 'ausente') return <Navigate to="/login" replace />
+
+  const inicial = (nombre || correoActual || '?').charAt(0).toUpperCase()
+  const datosCuenta = [
+    { etiqueta: 'Correo', valor: correoActual ?? 'No disponible' },
+    { etiqueta: 'Fecha de creación', valor: cuenta.creadoEn ? new Date(cuenta.creadoEn).toLocaleDateString() : 'No disponible' },
+    { etiqueta: 'Organización', valor: cuenta.organizacion ?? 'Sin organización activa' },
+    { etiqueta: 'Rol', valor: cuenta.rol ?? 'Sin rol asignado' },
+  ]
+
   return (
-    <Box component="main" sx={{ maxWidth: 560, mx: 'auto', mt: 4, px: 2 }}>
-      <Stack component="form" spacing={2} onSubmit={guardarPerfil} noValidate>
-        <Typography component="h1" variant="h4">Mi perfil</Typography>
-        <Typography color="text.secondary">Actualiza los datos con los que te identificamos.</Typography>
-        {error && <Alert severity="error" role="alert">{error}</Alert>}
-        {mensaje && <Alert severity="success" role="status">{mensaje}</Alert>}
-        <TextField label="Nombre" value={nombre} onChange={(event) => setNombre(event.target.value)} autoComplete="given-name" required fullWidth />
-        <TextField label="Apellido" value={apellido} onChange={(event) => setApellido(event.target.value)} autoComplete="family-name" required fullWidth />
-        <Button type="submit" variant="contained" disabled={guardando} aria-busy={guardando}>{guardando ? 'Guardando...' : 'Guardar datos personales'}</Button>
-      </Stack>
-      <Stack spacing={2} sx={{ mt: 5 }}>
-        <Typography component="h2" variant="h5">Foto de perfil</Typography>
-        <Avatar src={fotoUrl ?? undefined} alt="Tu foto de perfil" sx={{ width: 80, height: 80 }}>?</Avatar>
-        <Button component="label" variant="outlined" disabled={subiendoFoto} aria-busy={subiendoFoto}>
-          {subiendoFoto ? 'Actualizando foto...' : 'Cargar o reemplazar foto'}
-          <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void cargarFoto(event.target.files?.[0])} />
-        </Button>
-        {tieneFoto && <Button color="error" onClick={() => void eliminarFoto()} disabled={subiendoFoto} aria-busy={subiendoFoto}>Quitar foto</Button>}
-        <Typography variant="caption" color="text.secondary">JPG, PNG o WebP de hasta 2 MiB.</Typography>
-      </Stack>
-      <Stack spacing={1} sx={{ mt: 5 }}>
-        <Typography component="h2" variant="h5">Datos de cuenta</Typography>
-        <Typography>Correo: {correoActual ?? 'No disponible'}</Typography>
-        <Typography>Fecha de creación: {cuenta.creadoEn ? new Date(cuenta.creadoEn).toLocaleDateString() : 'No disponible'}</Typography>
-        <Typography>Organización: {cuenta.organizacion ?? 'Sin organización activa'}</Typography>
-        <Typography>Rol: {cuenta.rol ?? 'Sin rol asignado'}</Typography>
-      </Stack>
-      <Stack spacing={1} sx={{ mt: 5 }}>
-        <Typography component="h2" variant="h5">Contraseña</Typography>
-        <Typography color="text.secondary">Gestiona tu contraseña desde el flujo seguro de tu cuenta.</Typography>
-        <Button component={RouterLink} to="/cuenta/cambiar-contrasena" variant="outlined">
-          Cambiar contraseña
-        </Button>
-      </Stack>
-      <Stack spacing={1} sx={{ mt: 5 }}>
-        <Typography component="h2" variant="h5">Últimas acciones de seguridad</Typography>
-        {eventosSeguridad.length === 0 ? (
-          <Typography color="text.secondary">Todavía no registramos acciones de seguridad para tu cuenta.</Typography>
-        ) : eventosSeguridad.map((evento) => (
-          <Typography key={evento.id}>
-            {evento.tipo.replaceAll('_', ' ')}: {new Date(evento.created_at).toLocaleString()}
-          </Typography>
-        ))}
-      </Stack>
-      <Stack component="form" spacing={2} onSubmit={solicitarCambioCorreo} noValidate sx={{ mt: 5 }}>
-        <Typography component="h2" variant="h5">Cambiar correo electronico</Typography>
-        <Typography color="text.secondary">Confirmaremos el cambio solo en la nueva direccion. Tu correo actual seguira vigente hasta entonces.</Typography>
-        <TextField
-          label="Contrasena actual para cambiar el correo"
-          type="password"
-          value={contrasenaActual}
-          onChange={(event) => setContrasenaActual(event.target.value)}
-          autoComplete="current-password"
-          required
-          fullWidth
-        />
-        <TextField
-          label="Correo electronico nuevo"
-          type="email"
-          value={correoNuevo}
-          onChange={(event) => setCorreoNuevo(event.target.value)}
-          autoComplete="email"
-          required
-          fullWidth
-        />
-        <Button type="submit" variant="outlined" disabled={solicitandoCorreo} aria-busy={solicitandoCorreo}>
-          {solicitandoCorreo ? 'Solicitando...' : 'Solicitar cambio de correo'}
-        </Button>
+    <Box component="main" sx={{ maxWidth: 720, mx: 'auto', mt: 2, px: 2 }}>
+      <EncabezadoPagina titulo="Mi perfil" descripcion="Actualiza los datos con los que te identificamos." />
+      {/* Alerta única para cualquier acción de la página (datos, foto, no hay
+          una por sección para no repetir el mismo patrón visual cuatro veces). */}
+      {error && <Alert severity="error" role="alert" sx={{ mb: 2 }}>{error}</Alert>}
+      {mensaje && <Alert severity="success" role="status" sx={{ mb: 2 }}>{mensaje}</Alert>}
+
+      <Stack spacing={2}>
+        <Card variant="outlined">
+          <CardContent>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
+              <Stack spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+                {/* Sin foto: inicial de nombre/correo, nunca un "?" fijo. */}
+                <Avatar src={fotoUrl ?? undefined} alt="Tu foto de perfil" sx={{ width: 96, height: 96, bgcolor: 'primary.main', fontSize: '2rem' }}>
+                  {inicial}
+                </Avatar>
+                <Button component="label" size="small" disabled={subiendoFoto} aria-busy={subiendoFoto}>
+                  {subiendoFoto ? 'Actualizando foto...' : 'Cargar o reemplazar foto'}
+                  <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void cargarFoto(event.target.files?.[0])} />
+                </Button>
+                {tieneFoto && <Button color="error" size="small" onClick={() => void eliminarFoto()} disabled={subiendoFoto} aria-busy={subiendoFoto}>Quitar foto</Button>}
+                <Typography variant="caption" color="text.secondary" textAlign="center">JPG, PNG o WebP de hasta 2 MiB.</Typography>
+              </Stack>
+              <Stack component="form" spacing={2} onSubmit={guardarPerfil} noValidate sx={{ flex: 1 }}>
+                <TextField label="Nombre" value={nombre} onChange={(event) => setNombre(event.target.value)} autoComplete="given-name" required fullWidth />
+                <TextField label="Apellido" value={apellido} onChange={(event) => setApellido(event.target.value)} autoComplete="family-name" required fullWidth />
+                <Button type="submit" variant="contained" disabled={guardando} aria-busy={guardando} sx={{ alignSelf: 'flex-start' }}>
+                  {guardando ? 'Guardando...' : 'Guardar datos personales'}
+                </Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent>
+            <Typography component="h2" variant="h6" sx={{ mb: 2 }}>Datos de cuenta</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              {datosCuenta.map((dato) => (
+                <Box key={dato.etiqueta}>
+                  <Typography variant="caption" color="text.secondary">{dato.etiqueta}</Typography>
+                  <Typography>{dato.valor}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent>
+            <Typography component="h2" variant="h6" sx={{ mb: 2 }}>Seguridad</Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1.5}>
+              <Box>
+                <Typography>Contraseña</Typography>
+                <Typography variant="body2" color="text.secondary">Gestiona tu contraseña desde el flujo seguro de tu cuenta.</Typography>
+              </Box>
+              <Button component={RouterLink} to="/cuenta/cambiar-contrasena" variant="outlined" sx={{ flexShrink: 0 }}>
+                Cambiar contraseña
+              </Button>
+            </Stack>
+            <Divider sx={{ my: 2 }} />
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1.5}>
+              <Box>
+                <Typography>Correo electrónico</Typography>
+                <Typography variant="body2" color="text.secondary">Gestiona el cambio de tu correo desde el flujo seguro de tu cuenta.</Typography>
+              </Box>
+              <Button component={RouterLink} to="/cuenta/cambiar-correo" variant="outlined" sx={{ flexShrink: 0 }}>
+                Cambiar correo electrónico
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent>
+            <Typography component="h2" variant="h6" sx={{ mb: 2 }}>Últimas acciones de seguridad</Typography>
+            {eventosSeguridad.length === 0 ? (
+              <Typography color="text.secondary">Todavía no registramos acciones de seguridad para tu cuenta.</Typography>
+            ) : (
+              <Stack spacing={1}>
+                {eventosSeguridad.map((evento) => (
+                  <Typography key={evento.id} variant="body2">
+                    {evento.tipo.replaceAll('_', ' ')}: {new Date(evento.created_at).toLocaleString()}
+                  </Typography>
+                ))}
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
       </Stack>
     </Box>
   )

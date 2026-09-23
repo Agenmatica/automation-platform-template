@@ -5,6 +5,7 @@ import { Create } from '@refinedev/mui'
 import { usePuedeEscribir } from '../../hooks/usePuedeEscribir'
 import { useOrganizacionDeTrabajo } from '../../hooks/useOrganizacionDeTrabajo'
 import { supabaseClient } from '../../lib/supabase'
+import { EstadoCargaPagina } from '../../components/estados/EstadosPagina'
 
 export function ConexionCreate() {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ export function ConexionCreate() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (checkingPermiso || checkingOrganizacion) return null
+  if (checkingPermiso || checkingOrganizacion) return <EstadoCargaPagina />
   if (!puedeEscribir || !organizacionId) return <Alert severity="error" sx={{ m: 2 }}>Solo un administrador con una organización activa puede crear conexiones.</Alert>
 
   const handleSubmit = async (event: FormEvent) => {

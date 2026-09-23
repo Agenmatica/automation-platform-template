@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent, Typography } from '@mui/material'
-import { List } from '@refinedev/mui'
+import { Box, FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent, Typography } from '@mui/material'
 import { useReportesAsignados } from '../../hooks/useReportesAsignados'
 import { ReporteEmbebido } from '../../components/ReporteEmbebido'
+import { EstadoCargaPagina, EstadoVacio } from '../../components/estados/EstadosPagina'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
+import { ContenedorSeccion } from '../../components/pagina/ContenedorSeccion'
+import { ContextoOrganizacionActiva } from '../../components/pagina/ContextoOrganizacionActiva'
 
 // US2: reportes visibles para el usuario actual, embebidos al seleccionar
 // uno. La lista misma ya viene filtrada por RLS (useReportesAsignados) —
@@ -16,16 +19,24 @@ export function AnaliticaList() {
   const [reporteSeleccionado, setReporteSeleccionado] = useState<string>('')
 
   if (isLoading) {
-    return null
+    return (
+      <Box>
+        <EncabezadoPagina titulo="Analítica" contexto={<ContextoOrganizacionActiva />} />
+        <ContenedorSeccion>
+          <EstadoCargaPagina />
+        </ContenedorSeccion>
+      </Box>
+    )
   }
 
   if (reportes.length === 0) {
     return (
-      <List title="Analítica">
-        <Typography color="text.secondary">
-          Todavía no tenés reportes configurados para tu organización.
-        </Typography>
-      </List>
+      <Box>
+        <EncabezadoPagina titulo="Analítica" contexto={<ContextoOrganizacionActiva />} />
+        <ContenedorSeccion>
+          <EstadoVacio titulo="Todavía no tenés reportes configurados para tu organización." />
+        </ContenedorSeccion>
+      </Box>
     )
   }
 
@@ -34,28 +45,31 @@ export function AnaliticaList() {
   }
 
   return (
-    <List title="Analítica">
-      <FormControl size="small" sx={{ minWidth: 280, mb: 2 }}>
-        <InputLabel id="analitica-reporte-label">Reporte</InputLabel>
-        <Select
-          labelId="analitica-reporte-label"
-          label="Reporte"
-          value={reporteSeleccionado}
-          onChange={handleChange}
-        >
-          {reportes.map((reporte) => (
-            <MenuItem key={reporte.id} value={reporte.id}>
-              {reporte.nombre}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+    <Box>
+      <EncabezadoPagina titulo="Analítica" contexto={<ContextoOrganizacionActiva />} />
+      <ContenedorSeccion>
+        <FormControl size="small" sx={{ minWidth: 280, mb: 2 }}>
+          <InputLabel id="analitica-reporte-label">Reporte</InputLabel>
+          <Select
+            labelId="analitica-reporte-label"
+            label="Reporte"
+            value={reporteSeleccionado}
+            onChange={handleChange}
+          >
+            {reportes.map((reporte) => (
+              <MenuItem key={reporte.id} value={reporte.id}>
+                {reporte.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      {reporteSeleccionado ? (
-        <ReporteEmbebido key={reporteSeleccionado} reporteId={reporteSeleccionado} />
-      ) : (
-        <Typography color="text.secondary">Elegí un reporte para verlo.</Typography>
-      )}
-    </List>
+        {reporteSeleccionado ? (
+          <ReporteEmbebido key={reporteSeleccionado} reporteId={reporteSeleccionado} />
+        ) : (
+          <Typography color="text.secondary">Elegí un reporte para verlo.</Typography>
+        )}
+      </ContenedorSeccion>
+    </Box>
   )
 }

@@ -1,17 +1,14 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useTable } from '@refinedev/core'
-import { List } from '@refinedev/mui'
-import {
-  Alert,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from '@mui/material'
+import { CreateButton } from '@refinedev/mui'
+import { Alert, Box, Button } from '@mui/material'
 import { useIsSuperadmin } from '../../hooks/useIsSuperadmin'
+import { useContextoPanel } from '../../hooks/useContextoPanel'
+import { EstadoCargaPagina, EstadoError, EstadoVacio } from '../../components/estados/EstadosPagina'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
+import { ContenedorSeccion } from '../../components/pagina/ContenedorSeccion'
+import { ContenidoAdaptable, type ColumnaAdaptable } from '../../components/pagina/ContenidoAdaptable'
 import { supabaseClient } from '../../lib/supabase'
 
 type Organizacion = {
@@ -24,13 +21,15 @@ type Organizacion = {
 // "Crear organización" (lo agrega <List> solo si canCreate, ver App.tsx) +
 // "Ingresar" por fila (US4, contrato: contracts/entrar-a-organizacion.md).
 export function OrganizacionList() {
+  const navigate = useNavigate()
+  const { invalidar } = useContextoPanel()
   const { isSuperadmin, isLoading: checkingSuperadmin } = useIsSuperadmin()
-  const { tableQuery } = useTable<Organizacion>({ resource: 'organizaciones' })
+  const { tableQuery } = useTable<Organizacion>({ resource: 'organizaciones', syncWithLocation: false })
   const [entrandoA, setEntrandoA] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   if (checkingSuperadmin) {
-    return null
+    return <EstadoCargaPagina />
   }
 
   if (!isSuperadmin) {
@@ -57,52 +56,73 @@ export function OrganizacionList() {
       return
     }
 
-    // Recarga completa, no navigate() de React Router (spec 004): el Sider
-    // vive en el layout persistente y cachea el resultado de
-    // accessControlProvider.can vía react-query — con una navegación SPA
-    // nunca se entera de que ahora hay una organización activa y seguiría
-    // mostrando el menú reducido de la Historia 1. Una recarga entera
-    // también evita cualquier dato ya cacheado por el dataProvider de una
-    // sesión anterior sin organización activa.
-    window.location.assign('/clientes')
+    // Navegación SPA, no recarga completa. El Sider ya no depende de
+    // accessControlProvider.can vía react-query sino del contexto propio —
+    // invalidar() le pide una versión nueva y así se entera de la
+    // organización recién activada.
+    invalidar()
+    navigate('/clientes')
   }
 
+  const encabezado = <EncabezadoPagina titulo="Organizaciones" descripcion="Organizaciones registradas en la plataforma." accion={<CreateButton />} />
+
+  if (tableQuery.isLoading) {
+    return (
+      <Box>
+        {encabezado}
+        <ContenedorSeccion>
+          <EstadoCargaPagina />
+        </ContenedorSeccion>
+      </Box>
+    )
+  }
+
+  if (tableQuery.isError) {
+    return (
+      <Box>
+        {encabezado}
+        <ContenedorSeccion>
+          <EstadoError descripcion="No pudimos cargar las organizaciones." reintentar={() => tableQuery.refetch()} />
+        </ContenedorSeccion>
+      </Box>
+    )
+  }
+
+  const columnas: ColumnaAdaptable<Organizacion>[] = [
+    { clave: 'nombre', encabezado: 'Nombre', render: (organizacion) => organizacion.nombre },
+    { clave: 'creada', encabezado: 'Creada', render: (organizacion) => new Date(organizacion.created_at).toLocaleString() },
+  ]
+
   return (
-    <List title="Organizaciones">
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Creada</TableCell>
-              <TableCell align="right">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {organizaciones.map((organizacion) => (
-              <TableRow key={organizacion.id}>
-                <TableCell>{organizacion.nombre}</TableCell>
-                <TableCell>{new Date(organizacion.created_at).toLocaleString()}</TableCell>
-                <TableCell align="right">
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    disabled={entrandoA === organizacion.id}
-                    onClick={() => handleIngresar(organizacion.id)}
-                  >
-                    {entrandoA === organizacion.id ? 'Ingresando…' : 'Ingresar'}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </List>
+    <Box>
+      {encabezado}
+      <ContenedorSeccion>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        {organizaciones.length === 0 ? (
+          <EstadoVacio titulo="Todavía no hay organizaciones creadas." />
+        ) : (
+          <ContenidoAdaptable
+            items={organizaciones}
+            columnas={columnas}
+            obtenerClave={(organizacion) => organizacion.id}
+            etiquetaTabla="Organizaciones"
+            acciones={(organizacion) => (
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={entrandoA === organizacion.id}
+                onClick={() => handleIngresar(organizacion.id)}
+              >
+                {entrandoA === organizacion.id ? 'Ingresando…' : 'Ingresar'}
+              </Button>
+            )}
+          />
+        )}
+      </ContenedorSeccion>
+    </Box>
   )
 }

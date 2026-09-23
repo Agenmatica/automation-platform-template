@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert } from '@mui/material'
-import { List } from '@refinedev/mui'
+import { Alert, Box } from '@mui/material'
 import { useIsSuperadmin } from '../../hooks/useIsSuperadmin'
 import { supabaseClient } from '../../lib/supabase'
 import {
@@ -9,6 +8,9 @@ import {
   type Habilitacion,
   type Organizacion,
 } from '../../components/GrillaFeaturesPorOrganizacion'
+import { EstadoCargaPagina } from '../../components/estados/EstadosPagina'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
+import { ContenedorSeccion } from '../../components/pagina/ContenedorSeccion'
 
 // Pantalla superadmin-only (US1): habilitar/deshabilitar funcionalidades del
 // catálogo por organización. Sin ningún formulario de alta de
@@ -57,7 +59,7 @@ export function FeaturesAdministrar() {
   }, [isSuperadmin])
 
   if (checkingSuperadmin) {
-    return null
+    return <EstadoCargaPagina />
   }
 
   if (!isSuperadmin) {
@@ -68,25 +70,37 @@ export function FeaturesAdministrar() {
     )
   }
 
+  const encabezado = <EncabezadoPagina titulo="Funcionalidades — Administrar" descripcion="Habilitá o deshabilitá funcionalidades por organización." />
+
   if (cargando) {
-    return null
+    return (
+      <Box>
+        {encabezado}
+        <ContenedorSeccion>
+          <EstadoCargaPagina />
+        </ContenedorSeccion>
+      </Box>
+    )
   }
 
   return (
-    <List title="Funcionalidades — Administrar">
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+    <Box>
+      {encabezado}
+      <ContenedorSeccion>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      <GrillaFeaturesPorOrganizacion
-        organizaciones={organizaciones}
-        features={features}
-        habilitaciones={habilitaciones}
-        onCambio={cargarDatos}
-        onError={setError}
-      />
-    </List>
+        <GrillaFeaturesPorOrganizacion
+          organizaciones={organizaciones}
+          features={features}
+          habilitaciones={habilitaciones}
+          onCambio={cargarDatos}
+          onError={setError}
+        />
+      </ContenedorSeccion>
+    </Box>
   )
 }

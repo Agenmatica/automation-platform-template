@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Paper, Stack, Typography } from '@mui/material'
-import { List } from '@refinedev/mui'
+import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
 import { useGetIdentity } from '@refinedev/core'
 import { usePuedeEscribir } from '../../hooks/usePuedeEscribir'
 import { supabaseClient } from '../../lib/supabase'
 import { GrillaPermisosPorRol, type RolOrganizacion } from '../../components/GrillaPermisosPorRol'
+import { EncabezadoPagina } from '../../components/pagina/EncabezadoPagina'
+import { ContenedorSeccion } from '../../components/pagina/ContenedorSeccion'
+import { ContextoOrganizacionActiva } from '../../components/pagina/ContextoOrganizacionActiva'
 
 type Identity = { id: string; email?: string }
 
@@ -129,7 +131,8 @@ export function AnaliticaPermisos() {
   }
 
   return (
-    <List title="Analítica — Permisos">
+    <Box>
+      <EncabezadoPagina titulo="Analítica — Permisos" contexto={<ContextoOrganizacionActiva />} />
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -137,9 +140,11 @@ export function AnaliticaPermisos() {
       )}
 
       {!cargando && reportes.length === 0 && (
-        <Typography color="text.secondary">
-          Todavía no hay reportes asignados a tu organización.
-        </Typography>
+        <ContenedorSeccion>
+          <Typography color="text.secondary">
+            Todavía no hay reportes asignados a tu organización.
+          </Typography>
+        </ContenedorSeccion>
       )}
 
       <Stack spacing={2}>
@@ -154,7 +159,7 @@ export function AnaliticaPermisos() {
           />
         ))}
       </Stack>
-    </List>
+    </Box>
   )
 }
 
