@@ -39,7 +39,7 @@ que son la bitácora del template y no se tocan):
 | `infra/playwright/compose.yaml` | `name:` (línea 1) |
 | `infra/runner/compose.yaml` | `name:` (línea 1), y además `RUNNER_REPO` / `RUNNER_NAME` en el bloque `environment:` — `RUNNER_REPO` es el repo de GitHub real contra el que se registra el self-hosted runner; si queda apuntando al del template, el runner de CI de este fork se registra en el repo equivocado |
 | `supabase/config.toml` | `project_id` (línea 5) |
-| `infra/runner/entrypoint.sh` | no hace falta editarlo — `RUNNER_NAME` ya se puede sobreescribir por variable de entorno en vez de tocar el script |
+| `infra/runner/entrypoint.mjs` | no hace falta editarlo — `RUNNER_NAME` ya se puede sobreescribir por variable de entorno en vez de tocar el script |
 | `docs/architecture.md` | la tabla de "Proyectos Docker locales" queda con los seis nombres nuevos |
 | `.specify/memory/constitution.md` (la copia del fork) | Principio IV lista los mismos seis nombres literales — actualizarlos ahí también si el fork sigue usando Spec Kit |
 

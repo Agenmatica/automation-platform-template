@@ -13,7 +13,7 @@ consumidor conserva la responsabilidad de invocar su adaptador de proveedor.
    perfil principal y, opcionalmente, uno de fallback. Ambos perfiles pueden
    pertenecer al mismo proveedor o a proveedores distintos.
 3. Aprovisionar la clave fuera de Refine y Kestra mediante
-   `infra/ia/aprovisionar-proveedores.ps1`. La clave queda en Vault y sólo el
+   `infra/ia/aprovisionar-proveedores.mjs`. La clave queda en Vault y sólo el
    runtime autorizado la recupera de manera efímera.
 4. El consumidor valida política y presupuesto con `prepararInvocacion`,
    sanitiza antes de persistir o alertar y registra cada transición mediante
@@ -49,4 +49,4 @@ Las variables `IA_PROVEEDOR_CODIGO`, `IA_PROVEEDOR_CREDENCIAL` e
 `IA_PROVEEDOR_CLAVE` se usan sólo durante el aprovisionamiento. Cargarlas desde
 un archivo local ignorado o desde el gestor de secretos del despliegue; no son
 variables de Refine, Kestra ni de los workers en ejecución. Ver `.env.example`
-e `infra/ia/aprovisionar-proveedores.ps1`.
+e `infra/ia/aprovisionar-proveedores.mjs`.

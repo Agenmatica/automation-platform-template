@@ -32,7 +32,7 @@ RUN curl -fsSL -o actions-runner.tar.gz \
     && tar xzf actions-runner.tar.gz && rm actions-runner.tar.gz \
     && ./bin/installdependencies.sh
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY entrypoint.mjs /entrypoint.mjs
+RUN chmod 0555 /entrypoint.mjs
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["node", "/entrypoint.mjs"]

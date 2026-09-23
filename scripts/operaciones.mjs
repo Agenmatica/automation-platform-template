@@ -28,7 +28,7 @@ export async function run(command, args, options = {}) {
     child.on('error', reject);
     child.on('close', (code, signal) => {
       if (code === 0) resolve();
-      else reject(new Error(`${command} terminó con código ${code ?? signal ?? 'desconocido'}${stderr ? ': ' + redactError({ message: stderr }) : ''}`));
+      else reject(new Error(`${command} terminó con código ${code ?? signal ?? 'desconocido'}${stderr ? ': ' + redactError(new Error(stderr)) : ''}`));
     });
   });
 }

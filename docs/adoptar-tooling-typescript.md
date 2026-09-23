@@ -8,10 +8,11 @@ Kestra coordina y los workers ejecutan integraciones aisladas.
 
 | Grupo | Relevo Node | Archivo anterior | Estado |
 | --- | --- | --- | --- |
-| Render/publicación Kestra | `pnpm kestra:render-flow`, `pnpm kestra:deploy-flow` | `infra/kestra/{renderizar-flow,desplegar-flow}.ps1` | Relevo creado; retiro pendiente |
-| CI y VPS | `pnpm db:reset:ci`, `pnpm deploy:vps -- staging` | `scripts/{reset-db-ci,deploy-vps}.sh` | Relevo creado; retiro pendiente |
-| IA, secretos y runtime | `infra/{ia,kestra}/*.mjs` | scripts PowerShell correspondientes | Pendiente de migración |
-| Entry points/fixtures Docker | — | `infra/**/entrypoint.sh`, fixtures `*.sh` | Excepción técnica: Docker/imagen los invoca internamente; revisar por archivo |
+| Render/publicación Kestra | `pnpm kestra:render-flow`, `pnpm kestra:deploy-flow` | `infra/kestra/{renderizar-flow,desplegar-flow}.ps1` | Migrado y retirado |
+| CI y VPS | `pnpm db:reset:ci`, `pnpm deploy:vps -- staging` | `scripts/{reset-db-ci,deploy-vps}.sh` | Migrado y retirado |
+| IA, secretos y runtime | `pnpm test:ia:aprovisionamiento`, `pnpm test:kestra:secretos`, `pnpm test:kestra:runtime` | scripts PowerShell correspondientes | Migrado y retirado; E2E explícito: `pnpm test:kestra:secretos:e2e` |
+| Runner autocontenido | `infra/runner/entrypoint.mjs` | `infra/runner/entrypoint.sh` | Migrado; Node ya está instalado en la imagen del runner |
+| Fixtures internos Docker | — | `infra/kestra/fixtures/{worker,worker-runtime,ssh-host}/*.sh` | Excepción técnica explícita: son contratos de `ENTRYPOINT`, `/custom-cont-init.d` o `sh` de imágenes Docker efímeras. No son comandos públicos ni tooling operativo; sus Dockerfiles los invocan dentro de imágenes base que no requieren Node. |
 
 ## Adopción incremental
 
@@ -23,6 +24,11 @@ Kestra coordina y los workers ejecutan integraciones aisladas.
    del producto si no hay un equivalente validado.
 4. Ejecutar `pnpm lint`, `pnpm build`, `pnpm infra:config` y los tests/flows
    afectados. Una validación de YAML no sustituye una ejecución real de Kestra.
+
+Los tres fixtures exceptuados se conservan porque verifican el comportamiento
+del intérprete y ciclo de vida interno de sus imágenes. Si un producto necesita
+un comando para personas, CI o despliegue, debe agregarlo como programa Node y
+no reutilizar esos scripts internos.
 
 Los valores sensibles se leen únicamente desde el entorno o Vault. Las
 herramientas no aceptan credenciales por flags ni imprimen cuerpos de respuesta
