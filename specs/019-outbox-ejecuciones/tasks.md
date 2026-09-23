@@ -5,9 +5,9 @@
 
 ## Fase 1 — Base
 
-- [ ] T001 Crear migración aditiva y su reversión documentada en `supabase/migrations/<timestamp>_outbox_ejecuciones.sql`.
-- [ ] T002 [P] Crear esqueleto pgTAP en `supabase/tests/database/outbox_ejecuciones.test.sql`.
-- [ ] T003 [P] Ampliar el contrato de adopción en `docs/adoptar-ciclo-ejecuciones.md`.
+- [X] T001 Crear migración aditiva y su reversión documentada en `supabase/migrations/20260923170828_outbox_ejecuciones.sql`.
+- [X] T002 [P] Crear esqueleto pgTAP en `supabase/tests/database/outbox_ejecuciones.test.sql`.
+- [X] T003 [P] Ampliar el contrato de adopción en `docs/adoptar-ciclo-ejecuciones.md`.
 
 **Checkpoint**: archivos versionados y pruebas preparadas, sin modificar aún el inicio de ejecuciones.
 
