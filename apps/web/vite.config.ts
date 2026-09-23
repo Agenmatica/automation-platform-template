@@ -25,6 +25,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    // Limita la presión de procesos en Windows y evita crear un proceso fork
+    // por archivo. Se conserva el aislamiento para que mocks y DOM no se
+    // filtren entre pruebas.
+    pool: 'threads',
+    maxWorkers: 1,
     // Sin "inline", vitest externaliza estos paquetes (los carga con el
     // resolutor ESM nativo de Node en vez de con el de Vite): @mui/material
     // reexporta subpaths sin extensión que Node no soporta como import de
