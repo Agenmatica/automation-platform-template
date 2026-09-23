@@ -3,6 +3,16 @@ packages:
   - packages/*
   - workers/*
 
+# El primer worker que use ghost-cursor-playwright o patchright-core va a
+# traer su propia dependencia de playwright-core más nueva que la pinneada
+# en su package.json — sin este override, TypeScript ve dos versiones de
+# los tipos de `Page` a la vez y falla el build. El servidor de
+# infra/playwright (patchright-core) también está pinneado a esta misma
+# versión (ver su Dockerfile) — cliente y servidor deben coincidir para el
+# protocolo de conexión remota.
+overrides:
+  playwright-core: "1.61.0"
+
 onlyBuiltDependencies:
   - esbuild
   - supabase
