@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(14);
 
 select has_table('public', 'despachos_ejecucion', 'existe la tabla durable de outbox');
 select has_column('public', 'despachos_ejecucion', 'ejecucion_id', 'la orden referencia la ejecución');
@@ -28,6 +28,7 @@ insert into conexiones (id, organizacion_id, sistema_externo, credencial_vault_i
   ('d2222222-2222-2222-2222-222222222223', 'd2222222-2222-2222-2222-222222222222', 'outbox-y', gen_random_uuid());
 insert into capacidades_ejecucion (id, organizacion_id, conexion_id, clave) values
   ('d1111111-1111-1111-1111-111111111113', 'd1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111112', 'outbox-x'),
+  ('d1111111-1111-1111-1111-111111111115', 'd1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111112', 'outbox-atomica'),
   ('d2222222-2222-2222-2222-222222222224', 'd2222222-2222-2222-2222-222222222222', 'd2222222-2222-2222-2222-222222222223', 'outbox-y');
 insert into ejecuciones_worker (id, organizacion_id, conexion_id, capacidad_id, origen) values
   ('d1111111-1111-1111-1111-111111111114', 'd1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111112', 'd1111111-1111-1111-1111-111111111113', 'manual'),
@@ -67,6 +68,24 @@ select ok(
   ),
   'un usuario autenticado no puede reclamar órdenes'
 );
+
+select set_config('request.jwt.claims', json_build_object('sub', 'd1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
+set local role authenticated;
+select ok(
+  public.iniciar_ejecucion_worker(
+    'd1111111-1111-1111-1111-111111111112', 'outbox-atomica', 'manual',
+    'd1000000-0000-0000-0000-000000000001', '{"periodo":"2026-09"}'::jsonb
+  ) is not null,
+  'el inicio manual crea una ejecución'
+);
+select is(
+  (select count(*) from public.despachos_ejecucion d
+    join public.ejecuciones_worker e on e.id = d.ejecucion_id
+    where e.capacidad_id = 'd1111111-1111-1111-1111-111111111115'),
+  1::bigint,
+  'el mismo inicio manual persiste exactamente una orden durable'
+);
+reset role;
 
 select * from finish();
 rollback;

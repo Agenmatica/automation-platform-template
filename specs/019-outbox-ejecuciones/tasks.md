@@ -21,9 +21,9 @@
 
 ## Fase 3 — Historia 1: solicitud durable
 
-- [ ] T007 [US1] Escribir pruebas de atomicidad de inicio y orden en `supabase/tests/database/outbox_ejecuciones.test.sql`.
-- [ ] T008 [US1] Extender `iniciar_ejecucion_worker` para crear la orden en la misma transacción en `supabase/migrations/<timestamp>_outbox_ejecuciones.sql`.
-- [ ] T009 [US1] Publicar el contrato de reclamo mínimo en `specs/019-outbox-ejecuciones/contracts/despacho-outbox.md` y `workers/README.md`.
+- [X] T007 [US1] Escribir pruebas de atomicidad de inicio y orden en `supabase/tests/database/outbox_ejecuciones.test.sql`.
+- [X] T008 [US1] Extender `iniciar_ejecucion_worker` para crear la orden en la misma transacción en `supabase/migrations/20260923172738_iniciar_ejecucion_outbox.sql`.
+- [X] T009 [US1] Publicar el contrato de reclamo mínimo en `specs/019-outbox-ejecuciones/contracts/despacho-outbox.md` y `workers/README.md`.
 
 **Checkpoint**: una solicitud manual persiste una ejecución y una sola orden recuperable.
 

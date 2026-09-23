@@ -106,11 +106,12 @@ Cuando el producto adoptó el ciclo de ejecuciones del template, cada
 disparo de Kestra ocurre dentro de una ejecución auditada
 (`specs/016-ciclo-ejecuciones-workers/contracts/ciclo-ejecuciones.md`):
 
-- Kestra inicia la ejecución por JDBC **antes** de despachar el contenedor
-  (`select iniciar_ejecucion_worker(CONEXION_ID, CAPACIDAD, ORIGEN)`); el worker no
-  la inicia él mismo. Si la capacidad ya tiene una ejecución activa para esa
-  organización, el inicio falla con `YA_EN_CURSO` y Kestra no despacha nada:
-  el worker nunca corre duplicado por este motivo.
+- Un disparo manual crea por RPC la ejecución y su orden durable en una sola
+  transacción. Kestra reclama esa orden por JDBC antes de despachar el
+  contenedor; el worker no inicia la ejecución por sí mismo. Si la capacidad
+  ya tiene una ejecución activa para esa organización, el inicio falla con
+  `YA_EN_CURSO` y no se crea orden: el worker nunca corre duplicado por este
+  motivo.
 - El contenedor recibe, además de las variables ya documentadas,
   `CAPACIDAD` (la clave registrada y habilitada para esa conexión) y
   `EJECUCION_ID` (el intento auditable al que pertenece este trabajo). El
