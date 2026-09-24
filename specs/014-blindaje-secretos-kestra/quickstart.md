@@ -82,8 +82,8 @@ Durante este recorrido se corrigieron dos defectos reales encontrados en
 ejecución (no solo de fixture) — ver nota de desvío en `tasks.md` bajo T014.
 
 Este recorrido ahora es reproducible con un solo comando:
-`infra/kestra/validar-secretos-e2e.ps1` aprovisiona el fixture, dispara las
+`infra/kestra/validar-secretos-e2e.mjs` aprovisiona el fixture, dispara las
 tres ejecuciones vía la API de Kestra, exporta sus outputs/logs y termina
-invocando `test-secretos-orquestacion.ps1 -ArtifactDirectory` para verificar
+invocando `test-secretos-orquestacion.mjs --artifact-directory` para verificar
 de forma automatizada cero apariciones del centinela (T022; antes esta
 evidencia se obtenía con comandos manuales no reproducibles).

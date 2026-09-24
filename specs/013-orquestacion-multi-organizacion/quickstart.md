@@ -8,7 +8,7 @@ desde el Kestra local) — no requiere una organización ni un servidor real.
 
 - `pnpm dev:supabase` y `pnpm dev:kestra` corriendo.
 - La migración de esta spec aplicada (`supabase/migrations/<timestamp>_orquestacion_multi_organizacion.sql`).
-- Los flows de `infra/kestra/flows/` aplicados vía la API/CLI de Kestra. Antes de importar `plantilla-generico.yml`, renderizarlo con `infra/kestra/renderizar-flow.ps1`, tomando `KESTRA_ORQUESTACION_CONCURRENCIA` del entorno (Kestra 1.3.35 exige un entero literal en `concurrencyLimit`).
+- Los flows de `infra/kestra/flows/` aplicados vía la API/CLI de Kestra. Antes de importar `plantilla-generico.yml`, renderizarlo con `infra/kestra/renderizar-flow.mjs`, tomando `KESTRA_ORQUESTACION_CONCURRENCIA` del entorno (Kestra 1.3.35 exige un entero literal en `concurrencyLimit`).
 - Un contenedor de prueba con `sshd` expuesto, jugando el rol de "servidor de organización" (documentado en el paso 1).
 
 ## Pasos

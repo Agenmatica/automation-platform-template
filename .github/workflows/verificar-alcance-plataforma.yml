@@ -92,7 +92,7 @@ jobs:
           patron="$patron|^\.github/worker-vulnerability-exceptions\.json$"
           patron="$patron|^infra/kestra/flows/plantilla-.*\.yml$"
           patron="$patron|^infra/kestra/flows/alertas\.yml$"
-          patron="$patron|^infra/kestra/.*\.ps1$"
+          patron="$patron|^infra/kestra/.*\.(ps1|mjs)$"
           patron="$patron|^infra/kestra/compose.*\.yaml$"
           patron="$patron|^infra/kestra/fixtures/"
           patron="$patron|^infra/superset/"

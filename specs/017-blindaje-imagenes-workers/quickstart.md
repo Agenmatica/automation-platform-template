@@ -63,7 +63,7 @@ Validaciones reproducibles sin infraestructura externa, ni siquiera con un worke
 pnpm test:workers:discover
 pnpm test:workers:idempotency
 pnpm test:workers:audit
-powershell -ExecutionPolicy Bypass -File infra/kestra/validar-workers-runtime.ps1
+node infra/kestra/validar-workers-runtime.mjs
 ```
 
 `pnpm workers:discover` sí requiere al menos un worker real bajo `workers/` — falla intencionalmente si no encuentra ninguno, mismo criterio que documenta `.github/workflows/worker-images.yml` para el job de publicación.
@@ -99,5 +99,5 @@ Pasaron, contra este checkout:
 - `pnpm test:workers:idempotency` — OK, segundo intento marcado `duplicate: true`.
 - `pnpm test:workers:egress` — OK, `0 worker(s)` validados (el objeto `workers` de `egress-allowlists.json` arranca vacío en el template).
 - `pnpm test:workers:audit` — OK, 2 eventos del fixture de rollback.
-- `infra/kestra/validar-workers-runtime.ps1 -Mode static` — OK para los 4 flows bajo `infra/kestra/flows/` (genérico, dedicado y sus variantes).
+- `infra/kestra/validar-workers-runtime.mjs` — OK para los 4 flows bajo `infra/kestra/flows/` (genérico, dedicado y sus variantes).
 - `pnpm workers:discover` (sin `--json`) falla con "No se encontraron workers válidos" — comportamiento esperado y documentado, no un bug: el template no tiene ningún worker real todavía.

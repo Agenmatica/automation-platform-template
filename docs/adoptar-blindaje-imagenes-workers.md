@@ -36,7 +36,7 @@ En el fork, relevar antes de mergear `git merge upstream/main`:
    los tenía todavía, o **idénticos** si ya adoptó esta misma spec de otra
    fuente: `workers/CONTRATO.md`, `scripts/descubrir-workers.mjs` (+ test),
    `scripts/smoke-imagenes-workers.mjs`, `scripts/validar-auditoria-workers.mjs`,
-   `scripts/validar-idempotencia-workers.mjs`, `infra/kestra/validar-workers-runtime.ps1`,
+   `scripts/validar-idempotencia-workers.mjs`, `infra/kestra/validar-workers-runtime.mjs`,
    `infra/kestra/fixtures/worker-runtime/`.
 2. `scripts/validar-egress-workers.mjs` y `scripts/validar-scan-worker.mjs`
    leen su configuración de `workers/egress-allowlists.json` y

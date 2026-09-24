@@ -74,7 +74,7 @@ jobs:
       # confiabilidad y dejó políticas de RLS mal resueltas (visibilidad de
       # `clientes` incorrecta).
       #
-      # db:reset:ci (scripts/reset-db-ci.sh) hace lo mismo a mano con psql
+      # db:reset:ci (scripts/reset-db-ci.mjs) hace lo mismo a mano con psql
       # por host.docker.internal: dropea `public`/`private` y reaplica cada
       # migración + seed.sql, sin pasar por el CLI para esta parte.
       - run: pnpm db:reset:ci
