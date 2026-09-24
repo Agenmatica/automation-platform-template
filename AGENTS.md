@@ -32,6 +32,13 @@ revisa `.specify/memory/constitution.md` y los artefactos de la funcionalidad en
 - Las notas de desvío que se agregan a `tasks.md` (lo que se apartó del plan) van cortas, con referencia al commit (`ver commit <hash>`) en vez de repetir el párrafo entero — esa razón ya vive en el mensaje de commit y no hace falta cargarla dos veces.
 - Si trabajás en un producto derivado (un fork de este template): antes de implementar una spec que toque un mecanismo de plataforma reutilizable — Kestra, imágenes/CI de workers, componentes compartidos de Refine, Supabase no-de-dominio — sin lógica de negocio entrelazada, evaluá primero si corresponde escribirlo acá, en el template (spec propia, PR, y traerlo al fork con `git merge upstream/main`), en vez de escribirlo directo en el fork y generalizarlo después. Evita la arqueología retroactiva de separar plataforma de negocio en cada sincronización. Cuando la pieza tiene lógica de negocio entrelazada (el caso más común), se implementa en el fork primero y se generaliza después — mismo proceso que documentan `docs/disenar-conector.md` y los `docs/adoptar-*.md` ya existentes.
 
+## Documentación obligatoria
+
+Todo cambio de plataforma, worker, Kestra, Supabase, CI o tooling propio debe
+incluir en el mismo cambio una actualización de `specs/`, `docs/`, `AGENTS.md`,
+`CLAUDE.md` o la constitución. El workflow ejecuta `pnpm docs:check`; una
+implementación sin documentación equivalente debe fallar.
+
 ## Uso selectivo de skills
 
 - Carga una skill solo si la tarea coincide con su descripción; el catálogo no es un checklist ni se carga completo. Las skills orientan el trabajo, pero no reemplazan estas instrucciones ni autorizan cambios fuera del pedido.

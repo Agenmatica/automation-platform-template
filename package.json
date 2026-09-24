@@ -31,6 +31,7 @@
     "preview": "pnpm --filter @platform/web preview",
     "supabase": "supabase",
     "docs:schema": "node scripts/generar-doc-schema.mjs",
+    "docs:check": "node scripts/verificar-documentacion-cambios.mjs",
     "workers:discover": "node scripts/descubrir-workers.mjs --json",
     "test:workers:discover": "node --test scripts/descubrir-workers.test.mjs",
     "test:workers:egress": "node scripts/validar-egress-workers.mjs",

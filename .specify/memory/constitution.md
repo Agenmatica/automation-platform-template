@@ -91,4 +91,10 @@ Esta constitución prevalece sobre decisiones ad hoc de los agentes. Una
 excepción debe quedar documentada en la spec y su plan. Los cambios de principios
 requieren actualizar versión, fecha y artefactos afectados.
 
-**Version**: 1.5.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-22
+### VII. Documentación como parte del cambio
+Todo cambio de plataforma, worker, Kestra, Supabase, CI o tooling propio DEBE
+actualizar en el mismo cambio una spec, una guía en `docs/`, esta constitución,
+`AGENTS.md` o `CLAUDE.md`. El control automatizado `pnpm docs:check` DEBE correr
+en CI para impedir que el código evolucione sin una decisión o contrato escrito.
+
+**Version**: 1.6.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-23
