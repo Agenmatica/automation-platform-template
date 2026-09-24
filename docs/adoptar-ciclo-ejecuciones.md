@@ -49,7 +49,24 @@ En el Supabase local del producto, relevar:
 - La tabla de dominio del producto no se toca: ni se migra, ni se renombra,
   ni se mueve al template.
 
+## 3.1 Despacho durable (spec 019)
+
+Cuando el producto adopte la outbox de ejecuciones, debe crear la orden en la
+misma transacción que la ejecución y hacer que Kestra la reclame mediante el
+contrato de `specs/019-outbox-ejecuciones/contracts/despacho-outbox.md`.
+No debe conservar ni crear un trigger SQL que envíe HTTP, use `pg_net` o lea
+una URL de webhook para despachar un worker. La primera adopción se valida con
+un disparo manual recuperable antes de migrar schedules.
+
 ## 4. Mapeo de este producto
+
+### Versión de outbox adoptable
+
+La versión adoptable actual es **019**. La función de reclamo devuelve el
+identificador de despacho, ejecución, conexión, capacidad, detalle, intento y
+vencimiento; el flow debe conservar `despacho_id` + `intento` y pasarlos a
+`private.resolver_despacho_ejecucion` para confirmar, liberar o agotar. No se
+puede confirmar un intento vencido o reemplazado.
 
 _(Completar al adoptar: tabla propia → tabla del template, columna por
 columna, y decisión de evidencia.)_
