@@ -7,6 +7,13 @@ labels:
   dominio: plataforma
   componente: plantilla-generica
 description: "Despacha en paralelo un worker por cada organizacion elegible."
+# Contrato outbox (spec 019): una adopción que reciba disparos manuales debe
+# reemplazar el descubrimiento programado por esta consulta JDBC y usar cada
+# fila reclamada como único input del worker. No se invoca HTTP desde SQL:
+#   select * from private.reclamar_despachos_ejecucion(10, 300);
+# La rama de éxito confirma `despacho_id` e `intento`; un error transitorio lo
+# libera y el límite lo agota mediante resolver_despacho_ejecucion. Copiar esta
+# plantilla no basta: el flow concreto debe enlazar esas tres transiciones.
 inputs:
   - id: sistema_externo
     type: STRING

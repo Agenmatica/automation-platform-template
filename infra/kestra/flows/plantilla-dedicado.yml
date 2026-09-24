@@ -7,6 +7,11 @@ labels:
   dominio: plataforma
   componente: plantilla-dedicada
 description: "Despacha un worker para una organizacion atendida como excepcion."
+# Contrato outbox (spec 019): para disparos manuales, reclamar primero por JDBC
+# (`select * from private.reclamar_despachos_ejecucion(10, 300)`) y propagar
+# exclusivamente despacho_id, ejecucion_id, intento y el payload devuelto. Al
+# finalizar, resolver el mismo intento con confirmar, liberar o agotar. No se
+# agregan webhooks ni URLs de despacho a la base ni a este YAML.
 inputs:
   - id: organizacion_id
     type: STRING
