@@ -56,6 +56,20 @@ organización puede tener más de una conexión al mismo sistema externo
 - `activa → error`: falla técnica genérica (no de credencial); no bloquea
   que una ejecución posterior vuelva a `activa` del mismo modo.
 
+Cómo se llega a esa "próxima ejecución" (bug `conexion-invalida-trabada`,
+migración `20260925210000_destrabar_conexion_invalida.sql`; desde la
+spec 016 ningún camino la producía):
+- `error` no bloquea: `iniciar_ejecucion_worker` la acepta en cualquier
+  origen y el flow genérico la recorre.
+- `credencial_invalida` no se reintenta sola (el programado repetiría un
+  login rechazado): el genérico la saltea y `iniciar_ejecucion_worker`
+  la rechaza con `CONEXION_CREDENCIAL_INVALIDA` salvo en un disparo
+  `manual` de un administrador autenticado. Actualizar la credencial
+  (`actualizar_credencial_conexion`) la devuelve a `activa`, como una
+  conexión recién creada, para que la próxima ejecución la pruebe. Cada
+  camino es un único intento: el flow no reintenta una falla de credencial
+  (`workers/CONTRATO.md`, "Códigos de salida y reintentos").
+
 **RLS**: solo administradores de esa organización o superadmin pueden
 `select`/`insert`/`update`/`delete` (FR-009) — nunca `credencial_vault_id`
 en texto descifrado; el valor descifrado solo sale a través de
