@@ -34,10 +34,10 @@ proyectos.
 
 **Independent Test**: ejecución real de ambas plantillas con éxito y falla; output `publicar_logs` presente y sin centinela.
 
-- [ ] T006 [P] [US1] Test estático `infra/kestra/validar-evidencia-flows.test.mjs` (`node --test`): ambas plantillas pasan `KESTRA_EJECUCION_ID`, tienen `publicar_logs` (`log.Fetch`, `tasksId: [despacho_ssh]`) en `finally` de flow con `allowFailure`/`allowWarning`; script `test:kestra:evidencia` en `package.json`
-- [ ] T007 [P] [US1] `infra/kestra/flows/plantilla-dedicado.yml`: `-e KESTRA_EJECUCION_ID` en `docker run` y `finally` de flow con `publicar_logs`
-- [ ] T008 [P] [US1] `infra/kestra/flows/plantilla-generico.yml`: idem, un único `publicar_logs` en `finally` de flow
-- [ ] T009 [US1] `infra/kestra/validar-evidencia-e2e.mjs` (script `test:kestra:evidencia:e2e`) con escenarios de logs: genérico éxito (2 organizaciones) y dedicado falla técnica; verifica eventos en logs, `publicar_logs.uri` descargable, clasificación de alertas intacta y centinela ausente en logs y outputs; ejecutarlo
+- [X] T006 [P] [US1] Test estático `infra/kestra/validar-evidencia-flows.test.mjs` (`node --test`): ambas plantillas pasan `KESTRA_EJECUCION_ID`, tienen `publicar_logs` (`log.Fetch`, `tasksId: [despacho_ssh]`) en `finally` de flow con `allowFailure`/`allowWarning`; script `test:kestra:evidencia` en `package.json`
+- [X] T007 [P] [US1] `infra/kestra/flows/plantilla-dedicado.yml`: `-e KESTRA_EJECUCION_ID` en `docker run` y `finally` de flow con `publicar_logs`
+- [X] T008 [P] [US1] `infra/kestra/flows/plantilla-generico.yml`: idem, un único `publicar_logs` en `finally` de flow
+- [X] T009 [US1] `infra/kestra/validar-evidencia-e2e.mjs` (script `test:kestra:evidencia:e2e`) con escenarios de logs: genérico éxito (2 organizaciones) y dedicado falla técnica; verifica eventos en logs, `publicar_logs.uri` descargable, clasificación de alertas intacta y centinela ausente en logs y outputs; ejecutarlo
 
 **Checkpoint**: operador ve etapas y descarga logs de cada ejecución. Parar para `/clear`.
 

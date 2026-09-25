@@ -42,6 +42,8 @@
     "test:kestra:secretos": "node infra/kestra/test-secretos-orquestacion.mjs",
     "test:kestra:secretos:e2e": "node infra/kestra/validar-secretos-e2e.mjs",
     "test:kestra:runtime": "node infra/kestra/validar-workers-runtime.mjs",
+    "test:kestra:evidencia": "node --test infra/kestra/validar-evidencia-flows.test.mjs",
+    "test:kestra:evidencia:e2e": "node infra/kestra/validar-evidencia-e2e.mjs",
     "test:ia:aprovisionamiento": "node --test infra/ia/aprovisionar-proveedores.test.mjs",
     "test:tooling": "node --test scripts/operaciones.test.mjs",
     "test:kestra:deploy-flow": "node --test infra/kestra/desplegar-flow.test.mjs infra/kestra/sincronizar-rol-orquestacion.test.mjs",

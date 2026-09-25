@@ -66,6 +66,7 @@ tasks:
               --network "${WORKER_NETWORK:?Debe configurarse una red con egress allowlist}" \
               --env PGHOST --env PGPORT --env PGDATABASE --env PGUSER --env PGPASSWORD \
               -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
+              -e KESTRA_EJECUCION_ID="{{ execution.id }}" \
               -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
               -e CONEXION_ID="{{ outputs.resolver_despacho.row.conexion_id }}" \
               {{ inputs.imagen }}
@@ -116,3 +117,13 @@ tasks:
               organizacion_id: "{{ inputs.organizacion_id }}"
               conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
               motivo_sanitizado: FALLA_TECNICA_SANITIZADA
+finally:
+  # Observabilidad (spec 20260925-133820): publica como output los logs del
+  # despacho, incluidos los eventos JSON por etapa del worker, en exito y en
+  # error. Un fallo al publicarlos no cambia el estado de negocio.
+  - id: publicar_logs
+    type: io.kestra.plugin.core.log.Fetch
+    tasksId:
+      - despacho_ssh
+    allowFailure: true
+    allowWarning: true
