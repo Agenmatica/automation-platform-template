@@ -40,6 +40,7 @@
     "test:workers:scan": "node --test scripts/validar-scan-worker.test.mjs",
     "test:workers:idempotency": "node scripts/validar-idempotencia-workers.mjs",
     "test:workers:audit": "node scripts/validar-auditoria-workers.mjs",
+    "test:superset:embebido": "node scripts/verificar-superset-embebido.mjs",
     "test:kestra:secretos": "node infra/kestra/test-secretos-orquestacion.mjs",
     "test:kestra:secretos:e2e": "node infra/kestra/validar-secretos-e2e.mjs",
     "test:kestra:runtime": "node infra/kestra/validar-workers-runtime.mjs",

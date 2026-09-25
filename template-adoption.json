@@ -11,6 +11,7 @@
     "portable-typescript-tooling": { "version": "1.0.1", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.0.0", "status": "adopted" },
     "template-capability-sync": { "version": "1.0.1", "status": "adopted" },
+    "embedded-analytics-runtime": { "version": "1.0.0", "status": "adopted" },
     "isolated-ci-database": { "version": "1.0.0", "status": "adopted" }
   }
 }

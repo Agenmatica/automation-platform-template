@@ -43,7 +43,8 @@ services:
         --email "$$SUPERSET_ADMIN_EMAIL"
         --password "$$SUPERSET_ADMIN_PASSWORD" || true) &&
         superset init &&
-        echo "exec(open('/app/pythonpath/crear_cuenta_servicio_guest_token.py').read())" | superset shell
+        echo "exec(open('/app/pythonpath/crear_cuenta_servicio_guest_token.py').read())" | superset shell &&
+        echo "exec(open('/app/pythonpath/configurar_embebido.py').read())" | superset shell
     environment: &superset-environment
       SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
       SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-change-me-local-with-at-least-42-characters}
@@ -68,6 +69,7 @@ services:
     volumes:
       - ./superset_config.py:/app/pythonpath/superset_config.py:ro
       - ./crear_cuenta_servicio_guest_token.py:/app/pythonpath/crear_cuenta_servicio_guest_token.py:ro
+      - ./configurar_embebido.py:/app/pythonpath/configurar_embebido.py:ro
     depends_on:
       superset-postgres:
         condition: service_healthy
@@ -90,6 +92,15 @@ services:
       - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
     volumes:
       - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    networks:
+      default: {}
+      # emitir-acceso-reporte (contenedor de Edge Functions de Supabase, otro
+      # proyecto Compose) pide guest tokens a http://superset:8088. Declararlo
+      # acá hace que el alias sobreviva cualquier recreación; antes era un
+      # `docker network connect --alias superset` a mano que se perdía (ver
+      # docs/operar-superset.md).
+      supabase:
+        aliases: [superset]
     depends_on:
       superset-init:
         condition: service_completed_successfully
@@ -103,3 +114,13 @@ services:
 volumes:
   superset-postgres-data:
   superset-redis-data:
+
+networks:
+  default: {}
+  # Red que crea `supabase start`: supabase_network_<project_id de
+  # supabase/config.toml>. Externa, así que Supabase tiene que estar levantado
+  # antes que Superset. Un producto derivado cambia este default por su propio
+  # project_id (o define SUPABASE_DOCKER_NETWORK en infra/superset/.env).
+  supabase:
+    name: ${SUPABASE_DOCKER_NETWORK:-supabase_network_automation-platform-template-supabase-dev}
+    external: true

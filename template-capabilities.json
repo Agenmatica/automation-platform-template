@@ -51,6 +51,12 @@
       "paths": ["scripts/verificar-adopcion-template.mjs", "scripts/verificar-adopcion-template.test.mjs", "scripts/verificar-versiones-capacidades.mjs", ".github/workflows/sync-template.yml"]
     },
     {
+      "id": "embedded-analytics-runtime",
+      "version": "1.0.0",
+      "title": "Analítica embebida de Superset reproducible al recrear contenedores",
+      "paths": ["infra/superset/compose.yaml", "infra/superset/compose.vps.yaml", "infra/superset/configurar_embebido.py", "supabase/functions/emitir-acceso-reporte/index.ts", "scripts/verificar-superset-embebido.mjs"]
+    },
+    {
       "id": "isolated-ci-database",
       "version": "1.0.0",
       "title": "Base de datos del CI aislada de los stacks de desarrollo",
