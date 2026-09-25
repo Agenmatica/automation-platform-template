@@ -68,15 +68,19 @@ ventanas sin CI en ninguno de los dos repos.
 ## Deviations from Assessment
 
 - **Sin tarea `Fail`** (ver commit 30aad4c). La evaluación proponía una tarea
-  `io.kestra.plugin.core.execution.Fail` tras `despacho_ssh`. En el genérico,
-  sumar cualquier tarea a esa secuencia dentro del `ForEach` —`Fail`,
-  `Assert` o un `debug.Return` trivial— hace que Kestra 1.3.35, después de
-  responder el guardado, crezca de ~1,5 a ~8,5 GB de heap y termine en
-  `OutOfMemoryError` y reinicio (medido 4 veces; `POST /flows` responde en
-  ~1 s y la explosión es asíncrona). El dedicado no lo sufre. Se resolvió con
-  la tarea JDBC existente, renombrada `resolver_resultado_despacho`, que
-  llama a una función que marca activa o falla con la marca: mismo número de
-  tareas que en `main`.
+  `io.kestra.plugin.core.execution.Fail` tras `despacho_ssh`. Publicar el
+  genérico hace a veces que Kestra 1.3.35, después de responder el guardado
+  (`POST /flows` en ~1 s), crezca de ~1,5 a ~8,5 GB de heap y termine en
+  `OutOfMemoryError` y reinicio. Conteo de publicaciones en el Kestra de
+  desarrollo: con una tarea más en la secuencia del `ForEach` (`Fail`,
+  `Assert` o un `debug.Return` trivial) o con más referencias
+  `outputs.<tarea>[parent.taskrun.value]`, **7 de 7** explotaron; con la
+  estructura de `main` o la de este arreglo, **2 de 8** (una de cada una).
+  El dedicado nunca lo sufrió. No se aisló la causa interna (los hilos
+  virtuales de Kestra no salen en el thread dump). Se usó la tarea JDBC
+  existente, renombrada `resolver_resultado_despacho`, que llama a una
+  función que marca activa o falla con la marca: mismo número de tareas y
+  referencias que en `main`.
 - **Genérico sin clasificación verificable.** El E2E mostró que
   `clasificar_y_alertar` del genérico falla en runtime (`Unable to find
   value … outputs.detectar_tipo_falla.value`): dentro del `ForEach` ese

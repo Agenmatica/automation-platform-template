@@ -141,14 +141,15 @@ credencial inválida.
 Detalle y mediciones en
 `.specify/bugs/reintentos-credencial-invalida/fix.md`.
 
-- **Memoria al guardar.** La secuencia por organización del genérico
-  (dentro del `ForEach`, con `finally` y `errors`) está al borde de un
-  agotamiento de heap de Kestra: sumarle una tarea (aunque sea un
-  `debug.Return`) o más referencias `outputs.<tarea>[parent.taskrun.value]`
-  hace que Kestra pase de ~1,5 a ~8,5 GB después de responder el guardado,
-  termine en `OutOfMemoryError` y se reinicie. El flow dedicado no lo sufre.
-  Al adaptar el genérico, no agregar tareas a esa secuencia y validar la
-  publicación en el Kestra de desarrollo antes de desplegar.
+- **Memoria al guardar.** Publicar el genérico puede hacer que Kestra pase
+  de ~1,5 a ~8,5 GB de heap después de responder el guardado, termine en
+  `OutOfMemoryError` y se reinicie. Sumar una tarea a la secuencia por
+  organización (dentro del `ForEach`, con `finally` y `errors`), aunque
+  sea un `debug.Return`, o más referencias
+  `outputs.<tarea>[parent.taskrun.value]` lo provocó en 7 de 7 intentos;
+  la estructura actual, en 2 de 8. El flow dedicado no lo sufre. Al adaptar
+  el genérico, no agregar tareas a esa secuencia y validar la publicación en
+  el Kestra de desarrollo antes de desplegar.
 - **Clasificación de fallas.** En el genérico, `clasificar_y_alertar` lee
   `outputs.detectar_tipo_falla.value` sin el índice de la iteración y falla en
   runtime: una falla de una organización no se alerta ni marca la conexión
