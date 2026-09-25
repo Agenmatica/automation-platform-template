@@ -121,7 +121,9 @@ borraba en cada PR, también en los PR del producto que copió el workflow (ver
   la spec 015). Migraciones y seed quedan desactivados en ese `start`: los
   aplica `db:reset:ci`.
 - `supabase start --workdir "$SUPABASE_CI_WORKDIR" -x …` levanta sólo lo que
-  usan los pgTAP (Postgres, Auth, Storage, PostgREST, Kong). Para inicializar
+  usan los pgTAP (Postgres, Auth y Storage; sin Kong ni PostgREST, que
+  además no podrían validar `dominio` antes de que `db:reset:ci` aplique las
+  migraciones, y cuyo health-check por `127.0.0.1` no llega desde el runner). Para inicializar
   el stack, el CLI se conecta a `127.0.0.1:<puerto>`, que dentro del runner es
   el propio contenedor. Por eso, mientras dura el `start`, corre
   `scripts/supabase-ci.mjs puente`, que reenvía sólo el puerto derivado del CI
