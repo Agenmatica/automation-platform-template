@@ -31,8 +31,11 @@ evento inicio iniciada "Worker fixture iniciado"
 # Fallas no reintentables (workers/CONTRATO.md): con EJECUCION_ID, antes de
 # resolver la credencial o contactar al sistema externo se verifica que la
 # ejecución siga en curso; si no, sale 78 sin ningún efecto externo.
+# Un error de la consulta es técnico (set -e sale con el código de psql y el
+# flow lo reintenta); solo una respuesta "f" es no reintentable.
 if [ -n "${EJECUCION_ID:-}" ]; then
-  if [ "$(psql -v ON_ERROR_STOP=1 -Atqc "select private.ejecucion_worker_en_curso('$EJECUCION_ID')")" != "t" ]; then
+  EN_CURSO=$(psql -v ON_ERROR_STOP=1 -Atqc "select private.ejecucion_worker_en_curso('$EJECUCION_ID')")
+  if [ "$EN_CURSO" = "f" ]; then
     evento inicio fallida "Ejecución no en curso"
     printf 'EJECUCION_NO_EN_CURSO:%s\n' "$EJECUCION_ID" >&2
     exit 78

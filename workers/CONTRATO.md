@@ -66,7 +66,10 @@ abrir un navegador, iniciar sesión o contactar al sistema externo llama a
 `{"etapa":"inicio","estado":"fallida",...}`, escribe
 `EJECUCION_NO_EN_CURSO:<ejecucion_id>` en stderr y sale con `78`. No cierra la
 ejecución (ya está cerrada o la cerrará el timeout perezoso). Así un
-reintento del despacho posterior a un cierre no repite el login.
+reintento del despacho posterior a un cierre no repite el login. Si la
+consulta misma falla (base caída, red), es una falla técnica: el worker sale
+con otro código distinto de cero y el flow la reintenta; nunca la trata como
+`EJECUCION_NO_EN_CURSO`.
 
 La función es de solo lectura, rechaza (`NO_AUTORIZADO`) a cualquier llamante
 que no sea un worker y las ejecuciones de otra organización, y devuelve
