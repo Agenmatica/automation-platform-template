@@ -155,7 +155,7 @@ necesitando justo esta función".
 | 11 | P1 | Contratos de integración | H1 | Gestión de entornos | Primera integración nueva entre componentes. | Condicional (solo si integra componentes) | Convención documentada de autenticación, payloads, errores y versionado. | Exploración |
 | 12 | P1 | Auditoría transversal | H2 | Contratos de integración | Primera operación sensible que cruce componentes. | Condicional (solo si hay operación sensible cruzando componentes) | Actor, organización, acción, resultado y momento consultables de forma uniforme. | Exploración |
 | 13 | P0 | Trazas, costos y evaluaciones | H3 | Gateway IA y auditoría transversal | Primera capacidad IA en uso. | Condicional (solo si usa IA) | Registro de modelo, costo, fuentes, herramientas y casos de evaluación versionados. | Exploración |
-| 14 | P1 | Adopción selectiva de mejoras | H1 | Versión de origen | Primera mejora que deba volver a un producto derivado. | Condicional (solo si vuelve una mejora) | Guía para incorporar commits o paquetes de forma deliberada. | Exploración |
+| 14 | P1 | Adopción versionada de capacidades | H1 | Catálogo SemVer del template | Primera mejora que deba volver a un producto derivado. | Condicional (solo si vuelve una mejora) | Cada producto registra capacidades y versiones validadas; chequeo diario abre seguimiento sin copiar código ni hacer merges. [Spec de sincronización por capacidades](../specs/20260924-233045-sincronizacion-capacidades/spec.md) | Implementado; falta habilitar lectura privada en Sauger |
 | 15 | P1 | Herramientas IA | H3 | Contexto y permisos IA; contratos de integración | Primera herramienta conectada al modelo. | Condicional (solo si usa IA) | Herramientas con contratos, permisos y validación de entradas/salidas. | Exploración |
 | 16 | P1 | Aprobación humana | H3 | Herramientas IA y auditoría transversal | Primera acción con efecto externo o persistente. | Condicional (solo si hay acción automatizada con efecto externo) | Flujo propuesta → revisión → aprobación/rechazo → ejecución auditable. | Exploración |
 | 17 | P2 | Archivos y documentos | H2 | Gestión de entornos | Primer producto que gestione documentos. | Condicional (solo si gestiona documentos) | Carga, acceso, retención y eliminación por organización con permisos explícitos. | Exploración |
@@ -233,15 +233,15 @@ no requiere un servicio nuevo: puede ser un archivo de metadatos y una etiqueta
 Git. Sirve para responder "¿de qué base nació este producto?" cuando haya que
 evaluar una mejora posterior.
 
-#### Adopción selectiva de mejoras
+#### Adopción versionada de capacidades — implementada
 
-Debe documentar cuándo una mejora vuelve al template y cómo un producto la
-adopta: normalmente mediante commits seleccionados o, más adelante, paquetes
-versionados. Debe incluir verificación posterior y el criterio para no traer
-cambios que dependan de un dominio ajeno.
-
-Ejemplo: una mejora genérica de auditoría puede incorporarse al template y
-llevarse después a un producto. Una tabla de visitantes de BNI no.
+El catálogo del template asigna una versión SemVer a cada capacidad
+reutilizable. Cada producto mantiene su manifiesto de adopción independiente;
+un chequeo diario compara versiones y abre seguimiento cuando hay trabajo
+pendiente. La incorporación sigue siendo un PR selectivo y validado: no se
+copian cambios ni se fusiona el historial divergente automáticamente. La
+primera adopción está registrada en Sauger; falta su secreto de lectura para
+confirmar el acceso remoto al catálogo privado. [Spec](../specs/20260924-233045-sincronizacion-capacidades/spec.md).
 
 #### Gestión de entornos
 
