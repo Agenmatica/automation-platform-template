@@ -102,10 +102,15 @@ Deno.serve(async (req) => {
   const supersetPublicUrl = Deno.env.get('SUPERSET_PUBLIC_URL')!
   const username = Deno.env.get('SUPERSET_GUEST_TOKEN_USERNAME')!
   const password = Deno.env.get('SUPERSET_GUEST_TOKEN_PASSWORD')!
+  // Sin timeout, si SUPERSET_URL no resuelve (p. ej. a Superset le falta la
+  // red supabase_network_*) el isolate cuelga hasta el wall-clock en vez de
+  // caer en el 503 del catch (docs/operar-superset.md).
+  const timeout = () => AbortSignal.timeout(10_000)
 
   try {
     const loginRes = await fetch(`${supersetUrl}/api/v1/security/login`, {
       method: 'POST',
+      signal: timeout(),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username,
@@ -123,6 +128,7 @@ Deno.serve(async (req) => {
 
     const guestTokenRes = await fetch(`${supersetUrl}/api/v1/security/guest_token/`, {
       method: 'POST',
+      signal: timeout(),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
