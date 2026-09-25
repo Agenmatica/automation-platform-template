@@ -15,9 +15,9 @@ proyectos.
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Agregar `ENV_EVIDENCIA_VISUAL` (`${EVIDENCIA_VISUAL:-false}`), `ENV_EVIDENCIA_RETENCION_DIAS` (`${EVIDENCIA_RETENCION_DIAS:-30}`) y `ENV_EVIDENCIA_DIR_HOST` (`${EVIDENCIA_DIR_HOST:-/var/lib/automation-platform/evidencia}`) con comentario de spec en `infra/kestra/compose.yaml`, y documentarlas en `.env.example`
-- [ ] T002 [P] Extraer a `infra/kestra/e2e-comun.mjs` los helpers de `infra/kestra/validar-secretos-e2e.mjs` (docker/compose/db/request/publish/start/waitExecution/basicHeader/aprovisionamiento de organizaciones y hosts SSH fixture/limpieza) sin cambiar su comportamiento; el host fixture acepta montajes extra (base de evidencia con la misma ruta absoluta del daemon)
-- [ ] T003 Verificar que `pnpm test:kestra:secretos:e2e` sigue pasando tras T002 (Kestra del template recreado con T001: `pnpm dev:kestra`)
+- [X] T001 [P] Agregar `ENV_EVIDENCIA_VISUAL` (`${EVIDENCIA_VISUAL:-false}`), `ENV_EVIDENCIA_RETENCION_DIAS` (`${EVIDENCIA_RETENCION_DIAS:-30}`) y `ENV_EVIDENCIA_DIR_HOST` (`${EVIDENCIA_DIR_HOST:-/var/lib/automation-platform/evidencia}`) con comentario de spec en `infra/kestra/compose.yaml`, y documentarlas en `.env.example`
+- [X] T002 [P] Extraer a `infra/kestra/e2e-comun.mjs` los helpers de `infra/kestra/validar-secretos-e2e.mjs` (docker/compose/db/request/publish/start/waitExecution/basicHeader/aprovisionamiento de organizaciones y hosts SSH fixture/limpieza) sin cambiar su comportamiento; el host fixture acepta montajes extra (base de evidencia con la misma ruta absoluta del daemon)
+- [X] T003 Verificar que `pnpm test:kestra:secretos:e2e` sigue pasando tras T002 (Kestra del template recreado con T001: `pnpm dev:kestra`)
 
 **Checkpoint**: configuración disponible y E2E existente sin regresión.
 
