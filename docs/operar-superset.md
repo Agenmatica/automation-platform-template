@@ -5,75 +5,96 @@ embebida (spec 007) contra datos reales en un producto derivado — no es una
 funcionalidad de negocio, es infraestructura/configuración que cualquier
 producto derivado que use este Superset va a pisar igual. `infra/superset/`
 tiene la configuración real (`superset_config.py`,
-`crear_cuenta_servicio_guest_token.py`, `compose.yaml`).
+`crear_cuenta_servicio_guest_token.py`, `configurar_embebido.py`,
+`compose.yaml`).
 
-## Red cruzada entre proyectos Docker
+## Qué se configura solo en cada `superset-init`
 
-El contenedor de Edge Functions de Supabase y el de Superset son de dos
-`docker compose` distintos, cada uno con su propia red — el nombre de
-servicio `superset` no resuelve entre ellos por defecto, y
-`host.docker.internal` tampoco funciona desde el runtime de Edge Functions
-(sandboxea la red de cada isolate; el request cuelga hasta el timeout de
-wall-clock en vez de fallar rápido).
+La analítica embebida depende de tres piezas de estado que antes se cargaban
+a mano y se perdían al recrear contenedores o volúmenes. Ahora las deja
+listas `compose.yaml` y `configurar_embebido.py`, que corre en
+`superset-init` después de `crear_cuenta_servicio_guest_token.py`. El script
+es idempotente y solo agrega: nunca saca un permiso ni un dominio cargado a
+mano. Imprime `configurar_embebido: N cambios` con el detalle.
 
-Solución: conectar el contenedor de Superset a la red de Supabase con
-alias:
+Dashboards o embeds creados en la UI después del init se cubren volviendo a
+correr el init (no recrea `superset`):
 
 ```sh
-docker network connect --alias superset <red-supabase> <contenedor-superset>
+docker compose -f infra/superset/compose.yaml run --rm superset-init
 ```
 
-**No persiste solo** — hay que repetirlo si se recrea cualquiera de los dos
-contenedores (sí sobrevive un `docker restart` normal de cualquiera de los
-dos).
+### Red cruzada entre proyectos Docker
 
-## El rol `Guest` necesita permisos de datos en dos capas distintas
+Las Edge Functions de Supabase y Superset son de dos proyectos Compose
+distintos, cada uno con su propia red. `emitir-acceso-reporte` llama a
+`http://superset:8088`, así que el servicio `superset` se une a la red que
+crea `supabase start` (`supabase_network_<project_id>`) con alias
+`superset`. `host.docker.internal` no sirve: el runtime de Edge Functions
+sandboxea la red de cada isolate.
 
-`GUEST_ROLE_NAME` en `superset_config.py` (`"Guest"`) no trae solo, de
-fábrica, todo lo que un dashboard embebido necesita. El comentario que ya
-está junto a `GUEST_ROLE_NAME` documenta la primera capa (bootstrap del
-SDK: `can_read` sobre `CurrentUserRestApi` y sobre `Dashboard`, sin lo cual
-el navegador ni siquiera llega a intentar pintar un chart — falla con
-"Something went wrong with embedded authentication"). Esta sección
-documenta la **segunda capa**, encontrada después en un producto
-derivado: con el bootstrap ya andando, cada chart embebido individual
-seguía devolviendo `"Data error: Forbidden"` al pedir sus datos — el guest
-token resuelve *a qué* dashboard/recurso accede (vía `resources`/RLS del
-propio token), no *qué puede hacer* ese rol una vez adentro pidiendo cada
-chart.
+- La red se declara `external`: **Supabase tiene que estar levantado antes**
+  que `pnpm dev:superset`. Si no, Compose falla con `network
+  supabase_network_… declared as external, but could not be found`.
+- Un producto derivado cambia el default del nombre de red en
+  `compose.yaml` por su `project_id` de `supabase/config.toml`, o define
+  `SUPABASE_DOCKER_NETWORK` en `infra/superset/.env`.
+- `compose.vps.yaml` la saca: en el VPS no hay stack local de Supabase.
+- `emitir-acceso-reporte` corta cada llamada a Superset a los 10 s. Si falta
+  la red, devuelve 503 `analitica_no_disponible` en vez de colgarse hasta el
+  wall-clock.
 
-Estos permisos de la segunda capa viven en la metadata DB de la propia app
-Superset, **no en ningún archivo versionado todavía** — no sobreviven un
-volumen de Postgres de Superset recreado desde cero. A diferencia de
-`crear_cuenta_servicio_guest_token.py` (que sí automatiza el alta de la
-cuenta de servicio), esto **no tiene automatización propia acá**: se
-otorgó a mano, por API, la primera vez que se ejercitó en ese producto
-derivado. Queda documentado para que el primer producto que lo necesite
-decida si lo automatiza (`superset shell`, mismo mecanismo que el script
-existente) o lo repite a mano, según le convenga.
+### Orígenes permitidos del embed
 
-Permisos necesarios (otorgados vía
-`POST /api/v1/security/roles/<id>/permissions`, con
-`permission_view_menu_ids`, después de resolver esos IDs vía
-`GET /api/v1/security/permissions-resources/` filtrando por
-`permission.name`/`view_menu.name`):
+Superset rechaza con 403 la carga del iframe (`GET /embedded/<uuid>`) si el
+`Referer` no está en `allow_domain_list` del embed. El script agrega a cada
+embed los mismos orígenes que `CORS_OPTIONS` de `superset_config.py`:
+`REFINE_ORIGIN` y las variantes `localhost`/`127.0.0.1` con `WEB_PORT`.
+Si Refine cambia de puerto, alcanza con ajustar `WEB_PORT` en
+`infra/superset/.env` y volver a correr el init. Superset y Refine tienen
+que ver el mismo `WEB_PORT`: cada `compose.yaml` lee el `.env` de su propia
+carpeta.
 
-| Permiso | View menu |
-|---|---|
-| `can_read` | `Chart` |
-| `can_read` | `Dataset` |
-| `can_get` | `Datasource` |
-| `can_external_metadata` | `Datasource` |
-| `can_external_metadata_by_name` | `Datasource` |
-| `can_query` | `Api` |
-| `can_time_range` | `Api` |
-| `can_query_form_data` | `Api` |
-| `can_csv` | `Superset` — habilita exportar a CSV/Excel/imagen desde el menú "..." de cada chart |
-| `can_share_chart` | `Chart` — mantiene "Copy permalink"/"Share by email"; "Embed code" se bloquea aparte (ver sección siguiente), no sacando este permiso |
-| `datasource_access` | uno por cada tabla/dataset real que use un chart embebido — no hay lista genérica posible, depende de los datasets de cada producto |
+### Permisos del rol `Guest`
 
-**A propósito NO otorgar** `can_view_query` (`Dashboard`) — "View query" no
+`GUEST_ROLE_NAME` (`"Guest"`) no trae de fábrica lo que un dashboard
+embebido necesita. Hay dos capas: el bootstrap del SDK (sin ella el
+navegador muestra "Something went wrong with embedded authentication") y el
+pedido de datos de cada chart (sin ella cada chart muestra `"Data error:
+Forbidden"`). El guest token resuelve *a qué* dashboard y a qué filas
+accede (`resources`/RLS); el rol resuelve *qué puede hacer* adentro.
+
+`configurar_embebido.py` (`PERMISOS_GUEST`) otorga:
+
+| Permiso | View menu | Para qué |
+|---|---|---|
+| `can_read` | `CurrentUserRestApi` | bootstrap del SDK |
+| `can_read` | `Dashboard` | bootstrap del SDK |
+| `can_read` | `Chart`, `Dataset` | datos de cada chart |
+| `can_get`, `can_external_metadata`, `can_external_metadata_by_name` | `Datasource` | datos de cada chart |
+| `can_query`, `can_time_range`, `can_query_form_data` | `Api` | datos de cada chart |
+| `can_csv` | `Superset` | exportar a CSV/Excel/imagen desde el menú "..." |
+| `can_share_chart` | `Superset` | "Copy permalink"/"Share by email"; "Embed code" se bloquea aparte (sección siguiente) |
+| `datasource_access` | cada dataset usado por un dashboard con embed | derivado de la metadata: charts y filtros nativos |
+
+Si `superset init` no registra alguno de los pares fijos (nombre mal
+escrito o cambio de versión de Superset), el script falla en vez de crear
+un par que nadie chequea.
+
+**A propósito NO se otorga** `can_view_query` (`Dashboard`): "View query" no
 debe quedar visible para quien entra por guest token.
+
+### Verificación de punta a punta
+
+`pnpm test:superset:embebido` (`scripts/verificar-superset-embebido.mjs`)
+recorre el mismo camino que el SDK, sin credenciales admin de Superset:
+login en Supabase, `emitir-acceso-reporte` por cada reporte visible,
+`GET /embedded/<uuid>` con el `Referer` de Refine y `POST
+/api/v1/chart/data` de cada chart con el guest token. Nunca imprime tokens.
+
+```sh
+SUPABASE_URL=http://127.0.0.1:8100 SUPABASE_ANON_KEY=<anon> VERIFICAR_EMAIL=<usuario> VERIFICAR_PASSWORD=<password> WEB_ORIGIN=http://localhost:3100 pnpm test:superset:embebido
+```
 
 ## "Embed code" no se puede aislar solo con permisos de rol
 
