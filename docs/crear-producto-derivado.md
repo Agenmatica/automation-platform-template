@@ -40,7 +40,7 @@ que son la bitácora del template y no se tocan):
 | `package.json` | campo `"name"` (línea 2) y el `--project-id` hardcodeado en el script `dev:down:supabase` |
 | `infra/refine/compose.yaml` | `name:` (línea 1) |
 | `infra/kestra/compose.yaml` | `name:` (línea 1) |
-| `infra/superset/compose.yaml` | `name:` (línea 1) |
+| `infra/superset/compose.yaml` | `name:` (línea 1) y el default de `SUPABASE_DOCKER_NETWORK` en `networks.supabase.name` (al final): `supabase_network_<project_id nuevo>` — si queda el del template, `pnpm dev:superset` falla porque esa red no existe (ver `docs/operar-superset.md`) |
 | `infra/playwright/compose.yaml` | `name:` (línea 1) |
 | `infra/runner/compose.yaml` | `name:` (línea 1), y además `RUNNER_REPO` / `RUNNER_NAME` en el bloque `environment:` — `RUNNER_REPO` es el repo de GitHub real contra el que se registra el self-hosted runner; si queda apuntando al del template, el runner de CI de este fork se registra en el repo equivocado |
 | `supabase/config.toml` | `project_id` (línea 5) |
@@ -50,7 +50,8 @@ que son la bitácora del template y no se tocan):
 
 Después de renombrar, `pnpm dev:down:supabase` deja de apuntar al proyecto
 correcto si no se edita ese `--project-id` — es el único lugar donde el
-nombre del proyecto de Supabase queda repetido fuera de `config.toml`.
+nombre del proyecto de Supabase queda repetido fuera de `config.toml`,
+junto con el nombre de red de `infra/superset/compose.yaml`.
 
 ## 4. Configurar `.env`
 
