@@ -58,6 +58,47 @@ No debe conservar ni crear un trigger SQL que envíe HTTP, use `pg_net` o lea
 una URL de webhook para despachar un worker. La primera adopción se valida con
 un disparo manual recuperable antes de migrar schedules.
 
+## 3.2 Observabilidad y evidencia visual (`worker-execution-cycle` 1.1.0)
+
+Spec `specs/20260925-133820-observabilidad-workers-navegador`. Contrato
+normativo en `workers/CONTRATO.md` ("Observabilidad y evidencia visual").
+
+1. **Workers**: emitir eventos JSON por etapa en stdout con `etapa`,
+   `estado` (`iniciada|completada|fallida|omitida`), `timestamp` (ISO UTC),
+   `ejecucion` (`EJECUCION_ID` o `KESTRA_EJECUCION_ID`) y `mensaje`. Con
+   `EVIDENCIA_VISUAL=true` y `EVIDENCIA_DIR`, capturar solo hitos en esa
+   carpeta como `<AAAAMMDDTHHMMSSmmmZ>-<etapa>.png`. Un fallo de captura emite
+   `evidencia/fallida` en stdout (nunca en stderr) y no cambia el resultado.
+   El worker no lee `EVIDENCIA_RETENCION_DIAS` ni borra evidencia. Los
+   nombres de etapa (y datos extra del evento) son del producto.
+2. **Flows**: traer los cambios de `plantilla-generico.yml` y
+   `plantilla-dedicado.yml` a cada flow concreto copiado de ellas: input
+   `evidencia_visual`, preparación de carpeta antes de `docker run`,
+   `KESTRA_EJECUCION_ID`, `EVIDENCIA_VISUAL`, `"$@"`, `publicar_evidencia`
+   en el `finally` de la secuencia de despacho y `publicar_logs` en el
+   `finally` del flow. Copiar `limpieza-evidencia.yml` con el namespace
+   del producto (su input `namespace` es el prefijo que purga).
+3. **Kestra**: definir por entorno `EVIDENCIA_VISUAL` (default `false`),
+   `EVIDENCIA_RETENCION_DIAS` (default `30`) y `EVIDENCIA_DIR_HOST` (default
+   `/var/lib/automation-platform/evidencia`) como en
+   `infra/kestra/compose.yaml`.
+4. **Hosts de despacho** (solo si se habilita evidencia): crear
+   `EVIDENCIA_DIR_HOST` con dueño el usuario SSH de despacho y permisos
+   `0700`, en la misma ruta absoluta que ve el daemon Docker. Sin espacios en
+   la ruta.
+5. **Regla de almacenamiento**: ningún flow bajo el prefijo que purga la
+   limpieza guarda datos de negocio en el almacenamiento interno de Kestra;
+   la limpieza borra todo ese almacenamiento vencido (capturas y logs
+   publicados), nunca ejecuciones, logs, métricas ni Supabase. La evidencia
+   de auditoría del bucket `evidencias-ejecuciones` no es evidencia visual.
+6. **Validar** con una ejecución real equivalente a
+   `pnpm test:kestra:evidencia:e2e` (capturas en éxito y en error, fallo de
+   captura sin cambio de estado, limpieza idempotente).
+
+Diferencias con el contrato de origen (README de un producto derivado): se
+fijan los campos del evento, la ubicación de capturas la monta la plataforma
+y la retención deja de ser responsabilidad del worker.
+
 ## 4. Mapeo de este producto
 
 ### Versión de outbox adoptable

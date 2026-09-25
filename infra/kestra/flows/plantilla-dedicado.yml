@@ -19,6 +19,10 @@ inputs:
     type: STRING
   - id: imagen
     type: STRING
+  - id: evidencia_visual
+    type: BOOLEAN
+    required: false
+    description: "Reemplaza EVIDENCIA_VISUAL del entorno solo para esta ejecucion."
 tasks:
   - id: procesar_despacho
     type: io.kestra.plugin.core.flow.Sequential
@@ -56,6 +60,23 @@ tasks:
             WORKER_NETWORK_ESPERADA="worker-egress-$SISTEMA_EXTERNO"
             case "$SISTEMA_EXTERNO" in fixture-*) WORKER_NETWORK_ESPERADA=bridge ;; esac
             [ "$WORKER_NETWORK" = "$WORKER_NETWORK_ESPERADA" ] || { echo 'Red de egress no autorizada' >&2; exit 64; }
+            # Evidencia visual (spec 20260925-133820): solo con evidencia efectiva
+            # se prepara y monta una carpeta por ejecucion y organizacion, y se
+            # podan residuos vencidos del host. Nada de evidencia va a stderr:
+            # warningOnStdErr cambiaria el estado de negocio.
+            EVIDENCIA_VISUAL="{{ inputs.evidencia_visual ?? envs.evidencia_visual }}"
+            set --
+            if [ "$EVIDENCIA_VISUAL" = "true" ]; then
+              EVIDENCIA_BASE="{{ envs.evidencia_dir_host }}"
+              EVIDENCIA_CARPETA="$EVIDENCIA_BASE/{{ execution.id }}/{{ inputs.organizacion_id }}"
+              find "$EVIDENCIA_BASE" -mindepth 1 -maxdepth 1 -type d -mtime +{{ envs.evidencia_retencion_dias }} -exec rm -rf {} + 2>/dev/null || true
+              if mkdir -p "$EVIDENCIA_CARPETA" 2>/dev/null && chmod 0700 "$EVIDENCIA_BASE" 2>/dev/null && chmod 0777 "$EVIDENCIA_CARPETA" 2>/dev/null; then
+                set -- -v "$EVIDENCIA_CARPETA:/evidencia:rw" -e EVIDENCIA_DIR=/evidencia
+              else
+                EVIDENCIA_VISUAL=false
+                printf '{"etapa":"evidencia","estado":"fallida","timestamp":"%s","ejecucion":"%s","mensaje":"Carpeta de evidencia no disponible"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "{{ execution.id }}"
+              fi
+            fi
             docker run --rm \
               --read-only \
               --tmpfs /tmp:rw,noexec,nosuid,size=64m \
@@ -66,6 +87,9 @@ tasks:
               --network "${WORKER_NETWORK:?Debe configurarse una red con egress allowlist}" \
               --env PGHOST --env PGPORT --env PGDATABASE --env PGUSER --env PGPASSWORD \
               -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
+              -e KESTRA_EJECUCION_ID="{{ execution.id }}" \
+              -e EVIDENCIA_VISUAL="$EVIDENCIA_VISUAL" \
+              "$@" \
               -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
               -e CONEXION_ID="{{ outputs.resolver_despacho.row.conexion_id }}" \
               {{ inputs.imagen }}
@@ -77,6 +101,22 @@ tasks:
         sql: select private.marcar_conexion_activa(CAST(:conexion_id AS uuid));
         parameters:
           conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+    finally:
+      # Publica las capturas del worker como outputs de la ejecucion (en exito
+      # y en error) y las borra del host; un fallo no cambia el estado.
+      - id: publicar_evidencia
+        type: io.kestra.plugin.fs.sftp.Downloads
+        runIf: "{{ inputs.evidencia_visual ?? envs.evidencia_visual }}"
+        host: "{{ outputs.resolver_despacho.row.host }}"
+        port: "{{ outputs.resolver_despacho.row.puerto_ssh }}"
+        username: "{{ outputs.resolver_despacho.row.usuario_ssh }}"
+        keyfile: "{{ secret('ORQUESTACION_SSH_PRIVATE_KEY') }}"
+        from: "{{ envs.evidencia_dir_host }}/{{ execution.id }}/{{ inputs.organizacion_id }}/"
+        rootDir: false
+        action: DELETE
+        maxFiles: 50
+        allowFailure: true
+        allowWarning: true
     errors:
       # errorLogs() solo puede evaluarse en una tarea que corre en un Worker (no
       # en el condition de un Flowable como If, que lo evalua el executor) -- de
@@ -116,3 +156,13 @@ tasks:
               organizacion_id: "{{ inputs.organizacion_id }}"
               conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
               motivo_sanitizado: FALLA_TECNICA_SANITIZADA
+finally:
+  # Observabilidad (spec 20260925-133820): publica como output los logs del
+  # despacho, incluidos los eventos JSON por etapa del worker, en exito y en
+  # error. Un fallo al publicarlos no cambia el estado de negocio.
+  - id: publicar_logs
+    type: io.kestra.plugin.core.log.Fetch
+    tasksId:
+      - despacho_ssh
+    allowFailure: true
+    allowWarning: true

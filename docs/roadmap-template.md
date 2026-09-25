@@ -53,6 +53,7 @@ reemplaza las prioridades históricas de sus specs.
 | P0        | Infraestructura | Creador de productos derivados (guía)     | Puertos de desarrollo local configurables | Resuelto como documento, no como script ni spec: guía de proceso con la lista exacta de referencias de identidad a renombrar (Compose, `package.json`, `project_id` de Supabase), qué NO traer del template, y una verificación final por búsqueda de texto. Se gradúa a script solo si un segundo o tercer fork real muestra pasos mecánicos repetidos. [docs/crear-producto-derivado.md](./crear-producto-derivado.md) | Implementado |
 | P1        | Orquestación   | Despacho durable de ejecuciones            | Kestra y workers                          | Outbox transaccional con reclamo exclusivo, lease, fencing, historial de intentos y contrato sin HTTP en SQL; el producto derivado adopta el mecanismo sin arrastrar conectores de dominio. [Spec 019](../specs/019-outbox-ejecuciones/spec.md) | Implementado |
 | P1        | Tooling        | Tooling operativo portable                 | Node ESM y entornos locales               | Comandos operativos Node, validación de entradas sanitizada y sincronización local explícita del rol JDBC de Kestra; el recorrido E2E confirma éxito, clasificación de errores y ausencia de secretos persistidos. [Spec 020](../specs/020-tooling-typescript/spec.md) | Implementado |
+| P1        | Orquestación   | Observabilidad de workers de navegador     | Ciclo de ejecuciones y blindaje de secretos | Contrato de eventos JSON por etapa y sanitización; las plantillas de despacho publican los logs y, con evidencia visual habilitada por entorno o por ejecución, las capturas de hitos como outputs de Kestra sin alterar el resultado de negocio; limpieza diaria idempotente de evidencia vencida (`EVIDENCIA_RETENCION_DIAS`, 30 por defecto). Publicada como `worker-execution-cycle` 1.1.0. [Spec](../specs/20260925-133820-observabilidad-workers-navegador/spec.md) | Implementado |
 
 
  La spec 003 conserva una tarea abierta de comprobación inicial de entorno;
@@ -287,6 +288,11 @@ elige sus destinos y umbrales.
 Ejemplo: una caída de Kestra genera una alerta; un flujo fallido conserva su
 log y un enlace a la ejecución; una excepción web queda agrupada en el registro
 de errores del producto.
+
+Parte entregada: la observabilidad de workers (eventos por etapa, logs y
+capturas publicados en la ejecución de Kestra, retención limpia) ya cubre el
+diagnóstico de un flujo fallido. Siguen pendientes healthchecks y el registro
+central de errores. [Spec](../specs/20260925-133820-observabilidad-workers-navegador/spec.md).
 
 #### Auditoría transversal
 
