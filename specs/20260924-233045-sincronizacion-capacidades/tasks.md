@@ -18,8 +18,8 @@
 
 ## Phase 3: Sauger adoption
 
-- [ ] T007 [US1] Crear manifiesto de adopción en Sauger y registrar capacidades reconciliadas.
-- [ ] T008 [US2] Adaptar el workflow de Sauger al verificador del template.
+- [x] T007 [US1] Crear manifiesto de adopción en Sauger y registrar capacidades reconciliadas.
+- [x] T008 [US2] Adaptar el workflow de Sauger al verificador del template.
 - [ ] T009 [US3] Configurar el secreto de lectura en GitHub y comprobar una ejecución remota sanitizada.
 
 **Checkpoint**: Sauger queda registrado como un producto derivado, sin merge masivo.
