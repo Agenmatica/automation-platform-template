@@ -62,6 +62,13 @@ services:
       ENV_KESTRA_ORQUESTACION_DB_PASSWORD: ${KESTRA_ORQUESTACION_DB_PASSWORD:-change-me-local}
       ENV_KESTRA_ORQUESTACION_DB_URL: ${KESTRA_ORQUESTACION_DB_URL:-jdbc:postgresql://host.docker.internal:${SUPABASE_DB_PORT:-5434}/postgres}
       ENV_KESTRA_ORQUESTACION_CONCURRENCIA: ${KESTRA_ORQUESTACION_CONCURRENCIA:-10}
+      # Observabilidad de workers (spec 20260925-133820): evidencia visual
+      # deshabilitada por defecto, retención de capturas en días y base de la
+      # carpeta transitoria en cada host de despacho. Las leen las plantillas
+      # y limpieza-evidencia.yml vía {{ envs.evidencia_* }}.
+      ENV_EVIDENCIA_VISUAL: ${EVIDENCIA_VISUAL:-false}
+      ENV_EVIDENCIA_RETENCION_DIAS: ${EVIDENCIA_RETENCION_DIAS:-30}
+      ENV_EVIDENCIA_DIR_HOST: ${EVIDENCIA_DIR_HOST:-/var/lib/automation-platform/evidencia}
       # `secret()` lee exclusivamente variables de proceso con prefijo SECRET_.
       # El valor real vive exclusivamente en infra/kestra/.env o en el gestor
       # del entorno; no se expone mediante {{ envs.* }} ni se versiona.
