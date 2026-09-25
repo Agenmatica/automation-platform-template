@@ -136,6 +136,27 @@ credencial inválida.
    lanzamiento del worker, reintento técnico posterior a un cierre sin nuevo
    login y falla técnica con sus 3 intentos.
 
+### Limitaciones conocidas del flow genérico (Kestra 1.3.35)
+
+Detalle y mediciones en
+`.specify/bugs/reintentos-credencial-invalida/fix.md`.
+
+- **Memoria al guardar.** La secuencia por organización del genérico
+  (dentro del `ForEach`, con `finally` y `errors`) está al borde de un
+  agotamiento de heap de Kestra: sumarle una tarea (aunque sea un
+  `debug.Return`) o más referencias `outputs.<tarea>[parent.taskrun.value]`
+  hace que Kestra pase de ~1,5 a ~8,5 GB después de responder el guardado,
+  termine en `OutOfMemoryError` y se reinicie. El flow dedicado no lo sufre.
+  Al adaptar el genérico, no agregar tareas a esa secuencia y validar la
+  publicación en el Kestra de desarrollo antes de desplegar.
+- **Clasificación de fallas.** En el genérico, `clasificar_y_alertar` lee
+  `outputs.detectar_tipo_falla.value` sin el índice de la iteración y falla en
+  runtime: una falla de una organización no se alerta ni marca la conexión
+  (`credencial_invalida`). El dedicado clasifica bien. Corregir el índice
+  dispara la limitación de memoria anterior, así que se trata como un bug
+  propio; hasta entonces, las organizaciones que necesiten alerta de
+  credencial deben despacharse con el flow dedicado.
+
 ## 4. Mapeo de este producto
 
 ### Versión de outbox adoptable
