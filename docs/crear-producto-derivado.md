@@ -19,6 +19,11 @@ y el nombre del runner. Ejemplo en este documento: `estudio-contable`.
 
 ## 2. Crear el repo
 
+> **Actualización**: La fuente de versión y adopciones es ahora
+> [`adoptar-capacidades-template.md`](./adoptar-capacidades-template.md) y el
+> manifiesto `template-adoption.json`. Ese registro reemplaza la nota manual de
+> commit/tag mencionada en el texto histórico de esta sección.
+
 Fork o copia sin conservar el historial de Git, según convenga. De cualquier
 forma, anotar en el README del fork nuevo de qué commit/tag del template
 salió — hoy no hay automatización para esto (roadmap, ítem "Versión de
@@ -65,6 +70,12 @@ Esto no lo automatiza nada: crear el proyecto Supabase (local con
 staging/producción), el repo en GitHub, y cualquier credencial real
 (SMTP, runner de CI, etc.) — cada uno solo en el `.env`/secretos del fork,
 nunca en este template.
+
+Configurar también el secreto Actions `TEMPLATE_READ_TOKEN` con un token
+Fine-grained de `Contents: Read-only` limitado al repositorio del template. Si
+se usa otro repositorio, declararlo como variable Actions `TEMPLATE_REPOSITORY`.
+El procedimiento completo está en
+[`adoptar-capacidades-template.md`](./adoptar-capacidades-template.md).
 
 ## 6. Verificar que el fork arranca igual que el template
 
