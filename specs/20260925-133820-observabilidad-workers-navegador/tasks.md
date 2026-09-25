@@ -89,3 +89,26 @@ proyectos.
 MVP = US1 (logs y eventos). Cada fase termina en su Checkpoint con commit y
 push al PR; `/speckit-implement` se invoca fase por fase con `/clear` entre
 fases.
+
+## Desvíos
+
+- Por pedido del usuario las fases se corrieron seguidas, sin `/clear`.
+- T017 se adelantó para que el CI del PR no falle por versiones de
+  capacidades (ver commit 72a98c0).
+- `limpieza-evidencia` valida el plazo sin regex porque Pebble no soporta
+  `matches`; `retencion_dias` es STRING para poder rechazar valores inválidos
+  en el propio flow (ver commit 72a98c0).
+- El E2E publica las plantillas y la limpieza en un namespace propio de la
+  corrida para que la purga con plazo 0 no toque otras ejecuciones locales.
+- La corrida real se vio interrumpida porque el CI de un producto derivado
+  resetea el Supabase local del template (puerto 5434 por defecto); se corrió
+  en una ventana sin CI activo.
+- Estado de la validación real (T013, T016, T019 abiertas): pasaron en
+  Kestra real los escenarios de logs completos, el genérico con evidencia
+  (2 capturas por organización, host limpio) y el dedicado técnico con
+  evidencia; la validación de plazo de la limpieza (30/0 ok; `abc`, `-1`,
+  `1.5` fallan sin purgar) y la purga solo-storage idempotente (spike). Falta
+  una corrida completa de `test:kestra:evidencia:e2e` (captura fallida, sin
+  evidencia, sin carpeta, limpieza) y `pnpm test`: la máquina quedó sin
+  memoria y el Kestra local se colgó; además el CI del producto derivado
+  resetea el Supabase del template.

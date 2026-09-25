@@ -221,6 +221,25 @@ anterior la informa como pendiente.
   final de ninguna ejecución de prueba respecto del mismo escenario sin
   evidencia.
 
+## Contrato con productos derivados
+
+Respecto de la sección de observabilidad del `workers/README.md` del producto
+de origen, esta spec **cambia** el contrato así (ver `research.md` R8):
+
+1. Campos fijos del evento: `etapa`, `estado`
+   (`iniciada|completada|fallida|omitida`), `timestamp` (ISO UTC),
+   `ejecucion` (`EJECUCION_ID` o `KESTRA_EJECUCION_ID`) y `mensaje`; los
+   campos extra del producto se permiten si están sanitizados.
+2. Las capturas se escriben en `EVIDENCIA_DIR` (`/evidencia`), carpeta que
+   monta el flow; las publica Kestra como output.
+3. `EVIDENCIA_RETENCION_DIAS` es de plataforma: el worker no la lee ni borra
+   evidencia.
+4. Un fallo de captura se informa como evento `evidencia/fallida` en stdout.
+
+El producto `estudio-contable-automation` ya implementó sus workers contra
+este contrato (rama `observabilidad-workers`, PR #34). Cualquier cambio
+posterior debe anotarse aquí y avisarse antes de mergear.
+
 ## Assumptions
 
 - La consulta operativa se hace exclusivamente en Kestra; Refine queda fuera

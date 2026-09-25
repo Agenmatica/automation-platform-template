@@ -65,6 +65,10 @@ Cada cambio de etapa se emite en stdout como una línea JSON:
 | `ejecucion` | `EJECUCION_ID` si el flow lo envía; si no, `KESTRA_EJECUCION_ID`. |
 | `mensaje` | Opcional, hasta 500 caracteres, sanitizado. |
 
+Un producto puede agregar campos propios al evento (por ejemplo, cómo se
+resolvió una sesión) si respetan la sanitización; la plataforma no los
+interpreta.
+
 Kestra conserva esas líneas en los logs de la tarea de despacho y las
 plantillas publican esos logs como output (`publicar_logs`). La última etapa
 `completada` antes de una `fallida` es la última etapa completada. Una línea
