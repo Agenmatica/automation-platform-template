@@ -10,6 +10,6 @@
     "governed-ai-core": { "version": "1.0.0", "status": "adopted" },
     "portable-typescript-tooling": { "version": "1.0.0", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.0.0", "status": "adopted" },
-    "template-capability-sync": { "version": "1.0.0", "status": "adopted" }
+    "template-capability-sync": { "version": "1.0.1", "status": "adopted" }
   }
 }

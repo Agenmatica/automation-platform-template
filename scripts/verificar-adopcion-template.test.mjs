@@ -1,10 +1,17 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import test from 'node:test';
 import { compareAdoption } from './verificar-adopcion-template.mjs';
+
+test('workflow sincroniza issues por tÃ­tulo sin depender de etiquetas preexistentes', async () => {
+  const workflow = await readFile(path.resolve('.github/workflows/sync-template.yml'), 'utf8');
+  assert.doesNotMatch(workflow, /gh label create|--label template-sync/);
+  assert.match(workflow, /select\(\.title == "Configurar lectura del template"\)/);
+  assert.match(workflow, /select\(.*pendiente del template/);
+});
 
 const catalog = {
   schema_version: 1,

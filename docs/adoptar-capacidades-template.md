@@ -32,7 +32,10 @@ manifiesto queda al día, cierra esa issue. No modifica archivos ni integra
 cambios automáticamente.
 
 Configurar `TEMPLATE_READ_TOKEN` como secreto Actions del producto. El token
-debe limitarse a `Contents: Read-only` del repositorio del template. El nombre
+debe limitarse a `Contents: Read-only` del repositorio del template. Si falta,
+el workflow abre o actualiza una issue con instrucciones antes de marcar la
+ejecución como fallida. El seguimiento se identifica por título y no requiere
+etiquetas preconfiguradas en el producto. El nombre
 del repositorio puede configurarse con la variable Actions `TEMPLATE_REPOSITORY`;
 por defecto es `Agenmatica/automation-platform-template`.
 

@@ -43,8 +43,7 @@ jobs:
             echo "configurada=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          gh label create template-sync --color 0E8A16 --description "Seguimiento de adopción del template" 2>/dev/null || true
-          issue=$(gh issue list --repo "${{ github.repository }}" --state open --label template-sync --json number,title --jq '.[] | select(.title == "Configurar lectura del template") | .number' | head -1)
+          issue=$(gh issue list --repo "${{ github.repository }}" --state open --json number,title --jq '.[] | select(.title == "Configurar lectura del template") | .number' | head -1)
           cat > "$RUNNER_TEMP/template-read-token.md" <<'EOF'
           Este producto todavía no tiene acceso de lectura al repositorio privado del template.
 
@@ -55,7 +54,7 @@ jobs:
           if [ -n "$issue" ]; then
             gh issue edit "$issue" --repo "${{ github.repository }}" --body-file "$RUNNER_TEMP/template-read-token.md"
           else
-            gh issue create --repo "${{ github.repository }}" --title "Configurar lectura del template" --label template-sync --body-file "$RUNNER_TEMP/template-read-token.md"
+            gh issue create --repo "${{ github.repository }}" --title "Configurar lectura del template" --body-file "$RUNNER_TEMP/template-read-token.md"
           fi
           echo "::error::Falta el secreto Actions TEMPLATE_READ_TOKEN; se abrió o actualizó una issue con instrucciones."
           exit 1
@@ -98,13 +97,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh label create template-sync --color 0E8A16 --description "Seguimiento de adopción del template" 2>/dev/null || true
           node -e "const r=require(process.argv[1]); console.log('# Capacidades pendientes para '+r.product+'\\n\\nCatálogo: '+r.template_repository+'\\n\\n| Capacidad | Adoptada | Vigente | Estado |\\n|---|---:|---:|---|\\n'+r.pending.map(x=>'| '+x.id+' | '+(x.adopted_version||'sin registrar')+' | '+x.current_version+' | '+x.status+' |').join('\\n')+'\\n\\nAdoptá cada cambio en un PR propio y actualizá `template-adoption.json` después de validar el producto. No se ejecutan merges automáticamente.')" "$RUNNER_TEMP/template-adoption-result.json" > "$RUNNER_TEMP/template-adoption-issue.md"
-          issue=$(gh issue list --repo "${{ github.repository }}" --state open --label template-sync --json number,title --jq '.[] | select(.title == "Adopción pendiente del template") | .number' | head -1)
+          issue=$(gh issue list --repo "${{ github.repository }}" --state open --json number,title --jq '.[] | select(.title == "Adopción pendiente del template") | .number' | head -1)
           if [ -n "$issue" ]; then
             gh issue edit "$issue" --repo "${{ github.repository }}" --body-file "$RUNNER_TEMP/template-adoption-issue.md"
           else
-            gh issue create --repo "${{ github.repository }}" --title "Adopción pendiente del template" --label template-sync --body-file "$RUNNER_TEMP/template-adoption-issue.md"
+            gh issue create --repo "${{ github.repository }}" --title "Adopción pendiente del template" --body-file "$RUNNER_TEMP/template-adoption-issue.md"
           fi
 
       - name: Cerrar seguimiento resuelto
@@ -114,12 +112,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh label create template-sync --color 0E8A16 --description "Seguimiento de adopción del template" 2>/dev/null || true
-          issue=$(gh issue list --repo "${{ github.repository }}" --state open --label template-sync --json number,title --jq '.[] | select(.title == "Adopción pendiente del template") | .number' | head -1)
+          issue=$(gh issue list --repo "${{ github.repository }}" --state open --json number,title --jq '.[] | select(.title == "Adopción pendiente del template") | .number' | head -1)
           if [ -n "$issue" ]; then
             gh issue close "$issue" --repo "${{ github.repository }}" --comment "El manifiesto de adopción ya coincide con las versiones publicadas."
           fi
-          credential_issue=$(gh issue list --repo "${{ github.repository }}" --state open --label template-sync --json number,title --jq '.[] | select(.title == "Configurar lectura del template") | .number' | head -1)
+          credential_issue=$(gh issue list --repo "${{ github.repository }}" --state open --json number,title --jq '.[] | select(.title == "Configurar lectura del template") | .number' | head -1)
           if [ -n "$credential_issue" ]; then
             gh issue close "$credential_issue" --repo "${{ github.repository }}" --comment "La lectura del catálogo ya funciona correctamente."
           fi
