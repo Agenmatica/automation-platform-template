@@ -47,9 +47,9 @@ proyectos.
 
 **Independent Test**: E2E con evidencia por input en éxito, falla técnica, falla de captura y evidencia deshabilitada.
 
-- [ ] T010 [P] [US2] Ampliar `infra/kestra/validar-evidencia-flows.test.mjs`: input opcional `evidencia_visual`; montaje `/evidencia` solo dentro de la rama habilitada; nada de evidencia a stderr; poda `find -mtime +N` del host; `publicar_evidencia` (`sftp.Downloads`, `rootDir: false`, `action: DELETE`, `maxFiles: 50`, `runIf`, `allowFailure`/`allowWarning`) en `finally` de la secuencia de despacho; se mantiene el contrato de `validar-workers-runtime.mjs`
-- [ ] T011 [P] [US2] `infra/kestra/flows/plantilla-dedicado.yml`: input `evidencia_visual` (BOOLEAN opcional), preparación de carpeta `<base>/<execution.id>/<organizacion_id>` con fallback a evento `evidencia/fallida` en stdout, poda de residuos, `-v …:/evidencia:rw` + `EVIDENCIA_VISUAL`/`EVIDENCIA_DIR`, y `publicar_evidencia` en `finally` de `procesar_despacho`
-- [ ] T012 [P] [US2] `infra/kestra/flows/plantilla-generico.yml`: idem por iteración (`parent.taskrun.value`), `publicar_evidencia` en `finally` de `ejecutar_despacho`
+- [X] T010 [P] [US2] Ampliar `infra/kestra/validar-evidencia-flows.test.mjs`: input opcional `evidencia_visual`; montaje `/evidencia` solo dentro de la rama habilitada; nada de evidencia a stderr; poda `find -mtime +N` del host; `publicar_evidencia` (`sftp.Downloads`, `rootDir: false`, `action: DELETE`, `maxFiles: 50`, `runIf`, `allowFailure`/`allowWarning`) en `finally` de la secuencia de despacho; se mantiene el contrato de `validar-workers-runtime.mjs`
+- [X] T011 [P] [US2] `infra/kestra/flows/plantilla-dedicado.yml`: input `evidencia_visual` (BOOLEAN opcional), preparación de carpeta `<base>/<execution.id>/<organizacion_id>` con fallback a evento `evidencia/fallida` en stdout, poda de residuos, `-v …:/evidencia:rw` + `EVIDENCIA_VISUAL`/`EVIDENCIA_DIR`, y `publicar_evidencia` en `finally` de `procesar_despacho`
+- [X] T012 [P] [US2] `infra/kestra/flows/plantilla-generico.yml`: idem por iteración (`parent.taskrun.value`), `publicar_evidencia` en `finally` de `ejecutar_despacho`
 - [ ] T013 [US2] Ampliar `infra/kestra/validar-evidencia-e2e.mjs`: host fixture con la base de evidencia montada; escenarios genérico con evidencia (capturas separadas por organización, host sin archivos), dedicado falla técnica con evidencia (alerta técnica igual + captura), `fixture-captura-fallida` (`SUCCESS`) y dedicado sin evidencia (`SUCCESS`, `publicar_evidencia` omitida); centinela ausente también en las capturas descargadas; ejecutarlo junto con `pnpm test:kestra:secretos:e2e` y `pnpm test:kestra:runtime`
 
 **Checkpoint**: capturas visibles desde Kestra sin cambiar resultados. Parar para `/clear`.
@@ -60,16 +60,16 @@ proyectos.
 
 **Independent Test**: retención 30 no borra; retención 0 borra; segunda corrida 0 archivos; ejecuciones y logs intactos.
 
-- [ ] T014 [P] [US3] Ampliar `infra/kestra/validar-evidencia-flows.test.mjs`: `limpieza-evidencia` con `Schedule` diario, `PurgeExecutions` con `purgeExecution`/`purgeLog`/`purgeMetric: false`, `purgeStorage: true`, estados terminales, validación de retención entera ≥ 0 antes de purgar, sin tareas JDBC ni SSH
-- [ ] T015 [US3] Crear `infra/kestra/flows/limpieza-evidencia.yml` (namespace `platform.orquestacion`, inputs opcionales `retencion_dias` y `namespace` con default del entorno / `platform.orquestacion`)
+- [X] T014 [P] [US3] Ampliar `infra/kestra/validar-evidencia-flows.test.mjs`: `limpieza-evidencia` con `Schedule` diario, `PurgeExecutions` con `purgeExecution`/`purgeLog`/`purgeMetric: false`, `purgeStorage: true`, estados terminales, validación de retención entera ≥ 0 antes de purgar, sin tareas JDBC ni SSH
+- [X] T015 [US3] Crear `infra/kestra/flows/limpieza-evidencia.yml` (namespace `platform.orquestacion`, inputs opcionales `retencion_dias` y `namespace` con default del entorno / `platform.orquestacion`)
 - [ ] T016 [US3] Ampliar `infra/kestra/validar-evidencia-e2e.mjs` con el escenario de limpieza (30 → nada; 0 → evidencia previa 404; segunda corrida `storagesCount` 0; ejecuciones y logs consultables; retención inválida falla sin purgar) y ejecutarlo
 
 **Checkpoint**: la limpieza elimina solo evidencia vencida. Parar para `/clear`.
 
 ## Phase 6: User Story 4 - Adoptar la capacidad (P3)
 
-- [ ] T017 [US4] `template-capabilities.json`: `worker-execution-cycle` 1.1.0 con `infra/kestra/flows/limpieza-evidencia.yml`; `worker-image-security` 1.0.1; actualizar `template-adoption.json`; `pnpm template:capabilities:check --base origin/main` y `pnpm test:template:adoption`
-- [ ] T018 [P] [US4] Sección "Observabilidad y evidencia visual" en `docs/adoptar-ciclo-ejecuciones.md` (provisión de `EVIDENCIA_DIR_HOST` en hosts, variables, copia de `limpieza-evidencia` al namespace del producto, regla de no guardar datos de negocio en el storage interno, diferencias con el contrato de origen de `research.md` R8)
+- [X] T017 [US4] `template-capabilities.json`: `worker-execution-cycle` 1.1.0 con `infra/kestra/flows/limpieza-evidencia.yml`; `worker-image-security` 1.0.1; actualizar `template-adoption.json`; `pnpm template:capabilities:check --base origin/main` y `pnpm test:template:adoption`
+- [X] T018 [P] [US4] Sección "Observabilidad y evidencia visual" en `docs/adoptar-ciclo-ejecuciones.md` (provisión de `EVIDENCIA_DIR_HOST` en hosts, variables, copia de `limpieza-evidencia` al namespace del producto, regla de no guardar datos de negocio en el storage interno, diferencias con el contrato de origen de `research.md` R8)
 
 **Checkpoint**: capacidad publicada y adoptable.
 
