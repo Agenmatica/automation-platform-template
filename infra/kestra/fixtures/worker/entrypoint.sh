@@ -28,6 +28,17 @@ capturar() {
 
 evento inicio iniciada "Worker fixture iniciado"
 
+# Fallas no reintentables (workers/CONTRATO.md): con EJECUCION_ID, antes de
+# resolver la credencial o contactar al sistema externo se verifica que la
+# ejecución siga en curso; si no, sale 78 sin ningún efecto externo.
+if [ -n "${EJECUCION_ID:-}" ]; then
+  if [ "$(psql -v ON_ERROR_STOP=1 -Atqc "select private.ejecucion_worker_en_curso('$EJECUCION_ID')")" != "t" ]; then
+    evento inicio fallida "Ejecución no en curso"
+    printf 'EJECUCION_NO_EN_CURSO:%s\n' "$EJECUCION_ID" >&2
+    exit 78
+  fi
+fi
+
 # La consulta verifica el canal worker -> Vault sin serializar su resultado.
 psql -v ON_ERROR_STOP=1 -Atqc \
   "select length(private.obtener_credencial_para_worker('$CONEXION_ID'))" \
@@ -39,11 +50,19 @@ case "${SISTEMA_EXTERNO}" in
   fixture-credencial)
     evento sesion fallida "Credencial rechazada"
     printf 'CREDENCIAL_INVALIDA:%s\n' "$CONEXION_ID" >&2
-    exit 42
+    exit 78
     ;;
   fixture-tecnica)
     evento proceso fallida "Falla técnica simulada"
     capturar proceso
+    printf 'FALLA_TECNICA_SANITIZADA\n' >&2
+    exit 43
+    ;;
+  fixture-tecnica-cierra)
+    # Caso real (Xubio): el worker cierra su ejecución y termina con una falla
+    # técnica; el reintento del flow no debe volver a abrir sesión.
+    evento proceso fallida "Falla técnica tras cerrar la ejecución"
+    psql -v ON_ERROR_STOP=1 -Atqc "select public.cerrar_ejecucion_worker('$EJECUCION_ID', 'fallida', 'FALLA_TECNICA_SANITIZADA')" >/dev/null
     printf 'FALLA_TECNICA_SANITIZADA\n' >&2
     exit 43
     ;;

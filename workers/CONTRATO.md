@@ -23,6 +23,57 @@ Si la credencial es inválida, stderr solo contiene
 `CREDENCIAL_INVALIDA:<conexion_id>`. Los demás errores se sanitizan y no deben
 incluir tokens, cookies, archivos ni secretos.
 
+## Códigos de salida y reintentos
+
+| Código | Significado | ¿El flow reintenta? |
+|---|---|---|
+| `0` | Éxito. | — |
+| `78` | Falla **no reintentable** (`EX_CONFIG` de `sysexits.h`). | No. |
+| Otro distinto de cero | Falla técnica, potencialmente transitoria. | Sí, hasta 3 intentos. |
+
+Con `78`, la última línea de stderr que empieza con un motivo en mayúsculas
+es `<MOTIVO>:<id>`. Motivos no reintentables:
+
+| Motivo | Cuándo |
+|---|---|
+| `CREDENCIAL_INVALIDA:<conexion_id>` | El sistema externo rechazó la credencial. Reintentar puede bloquear la cuenta o, en sistemas de sesión única, expulsar la sesión anterior y activar el anti-bot. |
+| `EJECUCION_NO_EN_CURSO:<ejecucion_id>` | La ejecución recibida ya está cerrada (`exitosa`, `fallida`, `timeout`) o venció su `tiempo_max_seg`. Ver abajo. |
+| `YA_EN_CURSO:<conexion_id>` | Otra ejecución de la misma capacidad sigue activa. |
+| `CAPACIDAD_NO_HABILITADA:<conexion_id>` | La capacidad o la conexión no están habilitadas para ejecutar. |
+| `CONFIGURACION_INVALIDA:<conexion_id>` | Falta o es inválida una variable de entrada del worker. |
+
+Un motivo desconocido con `78` igual corta los reintentos y se informa como
+`NO_REINTENTABLE`. Las plantillas de Kestra también tratan como no
+reintentable cualquier stderr con `CREDENCIAL_INVALIDA:` aunque el código no
+sea `78`, para cubrir workers anteriores a este contrato; un worker nuevo usa
+`78` siempre.
+
+En el flow, `despacho_ssh` conserva el código técnico para su `retry`; ante
+una falla no reintentable termina en `0` con el output `no_reintentable` y la
+única tarea posterior, `resolver_resultado_despacho`
+(`private.resolver_resultado_despacho`), falla con `<MOTIVO>:<conexion_id>`
+sin reintento. El handler de errores la clasifica igual que antes (credencial
+o técnica) y la conexión no se marca activa. Un flow con outbox (spec 019)
+resuelve esa orden con `agotar`, nunca con `liberar`: liberar volvería a
+despachar el worker.
+
+## Ejecución en curso antes de actuar
+
+Cuando el worker recibe `EJECUCION_ID` (disparo manual u outbox), antes de
+abrir un navegador, iniciar sesión o contactar al sistema externo llama a
+`private.ejecucion_worker_en_curso(<ejecucion_id>)` con su propio rol
+`worker_*`. Si devuelve `false`, no hace nada más: emite el evento
+`{"etapa":"inicio","estado":"fallida",...}`, escribe
+`EJECUCION_NO_EN_CURSO:<ejecucion_id>` en stderr y sale con `78`. No cierra la
+ejecución (ya está cerrada o la cerrará el timeout perezoso). Así un
+reintento del despacho posterior a un cierre no repite el login.
+
+La función es de solo lectura, rechaza (`NO_AUTORIZADO`) a cualquier llamante
+que no sea un worker y las ejecuciones de otra organización, y devuelve
+`false` para una ejecución `en_curso` cuyo `tiempo_max_seg` ya venció. Un
+worker que se autoregistra con `iniciar_ejecucion_worker` (disparo
+programado) ya parte de una ejecución vigente.
+
 ## Red y runtime
 
 La red es deny-by-default. Cada worker documenta los dominios de Supabase, Vault
