@@ -23,8 +23,8 @@ proyectos.
 
 ## Phase 2: Foundational
 
-- [ ] T004 Agregar a `workers/CONTRATO.md` la sección "Observabilidad y evidencia visual" según `contracts/observabilidad-workers.md` y `data-model.md` (evento, estados, sanitización, `EVIDENCIA_VISUAL`, `EVIDENCIA_DIR`, `EVIDENCIA_RETENCION_DIAS` de plataforma, capturas solo en hitos y separadas de datos, fallo de captura no cambia el resultado)
-- [ ] T005 Extender el worker fixture `infra/kestra/fixtures/worker/entrypoint.sh` para emitir eventos del contrato por stdout (`inicio`, `proceso`, `fin` / `fallida`) y, con `EVIDENCIA_VISUAL=true` y `EVIDENCIA_DIR`, escribir capturas PNG mínimas por hito; nuevo `SISTEMA_EXTERNO=fixture-captura-fallida` que simula fallo de captura (evento `evidencia/fallida`) y termina bien
+- [X] T004 Agregar a `workers/CONTRATO.md` la sección "Observabilidad y evidencia visual" según `contracts/observabilidad-workers.md` y `data-model.md` (evento, estados, sanitización, `EVIDENCIA_VISUAL`, `EVIDENCIA_DIR`, `EVIDENCIA_RETENCION_DIAS` de plataforma, capturas solo en hitos y separadas de datos, fallo de captura no cambia el resultado)
+- [X] T005 Extender el worker fixture `infra/kestra/fixtures/worker/entrypoint.sh` para emitir eventos del contrato por stdout (`inicio`, `proceso`, `fin` / `fallida`) y, con `EVIDENCIA_VISUAL=true` y `EVIDENCIA_DIR`, escribir capturas PNG mínimas por hito; nuevo `SISTEMA_EXTERNO=fixture-captura-fallida` que simula fallo de captura (evento `evidencia/fallida`) y termina bien
 
 **Checkpoint**: contrato escrito y fixture capaz de ejercitarlo.
 
