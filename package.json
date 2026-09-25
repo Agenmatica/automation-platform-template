@@ -27,6 +27,7 @@
     "db:reset:ci": "node scripts/reset-db-ci.mjs",
     "deploy:vps": "node scripts/deploy-vps.mjs",
     "kestra:render-flow": "node infra/kestra/renderizar-flow.mjs",
+    "kestra:sincronizar-rol-local": "node infra/kestra/sincronizar-rol-orquestacion.mjs",
     "kestra:deploy-flow": "node infra/kestra/desplegar-flow.mjs",
     "preview": "pnpm --filter @platform/web preview",
     "supabase": "supabase",
