@@ -2,7 +2,7 @@
 
 **Rama**: `019-outbox-ejecuciones`  
 **Creada**: 2026-09-23  
-**Estado**: Borrador  
+**Estado**: Implementada
 **Alcance de entrega**: `supabase`, `kestra`, `workers`
 
 ## Escenarios de usuario y pruebas

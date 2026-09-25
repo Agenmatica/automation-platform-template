@@ -10,7 +10,8 @@ const tag = 'automation-platform-template/spec014-fixture-worker:local';
 const sshImage = 'automation-platform-template/spec014-fixture-ssh:local';
 const sentinel = 'CENTINELA_014_NO_PERSISTIR';
 const containers = ['spec014-ssh-x', 'spec014-ssh-y'];
-const secretNames = ['fixture-014-x', 'fixture-014-y', 'fixture-014-tecnica', 'fixture-014-credencial'];
+const fixtureRun = crypto.randomUUID();
+const secretNames = ['x', 'y', 'tecnica', 'credencial'].map((label) => `fixture-014-${fixtureRun}-${label}`);
 
 async function command(file, args, options = {}) {
   try {
@@ -164,14 +165,14 @@ try {
   await waitExecution(base, successId, headers);
   const success = await saveArtifacts(base, successId, 'exito', headers, artifactDirectory);
   if (success.state.current !== 'SUCCESS') throw new Error(`El escenario de éxito terminó en ${success.state.current}, se esperaba SUCCESS.`);
-  console.log('Disparando escenario de falla técnica...');
-  const technicalId = await start(base, 'platform.orquestacion', 'plantilla-dedicado', { organizacion_id: organizationX, sistema_externo: 'fixture-tecnica', imagen: tag }, headers);
-  await waitExecution(base, technicalId, headers);
-  assertClassification(await saveArtifacts(base, technicalId, 'falla-tecnica', headers, artifactDirectory), false, 'La falla técnica');
   console.log('Disparando escenario de falla de credencial (con reintento)...');
   const credentialId = await start(base, 'platform.orquestacion', 'plantilla-dedicado', { organizacion_id: organizationX, sistema_externo: 'fixture-credencial', imagen: tag }, headers);
   await waitExecution(base, credentialId, headers);
   assertClassification(await saveArtifacts(base, credentialId, 'falla-credencial', headers, artifactDirectory), true, 'La falla de credencial');
+  console.log('Disparando escenario de falla técnica...');
+  const technicalId = await start(base, 'platform.orquestacion', 'plantilla-dedicado', { organizacion_id: organizationX, sistema_externo: 'fixture-tecnica', imagen: tag }, headers);
+  await waitExecution(base, technicalId, headers);
+  assertClassification(await saveArtifacts(base, technicalId, 'falla-tecnica', headers, artifactDirectory), false, 'La falla técnica');
   await writeFile(path.join(artifactDirectory, 'kestra-internal-storage.txt'), await docker(['exec', kestra, 'sh', '-c', `grep -rF -e '${sentinel}' -e '${Buffer.from(sentinel).toString('base64')}' /app/storage /tmp/kestra-wd 2>/dev/null; echo fin-busqueda`]));
   await command('node', ['infra/kestra/test-secretos-orquestacion.mjs', '--artifact-directory', artifactDirectory], { env: { ...process.env, CREDENCIAL_CENTINELA: sentinel } });
   console.log('OK: recorrido completo sin apariciones del centinela en ninguna ejecución real.');
