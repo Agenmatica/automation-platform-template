@@ -16,6 +16,11 @@ Kestra coordina y los workers ejecutan integraciones aisladas.
 
 ## Adopción incremental
 
+El publicador `pnpm kestra:deploy-flow` consulta primero el flow indicado: lo
+crea si no existe y lo actualiza si existe. Las credenciales y las respuestas
+de Kestra no se imprimen. `pnpm test:kestra:deploy-flow` prueba ambas rutas y
+una respuesta de consulta rechazada sin requerir una instancia real.
+
 1. Inventariar los scripts propios del producto y separarlos de los que una
    imagen Docker o herramienta de terceros exige internamente.
 2. Traer el relevo Node, probarlo con datos locales sin secretos en argumentos,

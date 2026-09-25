@@ -43,6 +43,7 @@
     "test:kestra:runtime": "node infra/kestra/validar-workers-runtime.mjs",
     "test:ia:aprovisionamiento": "node --test infra/ia/aprovisionar-proveedores.test.mjs",
     "test:tooling": "node --test scripts/operaciones.test.mjs",
+    "test:kestra:deploy-flow": "node --test infra/kestra/desplegar-flow.test.mjs",
     "test:outbox:frontera": "node scripts/verificar-frontera-outbox.mjs",
     "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner",
     "infra:config:refine": "docker compose -f infra/refine/compose.yaml config --quiet",

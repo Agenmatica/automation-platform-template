@@ -12,11 +12,14 @@ const username = argumentValue(args, '--username', process.env.KESTRA_BASIC_AUTH
 const password = argumentValue(args, '--password', process.env.KESTRA_BASIC_AUTH_PASSWORD);
 
 if (!username?.trim() || !password?.trim()) throw new Error('Definí KESTRA_BASIC_AUTH_USERNAME y KESTRA_BASIC_AUTH_PASSWORD.');
-const webhookKey = requireEnvironment(webhookKeyEnv);
 const flow = await readFile(path.resolve(source), 'utf8');
-const rendered = flow.replace(/^(\s*key:\s+")\{\{\s*secret\('[^']+'\)\s*\}\}("\s*)$/m, `$1${webhookKey}$2`);
-if (rendered === flow || !/^\s*key:\s+"[0-9a-fA-F]+"\s*$/m.test(rendered)) {
-  throw new Error('No se encontró una clave webhook renderizable en el flow.');
+let rendered = flow;
+if (webhookKeyEnv) {
+  const webhookKey = requireEnvironment(webhookKeyEnv);
+  rendered = flow.replace(/^(\s*key:\s+")\{\{\s*secret\('[^']+'\)\s*\}\}("\s*)$/m, `$1${webhookKey}$2`);
+  if (rendered === flow || !/^\s*key:\s+"[0-9a-fA-F]+"\s*$/m.test(rendered)) {
+    throw new Error('No se encontró una clave webhook renderizable en el flow.');
+  }
 }
 
 const authorization = `Basic ${Buffer.from(`${username}:${password}`, 'utf8').toString('base64')}`;
@@ -31,12 +34,12 @@ async function publish(url, method) {
 }
 
 try {
-  let result;
-  try { result = await publish(`${kestraUrl}/api/v1/main/flows/${encodeURIComponent(namespace)}/${encodeURIComponent(flowId)}`, 'PUT'); }
-  catch (error) {
-    if (!String(error.message).includes('HTTP 404')) throw error;
-    result = await publish(`${kestraUrl}/api/v1/main/flows`, 'POST');
-  }
+  const flowUrl = `${kestraUrl}/api/v1/main/flows/${encodeURIComponent(namespace)}/${encodeURIComponent(flowId)}`;
+  const existing = await fetch(flowUrl, { headers: { authorization }, signal: AbortSignal.timeout(60_000) });
+  if (existing.status !== 200 && existing.status !== 404) throw new Error(`Kestra devolvió HTTP ${existing.status} al consultar el flow.`);
+  const result = existing.status === 404
+    ? await publish(`${kestraUrl}/api/v1/main/flows`, 'POST')
+    : await publish(flowUrl, 'PUT');
   console.log(`Desplegado ${namespace}/${flowId}, revisión ${result.revision ?? 'actualizada'}.`);
 } catch (error) {
   throw new Error(redactError(error));
