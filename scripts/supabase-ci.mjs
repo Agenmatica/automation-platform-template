@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { connect, createServer } from 'node:net';
 import { appendFile, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -121,14 +122,32 @@ async function preparar() {
   console.log(`Stack de CI: ${stack.projectId} (base en el puerto ${stack.puertoDb}, workdir ${WORKDIR_CI}).`);
 }
 
+// Dentro del contenedor del runner, 127.0.0.1 es el propio contenedor, pero
+// `supabase start` se conecta a 127.0.0.1:<puerto de la base> para terminar
+// de inicializar el stack. El puente reenvía sólo el puerto derivado del CI
+// hacia el Docker del host mientras dura el `start`.
+async function puente() {
+  const { puertoDb } = derivarStackCi(await leerDesarrollo(), process.env.GITHUB_REPOSITORY);
+  const servidor = createServer((cliente) => {
+    const destino = connect(puertoDb, 'host.docker.internal');
+    cliente.pipe(destino).pipe(cliente);
+    const cerrar = () => { cliente.destroy(); destino.destroy(); };
+    cliente.on('error', cerrar);
+    destino.on('error', cerrar);
+  });
+  await new Promise((resolve, reject) => servidor.once('error', reject).listen(puertoDb, '127.0.0.1', resolve));
+  console.log(`Puente 127.0.0.1:${puertoDb} → host.docker.internal:${puertoDb} activo.`);
+}
+
 async function main([comando]) {
   if (comando === 'preparar') return await preparar();
+  if (comando === 'puente') return await puente();
   if (comando === 'verificar') {
     const { puerto, projectId } = await verificarDestinoCiActual();
     console.log(`Destino verificado: ${projectId} en el puerto ${puerto}.`);
     return;
   }
-  throw new Error('Uso: node scripts/supabase-ci.mjs <preparar|verificar>');
+  throw new Error('Uso: node scripts/supabase-ci.mjs <preparar|puente|verificar>');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

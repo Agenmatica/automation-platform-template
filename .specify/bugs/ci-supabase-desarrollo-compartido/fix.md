@@ -52,6 +52,12 @@ aborta si el destino no es ese stack. Ya no queda ningún default a 5434.
   template: `template:adoption:check` lo exige.
 - Se descartó un script `db:ci:down` con el project_id fijo, porque cada
   producto tendría que editarlo. La limpieza manual queda documentada.
+- La mitigación de riesgo del assessment (desactivar migraciones y seed del
+  `start`) no alcanzó. En la primera corrida real (run 36170610204),
+  `supabase start` falló con `dial error (connect ECONNREFUSED
+  127.0.0.1:25434)`: el CLI se conecta a la base por 127.0.0.1 igual. Se
+  agregó `scripts/supabase-ci.mjs puente`, un reenvío TCP efímero de sólo ese
+  puerto hacia `host.docker.internal`, activo durante el `start`.
 - Durante la evaluación se abrió el PR con el CI anterior todavía activo. La
   corrida se canceló antes del reset (`db:reset:ci` = skipped, run
   36170074195), así que 5434 no se tocó.
