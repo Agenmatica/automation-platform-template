@@ -4,7 +4,7 @@
   "capabilities": [
     {
       "id": "worker-execution-cycle",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "title": "Ciclo auditable de ejecuciones de workers",
       "paths": ["supabase/migrations/20260920000000_ciclo_ejecuciones_workers.sql", "supabase/migrations/20260923120000_detalle_inicio_ejecucion.sql", "workers/CONTRATO.md", "infra/kestra/flows/plantilla-generico.yml", "infra/kestra/flows/plantilla-dedicado.yml"]
     },
