@@ -100,6 +100,50 @@ el host). `supabase start` sí funciona igual en los dos casos porque controla
 al Docker del host vía el socket montado, no depende de la red del
 contenedor.
 
+### Stack de Supabase propio del CI
+
+Como el runner comparte el Docker del host con los stacks de desarrollo (el
+del template y los de cada producto derivado), el job `database` **nunca**
+usa el `project_id` ni los puertos de `supabase/config.toml`. Antes se
+reutilizaba el stack de desarrollo del template (5434) y `db:reset:ci` lo
+borraba en cada PR, también en los PR del producto que copió el workflow (ver
+`.specify/bugs/ci-supabase-desarrollo-compartido/`).
+
+- `pnpm db:ci:preparar` (`scripts/supabase-ci.mjs preparar`) genera
+  `.supabase-ci/supabase/` (ignorado por Git) con una copia de `supabase/` y un
+  `config.toml` reescrito: `project_id = "ci-<repo>"` y cada puerto `p`
+  convertido en `20000 + p % 10000`. En el template queda
+  `ci-automation-platform-template` con la base en 25434; en
+  estudio-contable-automation (desarrollo en 6434), `ci-estudio-contable-automation`
+  con la base en 26434. Como los stacks de desarrollo ya usan puertos
+  distintos entre sí, los del CI tampoco chocan. Se genera un archivo aparte
+  porque `config.toml` no admite `env()` en los puertos (excepción FR-006 de
+  la spec 015). Migraciones y seed quedan desactivados en ese `start`: los
+  aplica `db:reset:ci`.
+- `supabase start --workdir "$SUPABASE_CI_WORKDIR" -x …` levanta sólo lo que
+  usan los pgTAP (Postgres, Auth y Storage; sin Kong ni PostgREST, que
+  además no podrían validar `dominio` antes de que `db:reset:ci` aplique las
+  migraciones, y cuyo health-check por `127.0.0.1` no llega desde el runner). Para inicializar
+  el stack, el CLI se conecta a `127.0.0.1:<puerto>`, que dentro del runner es
+  el propio contenedor. Por eso, mientras dura el `start`, corre
+  `scripts/supabase-ci.mjs puente`, que reenvía sólo el puerto derivado del CI
+  hacia `host.docker.internal`. El CI anterior nunca lo necesitó porque no
+  levantaba nada: encontraba el stack de desarrollo ya corriendo.
+- `pnpm db:reset:ci` y `pnpm test:db:ci` pasan primero por la guarda
+  `scripts/supabase-ci.mjs verificar`. La guarda aborta si falta
+  `SUPABASE_DB_PORT` o `SUPABASE_CI_PROJECT_ID` (no hay puerto por defecto),
+  si el project_id o el puerto son de desarrollo o no son los derivados, o si
+  el contenedor que publica ese puerto no es exactamente
+  `supabase_db_ci-<repo>`.
+- El stack del CI **se mantiene entre corridas** para que el arranque sea
+  rápido. No guarda datos de nadie: cada corrida lo resetea. Un `concurrency`
+  por repositorio evita que dos réplicas del runner lo usen a la vez (si hay
+  varias corridas en cola, GitHub descarta las pendientes más viejas). Como
+  un `start` sobre un stack ya levantado no relee `config.toml`, después de
+  cambiar esa configuración hay que bajarlo a mano:
+  `supabase stop --project-id ci-<repo> --no-backup`.
+- Adopción en productos derivados: `docs/adoptar-ci-base-aislada.md`.
+
 ## Promoción simple
 
 ```text

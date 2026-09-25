@@ -34,7 +34,7 @@
     },
     {
       "id": "portable-typescript-tooling",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "title": "Tooling operativo portable en Node ESM",
       "paths": ["infra/kestra/renderizar-flow.mjs", "infra/ia/", "scripts/deploy-vps.mjs", "scripts/reset-db-ci.mjs", "infra/runner/entrypoint.mjs"]
     },
@@ -55,6 +55,12 @@
       "version": "1.0.0",
       "title": "Analítica embebida de Superset reproducible al recrear contenedores",
       "paths": ["infra/superset/compose.yaml", "infra/superset/compose.vps.yaml", "infra/superset/configurar_embebido.py", "supabase/functions/emitir-acceso-reporte/index.ts", "scripts/verificar-superset-embebido.mjs"]
+    },
+    {
+      "id": "isolated-ci-database",
+      "version": "1.0.0",
+      "title": "Base de datos del CI aislada de los stacks de desarrollo",
+      "paths": ["scripts/supabase-ci.mjs", "scripts/supabase-ci.test.mjs", "scripts/reset-db-ci.mjs"]
     }
   ]
 }
