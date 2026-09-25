@@ -23,3 +23,6 @@ Thumbs.db
 # Agent-local state; shared skills and instructions remain versioned.
 .claude/settings.local.json
 .codex/
+
+# Workdir generado del stack de Supabase propio del CI (scripts/supabase-ci.mjs).
+.supabase-ci/
