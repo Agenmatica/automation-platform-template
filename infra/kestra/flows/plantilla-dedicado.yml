@@ -20,96 +20,99 @@ inputs:
   - id: imagen
     type: STRING
 tasks:
-  - id: resolver_despacho
-    type: io.kestra.plugin.jdbc.postgresql.Query
-    url: "{{ envs.kestra_orquestacion_db_url }}"
-    username: kestra_orquestacion
-    password: "{{ envs.kestra_orquestacion_db_password }}"
-    fetchType: FETCH_ONE
-    sql: select * from private.datos_despacho_conexion(CAST(:organizacion_id AS uuid), :sistema_externo);
-    parameters:
-      organizacion_id: "{{ inputs.organizacion_id }}"
-      sistema_externo: "{{ inputs.sistema_externo }}"
-  - id: despacho_ssh
-    type: io.kestra.plugin.fs.ssh.Command
-    host: "{{ outputs.resolver_despacho.row.host }}"
-    port: "{{ outputs.resolver_despacho.row.puerto_ssh }}"
-    username: "{{ outputs.resolver_despacho.row.usuario_ssh }}"
-    authMethod: PUBLIC_KEY
-    privateKey: "{{ secret('ORQUESTACION_SSH_PRIVATE_KEY') }}"
-    timeout: PT30M
-    retry:
-      type: exponential
-      maxAttempts: 3
-      interval: PT30S
-      maxInterval: PT2M
-    commands:
-      - docker image inspect {{ inputs.imagen }} >/dev/null 2>&1 || docker pull {{ inputs.imagen }}
-      - |
-        set -a
-        . /opt/automation-platform/worker.env
-        set +a
-        SISTEMA_EXTERNO="{{ inputs.sistema_externo }}"
-        WORKER_NETWORK_ESPERADA="worker-egress-$SISTEMA_EXTERNO"
-        case "$SISTEMA_EXTERNO" in fixture-*) WORKER_NETWORK_ESPERADA=bridge ;; esac
-        [ "$WORKER_NETWORK" = "$WORKER_NETWORK_ESPERADA" ] || { echo 'Red de egress no autorizada' >&2; exit 64; }
-        docker run --rm \
-          --read-only \
-          --tmpfs /tmp:rw,noexec,nosuid,size=64m \
-          --cap-drop=ALL \
-          --security-opt=no-new-privileges:true \
-          --cpus "${WORKER_CPUS:-1}" \
-          --memory "${WORKER_MEMORY:-512m}" \
-          --network "${WORKER_NETWORK:?Debe configurarse una red con egress allowlist}" \
-          --env PGHOST --env PGPORT --env PGDATABASE --env PGUSER --env PGPASSWORD \
-          -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
-          -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
-          -e CONEXION_ID="{{ outputs.resolver_despacho.row.conexion_id }}" \
-          {{ inputs.imagen }}
-  - id: marcar_conexion_activa
-    type: io.kestra.plugin.jdbc.postgresql.Query
-    url: "{{ envs.kestra_orquestacion_db_url }}"
-    username: kestra_orquestacion
-    password: "{{ envs.kestra_orquestacion_db_password }}"
-    sql: select private.marcar_conexion_activa(CAST(:conexion_id AS uuid));
-    parameters:
-      conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
-errors:
-  # errorLogs() solo puede evaluarse en una tarea que corre en un Worker (no
-  # en el condition de un Flowable como If, que lo evalua el executor) -- de
-  # ahi la tarea intermedia detectar_tipo_falla.
-  # errorLogs() devuelve una lista de entradas estructuradas, no texto
-  # concatenado, asi que "contains" sobre la lista nunca matchea un
-  # substring: hay que unir los mensajes antes de buscar la marca.
-  - id: detectar_tipo_falla
-    type: io.kestra.plugin.core.debug.Return
-    format: "{% for log in errorLogs() %}{{ log.message }}\n{% endfor %}"
-  - id: clasificar_y_alertar
-    type: io.kestra.plugin.core.flow.If
-    # Solo se inspecciona la marca contractual del worker para elegir tipo;
-    # errorLogs() nunca se transmite ni se persiste como motivo.
-    condition: "{{ outputs.detectar_tipo_falla is defined and outputs.detectar_tipo_falla.value contains 'CREDENCIAL_INVALIDA:' }}"
-    then:
-      - id: alertar_credencial
-        type: io.kestra.plugin.core.flow.Subflow
-        namespace: platform.alertas
-        flowId: alertas
-        wait: true
-        transmitFailed: false
-        inputs:
-          tipo: credencial
+  - id: procesar_despacho
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: resolver_despacho
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: "{{ envs.kestra_orquestacion_db_url }}"
+        username: kestra_orquestacion
+        password: "{{ envs.kestra_orquestacion_db_password }}"
+        fetchType: FETCH_ONE
+        sql: select * from private.datos_despacho_conexion(CAST(:organizacion_id AS uuid), :sistema_externo);
+        parameters:
           organizacion_id: "{{ inputs.organizacion_id }}"
+          sistema_externo: "{{ inputs.sistema_externo }}"
+      - id: despacho_ssh
+        type: io.kestra.plugin.fs.ssh.Command
+        host: "{{ outputs.resolver_despacho.row.host }}"
+        port: "{{ outputs.resolver_despacho.row.puerto_ssh }}"
+        username: "{{ outputs.resolver_despacho.row.usuario_ssh }}"
+        authMethod: PUBLIC_KEY
+        privateKey: "{{ secret('ORQUESTACION_SSH_PRIVATE_KEY') }}"
+        timeout: PT30M
+        retry:
+          type: exponential
+          maxAttempts: 3
+          interval: PT30S
+          maxInterval: PT2M
+        commands:
+          - docker image inspect {{ inputs.imagen }} >/dev/null 2>&1 || docker pull {{ inputs.imagen }}
+          - |
+            set -a
+            . /opt/automation-platform/worker.env
+            set +a
+            SISTEMA_EXTERNO="{{ inputs.sistema_externo }}"
+            WORKER_NETWORK_ESPERADA="worker-egress-$SISTEMA_EXTERNO"
+            case "$SISTEMA_EXTERNO" in fixture-*) WORKER_NETWORK_ESPERADA=bridge ;; esac
+            [ "$WORKER_NETWORK" = "$WORKER_NETWORK_ESPERADA" ] || { echo 'Red de egress no autorizada' >&2; exit 64; }
+            docker run --rm \
+              --read-only \
+              --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+              --cap-drop=ALL \
+              --security-opt=no-new-privileges:true \
+              --cpus "${WORKER_CPUS:-1}" \
+              --memory "${WORKER_MEMORY:-512m}" \
+              --network "${WORKER_NETWORK:?Debe configurarse una red con egress allowlist}" \
+              --env PGHOST --env PGPORT --env PGDATABASE --env PGUSER --env PGPASSWORD \
+              -e ORGANIZACION_ID="{{ inputs.organizacion_id }}" \
+              -e SISTEMA_EXTERNO="{{ inputs.sistema_externo }}" \
+              -e CONEXION_ID="{{ outputs.resolver_despacho.row.conexion_id }}" \
+              {{ inputs.imagen }}
+      - id: marcar_conexion_activa
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: "{{ envs.kestra_orquestacion_db_url }}"
+        username: kestra_orquestacion
+        password: "{{ envs.kestra_orquestacion_db_password }}"
+        sql: select private.marcar_conexion_activa(CAST(:conexion_id AS uuid));
+        parameters:
           conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
-          motivo_sanitizado: "CREDENCIAL_INVALIDA:{{ outputs.resolver_despacho.row.conexion_id }}"
-    else:
-      - id: alertar_tecnica
-        type: io.kestra.plugin.core.flow.Subflow
-        namespace: platform.alertas
-        flowId: alertas
-        wait: true
-        transmitFailed: false
-        inputs:
-          tipo: tecnica
-          organizacion_id: "{{ inputs.organizacion_id }}"
-          conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
-          motivo_sanitizado: FALLA_TECNICA_SANITIZADA
+    errors:
+      # errorLogs() solo puede evaluarse en una tarea que corre en un Worker (no
+      # en el condition de un Flowable como If, que lo evalua el executor) -- de
+      # ahi la tarea intermedia detectar_tipo_falla.
+      # errorLogs() devuelve una lista de entradas estructuradas, no texto
+      # concatenado, asi que "contains" sobre la lista nunca matchea un
+      # substring: hay que unir los mensajes antes de buscar la marca.
+      - id: detectar_tipo_falla
+        type: io.kestra.plugin.core.debug.Return
+        format: "{% for log in errorLogs() %}{{ log.message }}\n{% endfor %}"
+      - id: clasificar_y_alertar
+        type: io.kestra.plugin.core.flow.If
+        # Solo se inspecciona la marca contractual del worker para elegir tipo;
+        # errorLogs() nunca se transmite ni se persiste como motivo.
+        condition: "{{ outputs.detectar_tipo_falla is defined and outputs.detectar_tipo_falla.value contains 'CREDENCIAL_INVALIDA:' }}"
+        then:
+          - id: alertar_credencial
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: platform.alertas
+            flowId: alertas
+            wait: true
+            transmitFailed: false
+            inputs:
+              tipo: credencial
+              organizacion_id: "{{ inputs.organizacion_id }}"
+              conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+              motivo_sanitizado: "CREDENCIAL_INVALIDA:{{ outputs.resolver_despacho.row.conexion_id }}"
+        else:
+          - id: alertar_tecnica
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: platform.alertas
+            flowId: alertas
+            wait: true
+            transmitFailed: false
+            inputs:
+              tipo: tecnica
+              organizacion_id: "{{ inputs.organizacion_id }}"
+              conexion_id: "{{ outputs.resolver_despacho.row.conexion_id }}"
+              motivo_sanitizado: FALLA_TECNICA_SANITIZADA

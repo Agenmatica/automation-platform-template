@@ -2,7 +2,7 @@
 
 **Rama**: `020-tooling-typescript`  
 **Creada**: 2026-09-23  
-**Estado**: Borrador  
+**Estado**: Implementada
 **Alcance de entrega**: `kestra`, `workers`
 
 ## Escenarios de usuario y pruebas

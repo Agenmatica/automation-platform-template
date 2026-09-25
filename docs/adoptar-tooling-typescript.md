@@ -14,6 +14,11 @@ Kestra coordina y los workers ejecutan integraciones aisladas.
 | Runner autocontenido | `infra/runner/entrypoint.mjs` | `infra/runner/entrypoint.sh` | Migrado; Node ya está instalado en la imagen del runner |
 | Fixtures internos Docker | — | `infra/kestra/fixtures/{worker,worker-runtime,ssh-host}/*.sh` | Excepción técnica explícita: son contratos de `ENTRYPOINT`, `/custom-cont-init.d` o `sh` de imágenes Docker efímeras. No son comandos públicos ni tooling operativo; sus Dockerfiles los invocan dentro de imágenes base que no requieren Node. |
 
+Antes de ejecutar el E2E local de Kestra, reconciliar el rol JDBC con el
+entorno local mediante `pnpm kestra:sincronizar-rol-local`. El comando exige
+`KESTRA_ORQUESTACION_DB_PASSWORD`, la aplica por stdin a PostgreSQL y no la
+imprime. El valor permanece exclusivamente en `infra/kestra/.env` ignorado.
+
 ## Adopción incremental
 
 El publicador `pnpm kestra:deploy-flow` consulta primero el flow indicado: lo
