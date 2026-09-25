@@ -10,13 +10,13 @@ siendo opcional y no se registran secretos ni respuestas operativas.
 
 ## Technical Context
 
-**Language/Version**: Node.js 24, ECMAScript modules.  
-**Primary Dependencies**: Fetch nativo, Node test runner.  
-**Storage**: No aplica.  
-**Testing**: `node --test` con servidor HTTP local controlado.  
-**Target Platform**: Kestra local o VPS, Windows y Linux.  
-**Project Type**: Tooling de infraestructura.  
-**Constraints**: Sin secretos en salida; timeout de 60 s; no modificar flows de negocio.  
+**Language/Version**: Node.js 24, ECMAScript modules.
+**Primary Dependencies**: Fetch nativo, Node test runner.
+**Storage**: No aplica.
+**Testing**: `node --test` con servidor HTTP local controlado.
+**Target Platform**: Kestra local o VPS, Windows y Linux.
+**Project Type**: Tooling de infraestructura.
+**Constraints**: Sin secretos en salida; timeout de 60 s; no modificar flows de negocio.
 
 ## Constitution Check
 
