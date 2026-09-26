@@ -99,6 +99,65 @@ Diferencias con el contrato de origen (README de un producto derivado): se
 fijan los campos del evento, la ubicación de capturas la monta la plataforma
 y la retención deja de ser responsabilidad del worker.
 
+## 3.3 Fallas no reintentables (`worker-execution-cycle` 1.2.0)
+
+Bug `.specify/bugs/reintentos-credencial-invalida`. Contrato normativo en
+`workers/CONTRATO.md` ("Códigos de salida y reintentos" y "Ejecución en
+curso antes de actuar"). Sin esto, el `retry` de `despacho_ssh` relanzaba el
+worker (y el login contra el sistema externo) hasta 3 veces ante una
+credencial inválida.
+
+1. **Migración**: aplicar
+   `supabase/migrations/20260925200000_ejecucion_en_curso_worker.sql`
+   (aditiva: `private.ejecucion_worker_en_curso` con grant a
+   `workers_orquestacion`, que alcanza a los roles `worker_*` existentes, y
+   `private.resolver_resultado_despacho` con grant a `kestra_orquestacion`).
+2. **Workers**: salir con `78` y `<MOTIVO>:<id>` en stderr ante una falla no
+   reintentable (credencial inválida, ejecución no en curso, `YA_EN_CURSO`,
+   capacidad no habilitada, configuración inválida). Con `EJECUCION_ID`,
+   llamar a `private.ejecucion_worker_en_curso` antes de abrir el navegador
+   o hacer login; si devuelve `false`, salir `78` con
+   `EJECUCION_NO_EN_CURSO:<ejecucion_id>` sin cerrar la ejecución.
+3. **Flows**: traer a cada flow concreto copiado de las plantillas la
+   captura de `WORKER_STDERR`/`WORKER_RC` alrededor de `docker run`, el
+   bloque que publica el output `no_reintentable` y el reemplazo de
+   `marcar_conexion_activa` por `resolver_resultado_despacho` (misma
+   posición, sin `retry`). El flow dedicado agrega el input opcional
+   `ejecucion_id` → `EJECUCION_ID`. No agregar una tarea `Fail`/`Assert`
+   aparte a la secuencia del flow genérico: con Kestra 1.3.35, sumar tareas
+   (o referencias `outputs.<tarea>[parent.taskrun.value]`) a esa secuencia
+   dentro del `ForEach` agota el heap de Kestra después de guardar el flow.
+   Mientras un worker no adopte el código `78`, la marca
+   `CREDENCIAL_INVALIDA:` en stderr ya evita el reintento.
+4. **Outbox**: si el flow resuelve una orden de spec 019, una falla con
+   `no_reintentable` se resuelve con `agotar`, nunca con `liberar`.
+5. **Validar** con una ejecución real equivalente a
+   `pnpm test:kestra:reintentos:e2e`: credencial inválida con un solo
+   lanzamiento del worker, reintento técnico posterior a un cierre sin nuevo
+   login y falla técnica con sus 3 intentos.
+
+### Limitaciones conocidas del flow genérico (Kestra 1.3.35)
+
+Detalle y mediciones en
+`.specify/bugs/reintentos-credencial-invalida/fix.md`.
+
+- **Memoria al guardar.** Publicar el genérico puede hacer que Kestra pase
+  de ~1,5 a ~8,5 GB de heap después de responder el guardado, termine en
+  `OutOfMemoryError` y se reinicie. Sumar una tarea a la secuencia por
+  organización (dentro del `ForEach`, con `finally` y `errors`), aunque
+  sea un `debug.Return`, o más referencias
+  `outputs.<tarea>[parent.taskrun.value]` lo provocó en 7 de 7 intentos;
+  la estructura actual, en 2 de 8. El flow dedicado no lo sufre. Al adaptar
+  el genérico, no agregar tareas a esa secuencia y validar la publicación en
+  el Kestra de desarrollo antes de desplegar.
+- **Clasificación de fallas.** En el genérico, `clasificar_y_alertar` lee
+  `outputs.detectar_tipo_falla.value` sin el índice de la iteración y falla en
+  runtime: una falla de una organización no se alerta ni marca la conexión
+  (`credencial_invalida`). El dedicado clasifica bien. Corregir el índice
+  dispara la limitación de memoria anterior, así que se trata como un bug
+  propio; hasta entonces, las organizaciones que necesiten alerta de
+  credencial deben despacharse con el flow dedicado.
+
 ## 4. Mapeo de este producto
 
 ### Versión de outbox adoptable
