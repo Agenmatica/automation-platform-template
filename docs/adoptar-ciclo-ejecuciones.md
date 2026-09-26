@@ -158,6 +158,31 @@ Detalle y mediciones en
   propio; hasta entonces, las organizaciones que necesiten alerta de
   credencial deben despacharse con el flow dedicado.
 
+## 3.4 Conexiones en `credencial_invalida` o `error` (`worker-execution-cycle` 1.3.0)
+
+Bug `.specify/bugs/conexion-invalida-trabada`; transiciones en
+`specs/013-orquestacion-multi-organizacion/data-model.md` (FR-013). Requiere
+haber adoptado la 1.2.0 (fallas no reintentables): cada camino de abajo es un
+único intento de login.
+
+1. **Migración**: aplicar
+   `supabase/migrations/20260925210000_destrabar_conexion_invalida.sql`
+   (aditiva: `create or replace` de `iniciar_ejecucion_worker`,
+   `organizaciones_activas_para_conector` y `actualizar_credencial_conexion`).
+   Si el producto redefinió alguna de esas funciones, portar la regla en vez
+   de pisarla.
+2. **Reglas**: `error` no bloquea ningún origen ni el genérico.
+   `credencial_invalida` la saltea el genérico y la rechaza
+   `iniciar_ejecucion_worker` con `CONEXION_CREDENCIAL_INVALIDA`, salvo un
+   disparo `manual` de un administrador autenticado; actualizar la credencial
+   la devuelve a `activa`. La ejecución exitosa la deja `activa` como siempre.
+3. **Refine**: el error `CONEXION_CREDENCIAL_INVALIDA` es nuevo; mostrarlo
+   como "actualizá la credencial o iniciá la ejecución a mano", no como
+   capacidad deshabilitada. Ya no hace falta `private.marcar_conexion_activa`
+   a mano para destrabar una conexión.
+4. **Validar** con una ejecución real equivalente a
+   `pnpm test:kestra:conexion-trabada:e2e`.
+
 ## 4. Mapeo de este producto
 
 ### Versión de outbox adoptable

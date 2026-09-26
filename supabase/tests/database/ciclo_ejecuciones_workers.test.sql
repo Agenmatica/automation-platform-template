@@ -172,7 +172,7 @@ reset role;
 -- ============================================================================
 
 insert into conexiones (id, organizacion_id, sistema_externo, estado, credencial_vault_id) values
-  ('e1111111-1111-1111-1111-111111111114', 'e1111111-1111-1111-1111-111111111111', 'sistema-x-inactivo', 'error', gen_random_uuid());
+  ('e1111111-1111-1111-1111-111111111114', 'e1111111-1111-1111-1111-111111111111', 'sistema-x-inactivo', 'credencial_invalida', gen_random_uuid());
 
 insert into capacidades_ejecucion (id, organizacion_id, conexion_id, clave, habilitada) values
   ('e1111111-1111-1111-1111-111111111115', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x2', true),
@@ -219,11 +219,13 @@ select throws_ok(
   'una capacidad deshabilitada se rechaza'
 );
 
+-- Bug conexion-invalida-trabada: error ya no bloquea (FR-013); una conexión
+-- con la credencial rechazada sigue sin correr fuera del disparo manual.
 select throws_ok(
   $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111114', 'reporte-inactivo', 'kestra')$$,
   'P0001',
-  'CAPACIDAD_NO_HABILITADA: reporte-inactivo no está registrada y habilitada para la conexión e1111111-1111-1111-1111-111111111114',
-  'una conexión no activa se rechaza'
+  'CONEXION_CREDENCIAL_INVALIDA: la conexión e1111111-1111-1111-1111-111111111114 tiene la credencial rechazada; actualizala o iniciá la ejecución manualmente',
+  'una conexión con la credencial rechazada no corre por Kestra'
 );
 
 select throws_ok(

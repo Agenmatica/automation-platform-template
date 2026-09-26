@@ -20,7 +20,12 @@ select * from iniciar_ejecucion_worker(
 );
 -- Éxito: una fila de ejecuciones_worker en estado 'en_curso' (columna id).
 -- Errores contractuales (SQLSTATE + mensaje, nunca secreto):
---   CAPACIDAD_NO_HABILITADA  — conexión no activa o capacidad deshabilitada/desconocida (FR-004).
+--   CAPACIDAD_NO_HABILITADA  — capacidad deshabilitada/desconocida (FR-004).
+--   CONEXION_CREDENCIAL_INVALIDA — conexión en credencial_invalida y el
+--                              disparo no es manual de un administrador
+--                              autenticado (bug conexion-invalida-trabada,
+--                              FR-013 de la spec 013). Una conexión en
+--                              error no bloquea.
 --   YA_EN_CURSO              — hay una activa para esa organización+capacidad (US1, FR-002).
 -- Nota: antes de insertar, cierra como 'timeout' las vencidas según
 -- tiempo_max_seg (R2); ese cierre queda auditado y no es error.
