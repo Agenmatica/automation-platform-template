@@ -79,3 +79,13 @@ Files=13, Tests=422 ... Result: PASS
 Cerrar el bug: verificado de punta a punta. Mergear después de #60 e
 integrar `main` antes del merge (conflicto esperado solo en la versión y
 rutas de `worker-execution-cycle`, que queda 1.3.0).
+
+## Integración con main tras el merge de #60 (2026-09-26)
+
+Conflictos solo en el catálogo, `template-adoption.json`, `package.json` y
+la guía de adopción (ver commit 3d5bfe2): `worker-execution-cycle` queda en
+1.3.0 con las rutas de ambas migraciones; la guía conserva la §3.3 de #60 y
+suma la §3.4. Estáticos de reintentos y evidencia 11/11,
+`test:template:adoption` 11/11, `template:*:check`, `docs:check`,
+`test:kestra:deploy-flow` 4/4 y `pnpm test:db` sobre la base restaurada con
+las migraciones integradas: 14 archivos, 443 pruebas, PASS.
