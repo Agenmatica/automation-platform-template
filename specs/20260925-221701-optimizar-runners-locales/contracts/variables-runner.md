@@ -15,6 +15,8 @@ por cada step de los jobs):
 
 | Variable | Valor | Motivo |
 |----------|-------|--------|
-| `pnpm_config_store_dir` | `/pnpm-store` | Gana sobre `$PNPM_HOME/store` que implica `pnpm/action-setup`. |
+| `pnpm_config_store_dir` | `/pnpm/store` | Gana sobre `$PNPM_HOME/store` que implica `pnpm/action-setup`. |
+| `pnpm_config_cache_dir` | `/pnpm/cache` | R2b: metadata y verificación del lockfile compartidas. |
 | `pnpm_config_network_concurrency` | `${RUNNER_PNPM_NETWORK_CONCURRENCY:-16}` | R4. |
 | `pnpm_config_fetch_retries` | `5` | R4: reintentar `ECONNRESET` y cortes transitorios. |
+| `pnpm_config_fetch_timeout` | `600000` | R4b: que un tarball grande (binario de Supabase, 57 MB) termine de bajar en un Wi-Fi lento y quede en el store. |

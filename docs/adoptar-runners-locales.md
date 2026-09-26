@@ -20,8 +20,8 @@ cambian, y `validate.yml` tampoco.
 1. Integrar el `compose.yaml` del template (`git merge upstream/main` o a mano)
    **conservando lo propio del producto**: `name:` (línea 1), `RUNNER_REPO` y
    `RUNNER_NAME`. Lo nuevo es el bloque `deploy` (réplicas y
-   `resources.limits.memory`), las tres variables `pnpm_config_*` del
-   `environment`, el montaje `pnpm-store:/pnpm-store` y el bloque `volumes:`
+   `resources.limits.memory`), las cinco variables `pnpm_config_*` del
+   `environment`, el montaje `pnpm-store:/pnpm` y el bloque `volumes:`
    al final. **No** cambiar el nombre por defecto del volumen
    (`platform-runner-pnpm-store`): es lo que lo comparte con el template.
 2. En `package.json`, `dev:down:runner` con `--env-file .env` (como
@@ -57,7 +57,8 @@ repo desde este.
 
 1. `pnpm infra:config` pasa.
 2. `docker exec estudio-contable-automation-runner-dev-runner-1 sh -c 'env | grep ^pnpm_config_'`
-   muestra `store_dir=/pnpm-store`, `network_concurrency=16` y `fetch_retries=5`;
+   muestra `store_dir=/pnpm/store`, `cache_dir=/pnpm/cache`,
+   `network_concurrency=16`, `fetch_retries=5` y `fetch_timeout=600000`;
    `docker inspect … --format '{{.HostConfig.Memory}}'` muestra el tope.
 3. En el CI del PR de adopción, el log de `pnpm install --frozen-lockfile`
    (`Progress: resolved N, reused R, downloaded D`) muestra `downloaded` bajo

@@ -124,14 +124,21 @@ con default en `infra/runner/compose.yaml`; contrato en
 - `RUNNER_PNPM_NETWORK_CONCURRENCY` (default `16`): descargas simultáneas de
   cada `pnpm install` en el runner (pnpm usaría 64 en una máquina de 12
   núcleos). El runner fija además `pnpm_config_fetch_retries=5` para
-  reintentar cortes como `ECONNRESET`.
+  reintentar cortes como `ECONNRESET`, y `pnpm_config_fetch_timeout=600000`
+  (10 min por descarga): el binario opcional `@supabase/cli-linux-x64` pesa
+  57 MB y con el timeout de 60 s nunca terminaba de bajar en un Wi-Fi lento,
+  así que cada install lo reintentaba sin llegar a guardarlo.
 - `RUNNER_PNPM_STORE_VOLUME` (default `platform-runner-pnpm-store`): volumen
   del store de pnpm.
 
-**Store compartido.** El runner monta ese volumen en `/pnpm-store` y exporta
-`pnpm_config_store_dir=/pnpm-store`, que los steps heredan y que gana sobre el
-`$PNPM_HOME/store` que implica `pnpm/action-setup` (antes cada réplica tenía
-su propio store dentro del contenedor y se perdía al recrearlo). Todas las
+**Store compartido.** El runner monta ese volumen en `/pnpm` y exporta
+`pnpm_config_store_dir=/pnpm/store` y `pnpm_config_cache_dir=/pnpm/cache`, que
+los steps heredan y que ganan sobre el `$PNPM_HOME/store` que implica
+`pnpm/action-setup` (antes cada réplica tenía su propio store dentro del
+contenedor y se perdía al recrearlo). El caché importa tanto como el store:
+pnpm 11 verifica el lockfile contra sus políticas de supply-chain pidiendo la
+metadata de cada paquete al registro, y solo se saltea esa consulta si
+encuentra el resultado para ese mismo lockfile en el caché. Todas las
 réplicas lo comparten y, como el nombre por defecto es el mismo en todos los
 productos que adopten la capacidad `local-ci-runners`, también los runners de
 otros productos de la máquina: una dependencia se descarga una sola vez. Para
@@ -143,14 +150,18 @@ Es seguro con instalaciones en paralelo (verificado en el código de pnpm
 exclusivo o con temporal + `rename` atómico; si dos procesos escriben el mismo
 archivo escriben los mismos bytes, y pnpm verifica la integridad de cada
 archivo al importarlo. El índice (`index.db`) es SQLite en modo WAL con
-`busy_timeout`, que coordina varios procesos con locks del kernel. Límites:
+`busy_timeout`, que coordina varios procesos con locks del kernel. El caché
+se escribe con temporal + `rename` y un registro de una línea por lockfile
+verificado; sus errores nunca hacen fallar un install. Probado con tres
+contenedores instalando a la vez: los tres `reused 317, downloaded 0` y
+`pnpm store status` sin archivos alterados. Límites:
 
 - Tiene que ser un volumen local de Docker (o un disco local en Linux), nunca
   una carpeta de Windows montada ni un sistema de archivos de red.
 - `pnpm store prune` **no** es seguro con instalaciones en curso. Para
   limpiar, confirmar que ningún runner que use el volumen esté `busy` (en
   todos los repos que lo compartan) y correr
-  `docker run --rm --entrypoint pnpm -v platform-runner-pnpm-store:/pnpm-store automation-platform-template-runner-dev-runner store prune --store-dir /pnpm-store`
+  `docker run --rm --entrypoint pnpm -v platform-runner-pnpm-store:/pnpm automation-platform-template-runner-dev-runner store prune --store-dir /pnpm/store`
   (la imagen es la que construye `pnpm dev:runner`).
   Tamaño actual: `docker run --rm -v platform-runner-pnpm-store:/s busybox du -sh /s`.
 - El store y el directorio de trabajo del job están en sistemas de archivos

@@ -6,8 +6,9 @@ infraestructura del host.
 ## Store compartido de pnpm
 
 - **Recurso**: volumen Docker local con nombre `${RUNNER_PNPM_STORE_VOLUME:-platform-runner-pnpm-store}`.
-- **Montaje**: `/pnpm-store` en cada réplica; pnpm crea adentro `v11/`
-  (`files/` direccionado por hash + `index.db` SQLite en WAL).
+- **Montaje**: `/pnpm` en cada réplica: `store/v11/` (`files/` direccionado
+  por hash + `index.db` SQLite en WAL) y `cache/` (metadata del registro y
+  `lockfile-verified.jsonl`).
 - **Ciclo de vida**: lo crea el primer `docker compose up` que lo declara; no
   lo borra `docker compose down` (solo `down -v` o `docker volume rm`). Crece
   con cada versión nueva de dependencia; se limpia a mano con `pnpm store

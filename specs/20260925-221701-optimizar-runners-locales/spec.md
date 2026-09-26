@@ -215,7 +215,12 @@ pasos, la verificación previa de runners ocupados y la reversión.
   usar 16 descargas simultáneas por defecto (en lugar de las 64 que el gestor
   usa en esta máquina) y 5 reintentos ante cortes transitorios, configurados
   en el runner (no en el workflow ni en la configuración del repositorio), con
-  la concurrencia ajustable por variable.
+  la concurrencia ajustable por variable, y un tiempo máximo por descarga que
+  permita completar los paquetes grandes en una red lenta (ver `research.md`
+  R4b).
+- **FR-012**: La información de verificación del lockfile y la metadata del
+  registro que el gestor cachea MUST compartirse junto con el store, para que
+  una instalación con el store completo no vuelva a consultar el registro.
 - **FR-008**: Las nuevas variables MUST figurar en `.env.example` con su valor
   por defecto y sin secretos.
 - **FR-009**: La configuración de infraestructura MUST seguir validando con

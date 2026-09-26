@@ -15,7 +15,9 @@ reales del CI del PR.
 
 ## Phase 1: Setup
 
-- [ ] T001 Registrar la línea base: log de `pnpm install` (reused/downloaded, duración) de la primera corrida de Validate del PR con los runners viejos y pico de memoria por réplica en `specs/20260925-221701-optimizar-runners-locales/research.md` (R5)
+- [X] T001 Registrar la línea base: log de `pnpm install` (reused/downloaded, duración) de la primera corrida de Validate del PR con los runners viejos y pico de memoria por réplica en `specs/20260925-221701-optimizar-runners-locales/research.md` (R5)
+
+  - Línea base (corrida 36207983612, runners viejos): application y database con `reused 0, downloaded 316`, 4 min 12 s y 4 min 14 s; `@supabase/cli-linux-x64` falló por timeout en ambos; database cayó por red bajando la CLI de Supabase de GitHub (fuera de alcance). Pico de memoria 1502 MiB (research R5).
 
 **Checkpoint**: línea base registrada.
 
@@ -27,9 +29,11 @@ reales del CI del PR.
 
 **Independent Test**: dos corridas del CI con el mismo lockfile; la segunda muestra `downloaded 0`.
 
-- [ ] T002 [US1] Declarar el volumen `${RUNNER_PNPM_STORE_VOLUME:-platform-runner-pnpm-store}` montado en `/pnpm-store` y `pnpm_config_store_dir=/pnpm-store` en `infra/runner/compose.yaml`, con comentario sobre por qué gana a `PNPM_HOME` y por qué es seguro compartirlo
-- [ ] T003 [P] [US1] Agregar `RUNNER_PNPM_STORE_VOLUME` a `.env.example` junto a `GH_RUNNER_PAT`
-- [ ] T004 [P] [US1] Documentar el store compartido (ubicación, seguridad concurrente, límites: volumen local, `prune` solo sin jobs; tamaño y limpieza) en `docs/deployment.md` y actualizar `docs/ci-self-hosted-storage.md`
+- [X] T002 [US1] Declarar el volumen `${RUNNER_PNPM_STORE_VOLUME:-platform-runner-pnpm-store}` montado en `/pnpm` con `pnpm_config_store_dir=/pnpm/store` en `infra/runner/compose.yaml`, con comentario sobre por qué gana a `PNPM_HOME` y por qué es seguro compartirlo
+- [X] T003 [P] [US1] Agregar `RUNNER_PNPM_STORE_VOLUME` a `.env.example` junto a `GH_RUNNER_PAT`
+- [X] T004 [P] [US1] Documentar el store compartido (ubicación, seguridad concurrente, límites: volumen local, `prune` solo sin jobs; tamaño y limpieza) en `docs/deployment.md` y actualizar `docs/ci-self-hosted-storage.md`
+
+  - Desvío: además del store se comparte el cache dir (`/pnpm/cache`) y se sube `fetch-timeout` a 10 min; hallado en la prueba de concurrencia (research R2b, R2c, R4b; FR-012).
 
 **Checkpoint**: `pnpm infra:config` pasa; US1 lista para validar en T013.
 
@@ -41,9 +45,9 @@ reales del CI del PR.
 
 **Independent Test**: `RUNNER_REPLICAS=1 docker compose -f infra/runner/compose.yaml config` muestra `replicas: 1`; sin variable, 3.
 
-- [ ] T005 [US2] Interpolar `deploy.replicas: ${RUNNER_REPLICAS:-3}` en `infra/runner/compose.yaml`
-- [ ] T006 [P] [US2] Agregar `RUNNER_REPLICAS` a `.env.example` y documentar en `docs/deployment.md` cuándo bajarla (agentes activos, memoria, red), el efecto (jobs en cola, en serie) y el uso de `0`
-- [ ] T007 [P] [US2] Pasar `--env-file .env` también en `dev:down:runner` de `package.json`
+- [X] T005 [US2] Interpolar `deploy.replicas: ${RUNNER_REPLICAS:-3}` en `infra/runner/compose.yaml`
+- [X] T006 [P] [US2] Agregar `RUNNER_REPLICAS` a `.env.example` y documentar en `docs/deployment.md` cuándo bajarla (agentes activos, memoria, red), el efecto (jobs en cola, en serie) y el uso de `0`
+- [X] T007 [P] [US2] Pasar `--env-file .env` también en `dev:down:runner` de `package.json`
 
 **Checkpoint**: interpolación verificada con 0, 1, sin valor y valor inválido.
 
@@ -55,9 +59,9 @@ reales del CI del PR.
 
 **Independent Test**: `docker inspect` muestra el tope; `env` del contenedor muestra `pnpm_config_network_concurrency` y `pnpm_config_fetch_retries`; el CI completo pasa.
 
-- [ ] T008 [US3] Fijar el default de `RUNNER_MEMORY_LIMIT` a partir de la medición de T001 (pico + ~50 %, redondeado a GiB) en `infra/runner/compose.yaml` (`deploy.resources.limits.memory`) y completar la tabla de R5 en `research.md`
-- [ ] T009 [US3] Agregar `pnpm_config_network_concurrency: ${RUNNER_PNPM_NETWORK_CONCURRENCY:-16}` y `pnpm_config_fetch_retries: 5` al entorno en `infra/runner/compose.yaml`
-- [ ] T010 [P] [US3] Agregar `RUNNER_MEMORY_LIMIT` y `RUNNER_PNPM_NETWORK_CONCURRENCY` a `.env.example` y documentar topes y concurrencia en `docs/deployment.md`
+- [X] T008 [US3] Fijar el default de `RUNNER_MEMORY_LIMIT` a partir de la medición de T001 (pico + ~50 %, redondeado a GiB) en `infra/runner/compose.yaml` (`deploy.resources.limits.memory`) y completar la tabla de R5 en `research.md`
+- [X] T009 [US3] Agregar `pnpm_config_network_concurrency: ${RUNNER_PNPM_NETWORK_CONCURRENCY:-16}` y `pnpm_config_fetch_retries: 5` al entorno en `infra/runner/compose.yaml`
+- [X] T010 [P] [US3] Agregar `RUNNER_MEMORY_LIMIT` y `RUNNER_PNPM_NETWORK_CONCURRENCY` a `.env.example` y documentar topes y concurrencia en `docs/deployment.md`
 
 **Checkpoint**: `pnpm infra:config` pasa.
 
@@ -69,8 +73,8 @@ reales del CI del PR.
 
 **Independent Test**: `pnpm template:capabilities:check` y `pnpm test:template:adoption` pasan; la guía cubre verificación de runners ocupados y reversión.
 
-- [ ] T011 [US4] Publicar `local-ci-runners` 1.0.0 (ruta `infra/runner/compose.yaml`) en `template-capabilities.json` y declararla `adopted` en `template-adoption.json`
-- [ ] T012 [P] [US4] Escribir `docs/adoptar-runners-locales.md` (qué cambia, merge del compose conservando `name`/`RUNNER_REPO`/`RUNNER_NAME` del producto, verificación de `busy` con `gh api`, recreación, validación y reversión) y enlazarla desde `docs/adoptar-capacidades-template.md` y `docs/crear-producto-derivado.md`
+- [X] T011 [US4] Publicar `local-ci-runners` 1.0.0 (ruta `infra/runner/compose.yaml`) en `template-capabilities.json` y declararla `adopted` en `template-adoption.json`
+- [X] T012 [P] [US4] Escribir `docs/adoptar-runners-locales.md` (qué cambia, merge del compose conservando `name`/`RUNNER_REPO`/`RUNNER_NAME` del producto, verificación de `busy` con `gh api`, recreación, validación y reversión) y enlazarla desde `docs/adoptar-capacidades-template.md` y `docs/crear-producto-derivado.md`
 
 **Checkpoint**: catálogo válido.
 

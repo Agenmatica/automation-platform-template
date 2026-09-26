@@ -12,8 +12,9 @@ y pruebas de `docker compose config`.
   en las réplicas 1, 2 y 3 — cada una con su copia, dentro de la capa del
   contenedor (se pierde al recrearlo). `/root/.local/share/pnpm/store` solo
   tiene restos de un store `v3` viejo.
-- **Decisión**: montar un volumen con nombre en `/pnpm-store` y fijar
-  `pnpm_config_store_dir=/pnpm-store` en el entorno del contenedor runner.
+- **Decisión**: montar un volumen con nombre en `/pnpm` y fijar
+  `pnpm_config_store_dir=/pnpm/store` y `pnpm_config_cache_dir=/pnpm/cache`
+  (ver R2b) en el entorno del contenedor runner.
 - **Por qué**: pnpm 11 lee su configuración de variables `pnpm_config_*`
   (las `npm_config_*` ya no aplican a opciones de pnpm). Probado en el
   contenedor: con `PNPM_HOME` fijado como lo deja `action-setup`,
@@ -67,6 +68,38 @@ confianza: los runners ya montan `/var/run/docker.sock` (equivalente a root en
 el host) y todos los repositorios son del mismo operador. Quien quiera aislar
 un producto fija `RUNNER_PNPM_STORE_VOLUME` con otro nombre.
 
+## R2b. Caché de metadata y verificación del lockfile
+
+- **Hallazgo**: aun con el store completo, cada install de pnpm 11 corre
+  "Verifying lockfile against supply-chain policies (367 entries)": pide la
+  metadata de cada paquete al registro (por `minimum-release-age`, 1 día por
+  defecto). En la prueba con la red saturada llevó ~2 min 40 s y tuvo
+  `ECONNRESET`. El resultado se cachea por hash del lockfile en
+  `<cache-dir>/lockfile-verified.jsonl`, y la metadata en `<cache-dir>/`, que
+  por defecto es `~/.cache/pnpm` de cada contenedor.
+- **Decisión**: compartir también el cache dir en el mismo volumen
+  (`/pnpm/cache`). Con el caché compartido, el install siguiente mostró
+  "✓ Lockfile passes supply-chain policies (verified 9m ago)" sin consultas.
+- **Seguridad concurrente** (código de pnpm 11.19.0): la metadata se escribe
+  con temporal + `renameOverwrite` y es best-effort (un error solo se loguea en
+  debug); `lockfile-verified.jsonl` se escribe con `appendFileSync` de una
+  línea, la lectura ignora líneas que no parsean y la compactación escribe un
+  temporal y hace `rename`. Una carrera en el peor caso pierde un registro y
+  repite la verificación una vez.
+
+## R2c. Prueba de concurrencia real
+
+Tres contenedores con la imagen del runner (PID namespaces separados, como
+las réplicas) instalando el lockfile del repo a la vez contra un volumen de
+prueba:
+
+| Escenario | Resultado |
+|-----------|-----------|
+| Store vacío, 3 en paralelo | los 3 terminaron con `RC=0` (dos mostraron `downloaded 316/315`; 12–15 min por la red saturada y el binario de R4b) |
+| Store lleno sin caché compartido, 3 en paralelo | 3 × `reused 316, downloaded 0`, pero ~10 min cada uno (verificación R2b + reintentos R4b) |
+| Store y caché llenos, con R4b, 3 en paralelo | 3 × `reused 317, downloaded 0`, 0 consultas al registro, 16–17 s cada uno |
+| `pnpm store status` después | "Packages in the store are untouched", RC 0 |
+
 ## R3. Enlaces duros vs. copia
 
 - **Hallazgo**: el directorio de trabajo del job (`/home/runner/_work`) queda
@@ -98,6 +131,23 @@ un producto fija `RUNNER_PNPM_STORE_VOLUME` con otro nombre.
   lento en frío); fijarlo en `pnpm-workspace.yaml` (afectaría también a
   instalaciones locales con buena red).
 
+### R4b. Timeout de descarga: el binario de Supabase nunca llegaba al store
+
+- **Hallazgo** (prueba local y corrida base): `@supabase/cli-linux-x64`
+  (dependencia opcional del paquete `supabase`) pesa 57 MB. A la velocidad
+  medida esa noche (0,58 MB/s, 99 s) supera el `fetch-timeout` de 60 s de pnpm
+  ("error (23) The operation was aborted due to timeout"). Como es opcional,
+  pnpm termina el install sin él, así que **nunca queda en el store** y cada
+  install de cada réplica lo vuelve a intentar: ~2 min perdidos por install con
+  los reintentos por defecto, ~8 min con 5, más decenas de MB parciales por
+  intento. En la corrida base falló en los dos jobs.
+- **Decisión**: `pnpm_config_fetch_timeout=600000` (10 min). Probado: el
+  primer install lo bajó (`downloaded 1`, 1 min 20 s) y el siguiente tardó
+  7,3 s con `reused 317, downloaded 0`.
+- **Alternativa descartada**: excluir dependencias opcionales en el CI; cambia
+  el árbol instalado respecto del desarrollo y es una decisión del repositorio,
+  no del runner.
+
 ## R5. Tope de memoria por contenedor
 
 - **Medición**: muestreo de `docker stats` cada 2 s sobre las tres réplicas
@@ -112,9 +162,18 @@ un producto fija `RUNNER_PNPM_STORE_VOLUME` con otro nombre.
   sigue registrado. Si muriera el runner, `restart: unless-stopped` lo
   levanta y el entrypoint lo vuelve a registrar.
 
+Muestreo del 2026-09-25 22:19–22:44 (978 muestras), cubriendo la corrida base
+36207983612 del PR (application con lint, build y vitest; infrastructure;
+database) y jobs de otros PRs:
+
 | Réplica | Pico observado | Momento |
 |---------|----------------|---------|
-| (se completa con la medición del CI) | | |
+| runner-1 | 1502 MiB | 22:20:58 |
+| runner-2 | 1378 MiB | 22:42:27 |
+| runner-3 | 1437 MiB | 22:27:48 |
+
+Pico 1,47 GiB × 1,5 ≈ 2,2 GiB → **default `3g`**. Tres réplicas suman como
+máximo 9 GiB de los 15,5 GiB que ve Docker, frente a "sin límite" antes.
 
 ## R6. Réplicas configurables
 
