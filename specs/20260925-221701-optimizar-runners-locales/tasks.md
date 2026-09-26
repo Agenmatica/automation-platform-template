@@ -82,9 +82,40 @@ reales del CI del PR.
 
 ## Phase 6: Validación real y cierre de rama
 
-- [ ] T013 Verificar con `gh api repos/Agenmatica/automation-platform-template/actions/runners` que ningún runner del template esté `busy`, recrear solo los del template con `pnpm dev:runner` y comprobar entorno, tope y volumen (quickstart §2–3)
-- [ ] T014 Correr el CI del PR dos veces (push + `gh run rerun`) y registrar en este archivo reused/downloaded, duración del install y tamaño del store de ambas corridas (SC-001, SC-002, SC-005)
-- [ ] T015 Correr `pnpm infra:config`, `pnpm docs:check`, `pnpm template:capabilities:check --base origin/main` y `pnpm test:template:adoption`
+- [X] T013 Verificar con `gh api repos/Agenmatica/automation-platform-template/actions/runners` que ningún runner del template esté `busy`, recrear solo los del template con `pnpm dev:runner` y comprobar entorno, tope y volumen (quickstart §2–3)
+- [X] T014 Correr el CI del PR dos veces (push + `gh run rerun`) y registrar en este archivo reused/downloaded, duración del install y tamaño del store de ambas corridas (SC-001, SC-002, SC-005)
+- [X] T015 Correr `pnpm infra:config`, `pnpm docs:check`, `pnpm template:capabilities:check --base origin/main` y `pnpm test:template:adoption`
+
+### Evidencia (2026-09-25)
+
+- T013: ningún runner `busy` antes de recrear; recreados solo los tres del
+  template (los de `estudio-contable-automation` siguieron "Up 14 hours").
+  Cada réplica: `HostConfig.Memory=3221225472`, las cinco `pnpm_config_*`
+  del contrato y el volumen `platform-runner-pnpm-store` montado en `/pnpm`.
+- T014, Validate 36212025312 del commit d8e364f:
+
+| Corrida | Job | Resultado de `pnpm install` | Duración |
+|---------|-----|-------------------------------|----------|
+| Base (runners viejos, 36207983612) | application | `reused 0, downloaded 316`, binario de Supabase falló por timeout | 4 min 12 s |
+| Base | database | `reused 0, downloaded 316`, ídem | 4 min 14 s |
+| 1 (store vacío) | application | `reused 0, downloaded 317` | 6 min 28 s |
+| 1 | database | `reused 45, downloaded 272` (en paralelo con application) | 9 min 30 s |
+| 2 (re-run) | application | `reused 317, downloaded 0`, lockfile "verified 11m ago" | 12,8 s |
+| 2 | database | `reused 317, downloaded 0`, ídem | 10,6 s |
+
+  La red de esa noche iba a 10–50 KiB/s (pnpm avisó velocidades bajas), de ahí
+  los tiempos en frío mayores que la base. Volumen tras la corrida 1: store
+  452,7 MB + caché 102 MB; tras la corrida 2: igual (0 bytes nuevos). Las dos
+  corridas pasaron completas con el tope de 3 GiB (SC-001, SC-002, SC-005).
+- T015: todos OK.
+
+### Seguimiento fuera de alcance
+
+- `actions/setup-node` baja Node a `_work/_tool` de cada réplica; tras recrear,
+  la primera vez tarda ~5 min por réplica con esta red. Compartir el tool
+  cache necesita analizar su concurrencia aparte.
+- El job `database` baja la CLI de Supabase de GitHub en cada corrida; la
+  corrida base falló ahí por red (`SSL_ERROR_SYSCALL`).
 
 ## Dependencies
 
