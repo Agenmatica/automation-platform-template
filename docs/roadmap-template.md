@@ -54,6 +54,7 @@ reemplaza las prioridades históricas de sus specs.
 | P1        | Orquestación   | Despacho durable de ejecuciones            | Kestra y workers                          | Outbox transaccional con reclamo exclusivo, lease, fencing, historial de intentos y contrato sin HTTP en SQL; el producto derivado adopta el mecanismo sin arrastrar conectores de dominio. [Spec 019](../specs/019-outbox-ejecuciones/spec.md) | Implementado |
 | P1        | Tooling        | Tooling operativo portable                 | Node ESM y entornos locales               | Comandos operativos Node, validación de entradas sanitizada y sincronización local explícita del rol JDBC de Kestra; el recorrido E2E confirma éxito, clasificación de errores y ausencia de secretos persistidos. [Spec 020](../specs/020-tooling-typescript/spec.md) | Implementado |
 | P1        | Orquestación   | Observabilidad de workers de navegador     | Ciclo de ejecuciones y blindaje de secretos | Contrato de eventos JSON por etapa y sanitización; las plantillas de despacho publican los logs y, con evidencia visual habilitada por entorno o por ejecución, las capturas de hitos como outputs de Kestra sin alterar el resultado de negocio; limpieza diaria idempotente de evidencia vencida (`EVIDENCIA_RETENCION_DIAS`, 30 por defecto). Publicada como `worker-execution-cycle` 1.1.0. [Spec](../specs/20260925-133820-observabilidad-workers-navegador/spec.md) | Implementado |
+| P0        | Infraestructura | Base de datos del CI aislada               | Puertos de desarrollo local configurables y runners self-hosted | El job `database` levanta su propio stack de Supabase (`ci-<repo>`, puertos `20000 + p % 10000`) en vez de reutilizar y resetear el stack de desarrollo que comparte el Docker del host; reset y pgTAP pasan por una guarda que aborta si el destino no es ese stack. Capacidad `isolated-ci-database`; adopción en productos: [guía](./adoptar-ci-base-aislada.md). [Bug ci-supabase-desarrollo-compartido](../.specify/bugs/ci-supabase-desarrollo-compartido/assessment.md) | Implementado |
 
 
  La spec 003 conserva una tarea abierta de comprobación inicial de entorno;
@@ -328,6 +329,9 @@ de dominio sobre el mecanismo general.
 Debe convertir Playwright de infraestructura disponible a pruebas ejecutables
 en CI. La base debe definir cómo levantar servicios, crear datos efímeros,
 ejecutar el navegador, obtener evidencias y limpiar el entorno.
+Los servicios que levante deben seguir el patrón del job `database`: stack
+propio del CI derivado por repositorio y guarda contra stacks de desarrollo
+([docs/deployment.md](./deployment.md), "Stack de Supabase propio del CI").
 
 Cada producto escribe sus recorridos críticos. Por ejemplo, BNI probaría un
 visitante y su seguimiento; el template no incluye ese escenario.
