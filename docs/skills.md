@@ -14,7 +14,7 @@ Cargá una skill solo cuando su descripción coincida con el trabajo. No cargues
 | Datos y Supabase | `supabase`, `supabase-postgres-best-practices` |
 | Workers, Kestra o Superset | `kestra-orquestacion`, `superset-analitica` |
 | Pruebas | `pruebas-plataforma`; `playwright-best-practices` para pruebas end-to-end (E2E), inestabilidad o integración continua (CI) de Playwright |
-| Revisión y seguridad | `code-review` o la skill de seguridad específica del cambio |
+| Revisión y seguridad | `revision-pr` (enruta a la skill de seguridad específica del cambio) |
 | Decisiones transversales o investigación amplia | `arquitectura-plataforma`, `eficiencia-contexto` |
 
 Consultá el enrutamiento completo y sus límites en [AGENTS.md](../AGENTS.md).
@@ -24,6 +24,12 @@ Consultá el enrutamiento completo y sus límites en [AGENTS.md](../AGENTS.md).
 Codex y OpenCode detectan las skills en `.agents/skills`. Claude Code usa las copias equivalentes de `.claude/skills`. OpenCode también recibe los comandos nativos de GitHub Spec Kit en `.opencode/commands`.
 
 Las extensiones oficiales `assess` y `bug` viven en `.specify/extensions`. Codex las consume mediante wrappers en `.agents/skills`; Claude Code y OpenCode reciben sus integraciones generadas.
+
+## Revisión de PR
+
+`revision-pr` es propia (no está en `skills-lock.json`): revisa spec, reglas del proyecto y evidencia de funcionamiento, y enruta a las skills de seguridad según el diff. Reemplaza el uso por defecto de `code-review`, que es externa y se conserva sin editar para que `npx skills update` no pise cambios locales.
+
+Cada producto derivado puede sumar sus propias reglas en `docs/revision-reglas-producto.md`; el template no trae ese archivo, así que no choca con `git merge upstream/main`. Los hallazgos rechazados con motivo válido se anotan como excepciones aprendidas: los de plataforma en la skill, los del producto en su archivo.
 
 ## Actualizar una skill externa
 
