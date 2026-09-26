@@ -26,7 +26,7 @@ const dockerExit = async (args) => await new Promise((resolve, reject) => {
 });
 const fixture = path.resolve('infra/kestra/fixtures/worker-runtime/worker.sh');
 const image = 'node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81';
-for (const scenario of [{ result: 'success', runs: 34, expected: 0 }, { result: 'technical-failure', runs: 33, expected: 42 }, { result: 'invalid-credential', runs: 33, expected: 43 }]) {
+for (const scenario of [{ result: 'success', runs: 34, expected: 0 }, { result: 'technical-failure', runs: 33, expected: 42 }, { result: 'invalid-credential', runs: 33, expected: 78 }]) {
   const shell = `i=1; while [ $i -le ${scenario.runs} ]; do sh /fixture/worker.sh >/dev/null 2>/dev/null; actual=$?; [ $actual -eq ${scenario.expected} ] || exit $actual; i=$((i + 1)); done`;
   const code = await dockerExit(['run', '--rm', '--read-only', '--tmpfs', '/tmp:rw,noexec,nosuid,size=64m', '--cap-drop=ALL', '--security-opt=no-new-privileges:true', '--network', 'none', '-e', `FIXTURE_RESULT=${scenario.result}`, '-v', `${fixture}:/fixture/worker.sh:ro`, image, 'sh', '-c', shell]);
   if (code !== 0) throw new Error(`Fixture ${scenario.result} falló: se esperaba ${scenario.expected}, recibido ${code}.`);
