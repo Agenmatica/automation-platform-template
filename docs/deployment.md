@@ -100,6 +100,73 @@ el host). `supabase start` sí funciona igual en los dos casos porque controla
 al Docker del host vía el socket montado, no depende de la red del
 contenedor.
 
+### Réplicas, memoria, red y store de pnpm del runner
+
+Spec: `specs/20260925-221701-optimizar-runners-locales/` (research con la
+medición y el análisis de concurrencia). Variables en `.env` (todas opcionales,
+con default en `infra/runner/compose.yaml`; contrato en
+`specs/20260925-221701-optimizar-runners-locales/contracts/variables-runner.md`):
+
+- `RUNNER_REPLICAS` (default `3`): cuántos jobs de este repo corren a la vez.
+  Cada corrida de Validate usa tres runners (application, infrastructure,
+  database) más uno para `Verificar alcance de plataforma`. Conviene bajarla a
+  `1` o `2` cuando hay varios agentes activos con sus stacks (Supabase, Kestra)
+  levantados, cuando `docker stats` muestra la memoria del host cerca del
+  límite, o cuando la red es un Wi-Fi compartido y lento. Con menos réplicas
+  los jobs esperan en cola y el CI de un PR tarda más, pero no se cae. `0` no
+  levanta runners de este repo (útil para liberar la máquina sin borrar
+  nada). Un valor no numérico o negativo hace fallar `docker compose`.
+- `RUNNER_MEMORY_LIMIT` (default `3g`): tope de memoria de cada réplica. Cubre
+  lo que corre dentro del runner (pnpm, `tsc`, `vite build`, `vitest`,
+  `pg_prove`), no los contenedores que el job lanza por el socket (el stack de
+  Supabase del CI). Si un job lo supera, el step falla con código 137
+  (OOM); subirlo en `.env` y recrear.
+- `RUNNER_PNPM_NETWORK_CONCURRENCY` (default `16`): descargas simultáneas de
+  cada `pnpm install` en el runner (pnpm usaría 64 en una máquina de 12
+  núcleos). El runner fija además `pnpm_config_fetch_retries=5` para
+  reintentar cortes como `ECONNRESET`.
+- `RUNNER_PNPM_STORE_VOLUME` (default `platform-runner-pnpm-store`): volumen
+  del store de pnpm.
+
+**Store compartido.** El runner monta ese volumen en `/pnpm-store` y exporta
+`pnpm_config_store_dir=/pnpm-store`, que los steps heredan y que gana sobre el
+`$PNPM_HOME/store` que implica `pnpm/action-setup` (antes cada réplica tenía
+su propio store dentro del contenedor y se perdía al recrearlo). Todas las
+réplicas lo comparten y, como el nombre por defecto es el mismo en todos los
+productos que adopten la capacidad `local-ci-runners`, también los runners de
+otros productos de la máquina: una dependencia se descarga una sola vez. Para
+aislar un producto, darle otro nombre en su `.env`. Compartirlo no amplía la
+confianza: los runners ya montan el socket de Docker del host.
+
+Es seguro con instalaciones en paralelo (verificado en el código de pnpm
+11.19.0): cada archivo del store se nombra por su hash y se escribe en modo
+exclusivo o con temporal + `rename` atómico; si dos procesos escriben el mismo
+archivo escriben los mismos bytes, y pnpm verifica la integridad de cada
+archivo al importarlo. El índice (`index.db`) es SQLite en modo WAL con
+`busy_timeout`, que coordina varios procesos con locks del kernel. Límites:
+
+- Tiene que ser un volumen local de Docker (o un disco local en Linux), nunca
+  una carpeta de Windows montada ni un sistema de archivos de red.
+- `pnpm store prune` **no** es seguro con instalaciones en curso. Para
+  limpiar, confirmar que ningún runner que use el volumen esté `busy` (en
+  todos los repos que lo compartan) y correr
+  `docker run --rm --entrypoint pnpm -v platform-runner-pnpm-store:/pnpm-store automation-platform-template-runner-dev-runner store prune --store-dir /pnpm-store`
+  (la imagen es la que construye `pnpm dev:runner`).
+  Tamaño actual: `docker run --rm -v platform-runner-pnpm-store:/s busybox du -sh /s`.
+- El store y el directorio de trabajo del job están en sistemas de archivos
+  distintos, así que pnpm copia en vez de crear enlaces duros. Es más lento
+  que un enlace, pero mucho más rápido que descargar.
+
+**Recrear los runners corta los jobs en curso.** Antes de `pnpm dev:runner`
+tras cambiar alguna de estas variables, verificar que ninguno esté ocupado:
+
+```bash
+gh api repos/<owner>/<repo>/actions/runners \
+  -q '.runners[] | select(.status=="online") | "\(.name) busy=\(.busy)"'
+```
+
+Adopción en productos derivados: `docs/adoptar-runners-locales.md`.
+
 ### Stack de Supabase propio del CI
 
 Como el runner comparte el Docker del host con los stacks de desarrollo (el

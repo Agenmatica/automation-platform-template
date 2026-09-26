@@ -4,12 +4,28 @@ services:
   runner:
     build: .
     deploy:
-      replicas: 3
+      # Bajalo (1 o 2) con varios agentes activos, poca memoria o poca red;
+      # 0 no levanta runners de este repo. Ver docs/deployment.md.
+      replicas: ${RUNNER_REPLICAS:-3}
+      resources:
+        limits:
+          # Tope de lo que corre dentro del runner (pnpm, tsc, vite, vitest,
+          # pg_prove), medido en la spec 20260925-221701. No limita los
+          # contenedores que el job lanza por el socket (stack de Supabase).
+          memory: ${RUNNER_MEMORY_LIMIT:-3g}
     environment:
       GH_PAT: ${GH_RUNNER_PAT}
       RUNNER_REPO: Agenmatica/automation-platform-template
       RUNNER_NAME: automation-platform-template-docker
       RUNNER_LABELS: self-hosted,platform-local
+      # Los steps de los jobs heredan este entorno. pnpm 11 lee pnpm_config_*
+      # (no npm_config_*) y store_dir gana sobre el $PNPM_HOME/store que
+      # implica pnpm/action-setup, así validate.yml no cambia.
+      pnpm_config_store_dir: /pnpm-store
+      # pnpm usa 64 descargas simultáneas en esta máquina; con varias
+      # réplicas y repos saturaba el Wi-Fi (ECONNRESET). Ver research.md R4.
+      pnpm_config_network_concurrency: ${RUNNER_PNPM_NETWORK_CONCURRENCY:-16}
+      pnpm_config_fetch_retries: 5
     extra_hosts:
       # Igual motivo que infra/kestra/compose.yaml: pnpm test:db:ci y
       # scripts/reset-db-ci.mjs corren dentro de este contenedor y conectan
@@ -21,4 +37,15 @@ services:
       # Los comandos docker que corren los jobs (docker compose, supabase
       # start) terminan controlando el Docker del host, no uno anidado.
       - /var/run/docker.sock:/var/run/docker.sock
+      # Store de pnpm único para todas las réplicas y, con el mismo nombre de
+      # volumen, para los runners de otros productos de la máquina: cada
+      # dependencia se descarga una vez. Es seguro en paralelo (escritura
+      # atómica por hash + índice SQLite en WAL) mientras sea un volumen
+      # local y nadie corra `pnpm store prune` con jobs en curso. Ver
+      # docs/deployment.md.
+      - pnpm-store:/pnpm-store
     restart: unless-stopped
+
+volumes:
+  pnpm-store:
+    name: ${RUNNER_PNPM_STORE_VOLUME:-platform-runner-pnpm-store}

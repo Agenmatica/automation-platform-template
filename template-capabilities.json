@@ -61,6 +61,12 @@
       "version": "1.0.0",
       "title": "Base de datos del CI aislada de los stacks de desarrollo",
       "paths": ["scripts/supabase-ci.mjs", "scripts/supabase-ci.test.mjs", "scripts/reset-db-ci.mjs"]
+    },
+    {
+      "id": "local-ci-runners",
+      "version": "1.0.0",
+      "title": "Runners self-hosted locales con store de pnpm compartido y topes",
+      "paths": ["infra/runner/compose.yaml"]
     }
   ]
 }
