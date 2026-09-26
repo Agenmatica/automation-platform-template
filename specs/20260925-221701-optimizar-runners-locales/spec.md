@@ -29,6 +29,42 @@ descarga una vez por réplica. La memoria de la máquina quedó al límite con
 cuatro agentes, dos stacks de Supabase, dos de Kestra, los stacks del CI
 aislado y tres réplicas de runner por repositorio.
 
+## Clarifications
+
+### Session 2026-09-25
+
+Las respuestas las decidió el agente que implementa (el operador delegó el
+clarify); cada una lleva su fundamento.
+
+- Q: ¿El store se comparte con los runners de otros productos por defecto o
+  solo si el operador lo pide? → A: Por defecto, con un nombre de volumen fijo
+  e igual en todos los productos; una variable permite aislarlo. Fundamento:
+  el objetivo es una descarga por máquina; los repositorios son del mismo
+  operador y cada runner ya monta el socket de Docker del host (equivale a
+  root en la máquina), así que compartir el store no agrega confianza nueva, y
+  el gestor verifica la integridad de cada archivo al importarlo.
+- Q: ¿Qué tope de memoria por contenedor runner se usa por defecto? → A: El
+  pico medido de un runner durante el CI completo con un margen de ~50 %,
+  redondeado a GiB (valor y medición en `research.md`). Fundamento: un tope
+  menor que el pico real rompe el CI por memoria (SC-005); uno arbitrario no
+  protege; el margen absorbe el crecimiento del repositorio.
+- Q: ¿Cuántas conexiones de descarga simultáneas usa cada instalación? → A:
+  16 por instalación (ajustable), con 5 reintentos ante cortes. Fundamento:
+  el predeterminado del gestor en esta máquina es 64 por instalación; con tres
+  réplicas por repositorio y dos repositorios son hasta ~380 conexiones sobre
+  el mismo Wi-Fi. 16 es el valor que el gestor usaba históricamente y, con el
+  store compartido, solo pesa en instalaciones en frío.
+- Q: ¿Qué pasa con `RUNNER_REPLICAS=0` o un valor no numérico? → A: 0 es un
+  valor válido y explícito para no levantar runners de ese repositorio
+  (documentado); un valor no numérico hace fallar el arranque de forma
+  visible. Fundamento: 0 es la forma natural de liberar la máquina sin borrar
+  la configuración; un texto nunca es intencional.
+- Q: ¿Cómo se demuestra que la segunda corrida no descarga? → A: Con el
+  resumen de progreso que el gestor imprime en cada instalación (`reused` vs
+  `downloaded`) y la duración del paso, en dos corridas del CI del PR con el
+  mismo lockfile, más el tamaño del store antes y después. Fundamento: es
+  evidencia del propio CI, reproducible y sin instrumentación extra.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Una dependencia se descarga una sola vez por máquina (Priority: P1)
@@ -149,8 +185,9 @@ pasos, la verificación previa de runners ocupados y la reversión.
   contenedor runner se reinicia y vuelve a registrarse.
 - Recrear los runners mientras hay un job en curso lo corta: antes de
   recrearlos se verifica que ninguno esté ocupado.
-- La variable de réplicas con un valor inválido (0, texto): el arranque falla
-  de forma visible en lugar de dejar el repositorio sin runners en silencio.
+- La variable de réplicas en 0 no levanta runners de ese repositorio (uso
+  explícito y documentado); con un valor no numérico el arranque falla de
+  forma visible.
 
 ## Requirements *(mandatory)*
 
@@ -159,9 +196,10 @@ pasos, la verificación previa de runners ocupados y la reversión.
 - **FR-001**: Todas las réplicas del runner del repositorio MUST usar un único
   store de dependencias persistente, que sobreviva a la recreación de los
   contenedores y a la reconstrucción de la imagen.
-- **FR-002**: El store MUST poder compartirse con los runners de productos
-  derivados en la misma máquina mediante configuración, sin editar el archivo
-  de infraestructura versionado del producto más allá de adoptar la capacidad.
+- **FR-002**: El store MUST compartirse por defecto con los runners de
+  productos derivados de la misma máquina que adopten la capacidad (mismo
+  nombre de volumen), y MUST poder aislarse por repositorio con una variable
+  de entorno, sin editar archivos versionados.
 - **FR-003**: El acceso concurrente de varias instalaciones al mismo store MUST
   estar verificado contra el comportamiento real del gestor de paquetes en la
   versión usada, y documentado con sus límites (qué operaciones no son seguras
@@ -172,12 +210,12 @@ pasos, la verificación previa de runners ocupados y la reversión.
   `RUNNER_REPLICAS`, con tres por defecto.
 - **FR-006**: Cada contenedor runner MUST tener un tope de memoria configurable
   por variable de entorno, con un valor por defecto medido sobre el consumo
-  real del CI y documentado.
+  real del CI (pico con ~50 % de margen, redondeado a GiB) y documentado.
 - **FR-007**: Las instalaciones de dependencias que corran en el runner MUST
-  usar una concurrencia de descarga menor que la predeterminada y reintentos
-  ante cortes transitorios, configurados en el runner (no en el workflow ni en
-  la configuración del repositorio), con la concurrencia ajustable por
-  variable.
+  usar 16 descargas simultáneas por defecto (en lugar de las 64 que el gestor
+  usa en esta máquina) y 5 reintentos ante cortes transitorios, configurados
+  en el runner (no en el workflow ni en la configuración del repositorio), con
+  la concurrencia ajustable por variable.
 - **FR-008**: Las nuevas variables MUST figurar en `.env.example` con su valor
   por defecto y sin secretos.
 - **FR-009**: La configuración de infraestructura MUST seguir validando con
