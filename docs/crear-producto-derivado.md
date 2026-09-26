@@ -42,7 +42,7 @@ que son la bitácora del template y no se tocan):
 | `infra/kestra/compose.yaml` | `name:` (línea 1) |
 | `infra/superset/compose.yaml` | `name:` (línea 1) y el default de `SUPABASE_DOCKER_NETWORK` en `networks.supabase.name` (al final): `supabase_network_<project_id nuevo>` — si queda el del template, `pnpm dev:superset` falla porque esa red no existe (ver `docs/operar-superset.md`) |
 | `infra/playwright/compose.yaml` | `name:` (línea 1) |
-| `infra/runner/compose.yaml` | `name:` (línea 1), y además `RUNNER_REPO` / `RUNNER_NAME` en el bloque `environment:` — `RUNNER_REPO` es el repo de GitHub real contra el que se registra el self-hosted runner; si queda apuntando al del template, el runner de CI de este fork se registra en el repo equivocado |
+| `infra/runner/compose.yaml` | `name:` (línea 1), y además `RUNNER_REPO` / `RUNNER_NAME` en el bloque `environment:` — `RUNNER_REPO` es el repo de GitHub real contra el que se registra el self-hosted runner; si queda apuntando al del template, el runner de CI de este fork se registra en el repo equivocado. **No** renombrar el volumen `platform-runner-pnpm-store`: compartirlo con el template hace que cada dependencia se descargue una vez por máquina (ver `docs/adoptar-runners-locales.md`) |
 | `supabase/config.toml` | `project_id` (línea 5) |
 | `infra/runner/entrypoint.mjs` | no hace falta editarlo — `RUNNER_NAME` ya se puede sobreescribir por variable de entorno en vez de tocar el script |
 | `docs/architecture.md` | la tabla de "Proyectos Docker locales" queda con los seis nombres nuevos |

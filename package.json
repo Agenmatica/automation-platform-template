@@ -17,7 +17,7 @@
     "dev:down:kestra": "docker compose -f infra/kestra/compose.yaml down",
     "dev:down:superset": "docker compose -f infra/superset/compose.yaml down",
     "dev:down:playwright": "docker compose -f infra/playwright/compose.yaml down",
-    "dev:down:runner": "docker compose -f infra/runner/compose.yaml down",
+    "dev:down:runner": "docker compose --env-file .env -f infra/runner/compose.yaml down",
     "build": "pnpm --filter @platform/web build",
     "lint": "pnpm --filter @platform/web lint",
     "test": "pnpm test:template:adoption && pnpm --filter @platform/web test && pnpm test:db",
