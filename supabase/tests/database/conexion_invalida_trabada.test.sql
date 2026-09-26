@@ -11,10 +11,12 @@ insert into organizaciones (id, nombre) values
   ('c2222222-2222-2222-2222-222222222222', 'Organización en error');
 
 insert into auth.users (id, email) values
-  ('c1000000-0000-0000-0000-000000000001', 'admin-trabada@example.com');
+  ('c1000000-0000-0000-0000-000000000001', 'admin-trabada@example.com'),
+  ('c2000000-0000-0000-0000-000000000001', 'admin-error@example.com');
 
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
-  ('c1000000-0000-0000-0000-000000000001', 'c1111111-1111-1111-1111-111111111111', 'administrador');
+  ('c1000000-0000-0000-0000-000000000001', 'c1111111-1111-1111-1111-111111111111', 'administrador'),
+  ('c2000000-0000-0000-0000-000000000001', 'c2222222-2222-2222-2222-222222222222', 'administrador');
 
 insert into conexiones (id, organizacion_id, sistema_externo, estado, credencial_vault_id) values
   ('c1111111-1111-1111-1111-111111111112', 'c1111111-1111-1111-1111-111111111111', 'sistema-trabado', 'credencial_invalida',
@@ -97,12 +99,9 @@ select throws_ok(
 -- error no bloquea ningún origen
 -- ============================================================================
 
-insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
-  ('c1000000-0000-0000-0000-000000000001', 'c2222222-2222-2222-2222-222222222222', 'administrador');
-
 select set_config(
   'request.jwt.claims',
-  json_build_object('sub', 'c1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  json_build_object('sub', 'c2000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
   true
 );
 set local role authenticated;
@@ -118,13 +117,21 @@ where conexion_id = 'c2222222-2222-2222-2222-222222222223' and estado = 'en_curs
 set local role authenticated;
 
 select lives_ok(
-  $$select iniciar_ejecucion_worker('c2222222-2222-2222-2222-222222222223', 'reporte-error', 'manual', 'c1000000-0000-0000-0000-000000000001')$$,
+  $$select iniciar_ejecucion_worker('c2222222-2222-2222-2222-222222222223', 'reporte-error', 'manual', 'c2000000-0000-0000-0000-000000000001')$$,
   'error: el manual vuelve a correr'
 );
 
 -- ============================================================================
 -- Actualizar la credencial destraba credencial_invalida
 -- ============================================================================
+
+reset role;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'c1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
 
 select lives_ok(
   $$select public.actualizar_credencial_conexion('c1111111-1111-1111-1111-111111111112', 'credencial-nueva')$$,
