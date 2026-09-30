@@ -25,8 +25,8 @@
 
 - [X] T009 [US1] pgTAP: `iniciar_conexion_oauth` crea una fila `pendiente`, es idempotente (no duplica con `unique`), y falla si la integración no está `habilitada` o quien llama no administra esa organización — en `supabase/tests/database/conexiones_oauth.test.sql`.
 - [X] T010 [US1] pgTAP: `confirmar_conexion_oauth` solo actúa sobre conexiones de la propia organización del llamador y registra el evento `creada` — en `supabase/tests/database/conexiones_oauth.test.sql`.
-- [ ] T011 [US1] Agregar dependencia `@nangohq/frontend` en `apps/web` e implementar `apps/web/src/providers/nango/` (wrapper mínimo: construir cliente Nango con la URL pública del entorno, exponer una función `conectar(clave, conexionId)`).
-- [ ] T012 [US1] Implementar la pantalla/feature `apps/web/src/features/conexiones-oauth/` (Refine): listar integraciones habilitadas, botón "Conectar" que llama `iniciar_conexion_oauth` → `nango.auth(...)` → `confirmar_conexion_oauth`, declarando ubicación/icono en la navegación, estados de carga/vacío/error compartidos y accesibilidad (Principio VI).
+- [X] T011 [US1] Agregar dependencia `@nangohq/frontend` en `apps/web` e implementar `apps/web/src/providers/nango/` (wrapper mínimo: construir cliente Nango con la URL pública del entorno, exponer una función `conectarOAuth(clave, conexionId)`).
+- [X] T012 [US1] Implementar la pantalla `apps/web/src/pages/conexiones-oauth/list.tsx` (Refine): listar integraciones habilitadas, botón "Conectar" que llama `iniciar_conexion_oauth` → `nango.auth(...)` → `confirmar_conexion_oauth`, declarando ubicación/icono en la navegación (`destinosPanel.ts`, sección Configuración) y reutilizando los patrones compartidos de carga/vacío/error/adaptable (Principio VI).
 - [ ] T013 [US1] Verificar manualmente el flujo completo contra un proveedor real en modo Testing siguiendo `quickstart.md` (pasos 1-5) y registrar la evidencia sanitizada en este archivo.
 
 **Checkpoint**: una organización completa el flujo de conexión de extremo a extremo y ve el estado "activa" en Refine.
@@ -43,7 +43,7 @@
 ## Fase 5 — Historia 3: ver estado y reautorizar (P2)
 
 - [X] T018 [US3] pgTAP: reautorizar (repetir `iniciar_conexion_oauth` + `confirmar_conexion_oauth` sobre una conexión `con_error`) no duplica la fila y registra el evento `reautorizada` — en `supabase/tests/database/conexiones_oauth.test.sql`.
-- [ ] T019 [US3] Extender la pantalla de la Fase 3 para mostrar el estado de cada conexión (`activa`/`con_error`/`pendiente`) con los patrones compartidos de estado ya existentes en el panel, y ofrecer "Reautorizar" cuando el estado es `con_error`.
+- [X] T019 [US3] Extender la pantalla de la Fase 3 para mostrar el estado de cada conexión (`activa`/`con_error`/`pendiente`) con los patrones compartidos de estado ya existentes en el panel, y ofrecer "Reautorizar" cuando el estado es `con_error`.
 - [ ] T020 [US3] Verificar manualmente el escenario de revocación + reautorización de `quickstart.md` (paso 6) y registrar evidencia.
 
 **Checkpoint**: una conexión revocada se refleja como tal en Refine y se puede reautorizar sin duplicarse.
@@ -51,7 +51,7 @@
 ## Fase 6 — Historia 4: registrar un proveedor nuevo sin tocar el producto (P3)
 
 - [X] T021 [US4] pgTAP: `registrar_integracion_oauth`/`actualizar_integracion_oauth` solo son ejecutables por superadmin; una integración deshabilitada rechaza `iniciar_conexion_oauth` para cualquier organización.
-- [ ] T022 [US4] Implementar una pantalla mínima de superadmin (lista + alta + toggle de `habilitada`) reutilizando los patrones de UI ya existentes del panel de funcionalidades (spec 009), sin lógica de negocio de ningún proveedor concreto.
+- [X] T022 [US4] Implementar una pantalla mínima de superadmin (`apps/web/src/pages/integraciones-oauth/administrar.tsx`: lista + alta + toggle de `habilitada`) reutilizando los patrones de UI ya existentes del panel de funcionalidades (spec 009), sin lógica de negocio de ningún proveedor concreto.
 - [ ] T023 [US4] Verificar manualmente que dar de alta una segunda integración de prueba (proveedor distinto de Google) no requiere ningún cambio de esquema ni de la pantalla de la Fase 3.
 
 **Checkpoint**: el mecanismo admite un segundo proveedor sin tocar el esquema ya publicado.

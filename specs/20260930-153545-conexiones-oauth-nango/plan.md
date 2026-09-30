@@ -77,8 +77,9 @@ supabase/migrations/<timestamp>_conexiones_oauth.sql
 supabase/tests/database/conexiones_oauth.test.sql
 
 apps/web/src/
-├── features/conexiones-oauth/         # pantalla y componentes de conexión
-└── providers/nango/                    # wrapper mínimo de @nangohq/frontend
+├── pages/conexiones-oauth/list.tsx        # pantalla por organización (Historia 1 y 3)
+├── pages/integraciones-oauth/administrar.tsx  # catálogo de plataforma (Historia 4, superadmin)
+└── providers/nango/                        # wrapper mínimo de @nangohq/frontend
 
 docs/adoptar-conexiones-oauth.md        # guía de adopción para un producto derivado
 README.md                               # comando dev:nango y tabla de servicios

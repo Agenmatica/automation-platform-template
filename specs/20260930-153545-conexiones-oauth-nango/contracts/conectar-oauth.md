@@ -24,7 +24,7 @@ por un `insert`/`update` directo sobre `conexiones_oauth`.
   ```ts
   import Nango from '@nangohq/frontend';
 
-  const nango = new Nango({ publicKey: NANGO_PUBLIC_KEY_O_URL });
+  const nango = new Nango({ host: NANGO_PUBLIC_SERVER_URL }); // self-hosted: host, no publicKey
   const result = await nango.auth(clave, conexionId);
   ```
 
