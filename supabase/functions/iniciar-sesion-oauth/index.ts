@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
   const { data: conexion } = await asUser
     .from('conexiones_oauth')
-    .select('organizacion_id, integraciones_oauth(clave)')
+    .select('organizacion_id, nango_connection_id, integraciones_oauth(clave)')
     .eq('id', conexionId)
     .maybeSingle()
 
@@ -88,18 +88,25 @@ Deno.serve(async (req) => {
   const nangoSecretKey = Deno.env.get('NANGO_SECRET_KEY')!
   const timeout = () => AbortSignal.timeout(10_000)
 
+  // Nango asigna el connection_id — no se puede fijar en POST /connect/sessions
+  // (research.md R8). Primera vez: sesión de creación normal. Reautorizar una
+  // conexión que ya tiene nango_connection_id: sesión de /reconnect, que
+  // apunta a ese mismo connection_id existente en vez de crear uno nuevo.
+  const esReconexion = Boolean(conexion.nango_connection_id)
+  const endpoint = esReconexion ? '/connect/sessions/reconnect' : '/connect/sessions'
+  const payload = esReconexion
+    ? { connection_id: conexion.nango_connection_id, integration_id: clave }
+    : { end_user: { id: conexion.organizacion_id }, allowed_integrations: [clave] }
+
   try {
-    const sesionRes = await fetch(`${nangoUrl}/connect/sessions`, {
+    const sesionRes = await fetch(`${nangoUrl}${endpoint}`, {
       method: 'POST',
       signal: timeout(),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${nangoSecretKey}`,
       },
-      body: JSON.stringify({
-        end_user: { id: conexion.organizacion_id },
-        allowed_integrations: [clave],
-      }),
+      body: JSON.stringify(payload),
     })
 
     if (!sesionRes.ok) {
@@ -108,7 +115,7 @@ Deno.serve(async (req) => {
 
     const { data } = await sesionRes.json()
 
-    return jsonResponse({ token: data.token }, 200)
+    return jsonResponse({ token: data.token, es_reconexion: esReconexion }, 200)
   } catch {
     // Nango caído, timeout, o cualquier fallo de red — mismo criterio que
     // emitir-acceso-reporte: mensaje puntual, sin reintento automático.

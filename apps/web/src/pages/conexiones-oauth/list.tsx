@@ -91,6 +91,7 @@ export function ConexionOAuthList() {
 
     const { error: confirmarError } = await supabaseClient.rpc('confirmar_conexion_oauth', {
       p_conexion_id: conexion.id,
+      p_nango_connection_id: resultado.nangoConnectionId,
     })
     if (confirmarError) {
       setErrorPorIntegracion((actual) => ({ ...actual, [integracion.id]: confirmarError.message }))

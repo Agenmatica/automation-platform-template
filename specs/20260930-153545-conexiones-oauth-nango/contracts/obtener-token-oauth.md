@@ -7,10 +7,16 @@ ni tocar un secreto de Nango o del proveedor fuera de su propio entorno.
 
 No requiere leer el código de esta spec: alcanza con este documento.
 
-## Paso 1 — Resolver el `conexion_id` (Supabase, sin secretos)
+## Paso 1 — Resolver el `conexion_id` y el `nango_connection_id` (Supabase, sin secretos)
+
+**Importante (confirmado en vivo, research.md R8): son dos valores distintos.**
+Con Connect Session Token, Nango asigna su propio `connection_id` — no se
+puede pre-fijar igual al `id` de `conexiones_oauth`. El Paso 2 de abajo
+necesita el `nango_connection_id`; el Paso 3 (`marcar_conexion_oauth_invalida`)
+sigue necesitando el `id` de `conexiones_oauth`. No son intercambiables.
 
 ```sql
-select c.id, c.estado
+select c.id, c.nango_connection_id, c.estado
 from conexiones_oauth c
 join integraciones_oauth i on i.id = c.integracion_id
 where c.organizacion_id = :organizacion_id
@@ -35,18 +41,28 @@ sobre `conexiones`/`servidores_organizacion`. Para ese caso, el Paso 1 es:
 select private.datos_despacho_conexion_oauth(:organizacion_id, :clave);
 ```
 
-Devuelve el `conexion_id` activo, o falla con `P0002` si la organización no
-tiene una conexión activa a esa integración (el flow trata ese error igual
-que "conexión no disponible": no pasa a pedir un token). Ningún token ni dato
-de Nango sale de esta función — eso lo sigue haciendo el worker en el Paso 2,
-con su propio `NANGO_SECRET_KEY_*`, nunca el flow.
+Devuelve el `nango_connection_id` real (no el `id` de `conexiones_oauth`) de
+la conexión activa, o falla con `P0002` si la organización no tiene una
+conexión activa a esa integración (el flow trata ese error igual que
+"conexión no disponible": no pasa a pedir un token). Un flow de Kestra no
+necesita el `id` de `conexiones_oauth` — no reporta errores de credencial él
+mismo, eso lo hace el worker en el Paso 3. Ningún token ni dato de Nango sale
+de esta función — eso lo sigue haciendo el worker en el Paso 2, con su propio
+`NANGO_SECRET_KEY_*`, nunca el flow.
 
 ## Paso 2 — Pedir el token a Nango (fuera de Supabase, servidor a servidor)
 
 ```
-GET {NANGO_SERVER_URL}/connection/{conexion_id}?provider_config_key={clave}&refresh_token=true
+GET {NANGO_SERVER_URL}/connection/{nango_connection_id}?provider_config_key={clave}&refresh_token=true
 Authorization: Bearer {NANGO_SECRET_KEY}
 ```
+
+**Confirmado en vivo (T016)**: la respuesta 200 real trae, además de
+`credentials.access_token`, `connection_id` (coincide con el
+`nango_connection_id` pedido), `provider_config_key`, `provider`, `end_user`,
+`metadata`, `connection_config`, y `credentials.type`/`refresh_token`/
+`expires_at`/`raw` (con los campos crudos del proveedor, incluido `scope`) —
+todo consistente con lo ya documentado abajo, sin campos inesperados.
 
 - `{NANGO_SERVER_URL}`: URL del propio `nango-server` que opera el producto
   derivado (mismo valor configurado en `infra/nango/.env`).
@@ -60,7 +76,25 @@ Authorization: Bearer {NANGO_SECRET_KEY}
   lo refresca automáticamente si había vencido. El backend lo usa
   inmediatamente y lo descarta al terminar el intento; no lo persiste.
 - **Respuesta de error** (credencial revocada o refresh fallido): el backend
-  pasa al paso 3.
+  pasa al paso 3. Formas confirmadas en vivo (T016/T020):
+  - `connection_id` inexistente: `{"error":{"code":"not_found","message":"..."}}`,
+    HTTP 404.
+  - Credencial revocada por el usuario en el proveedor (T020, revocación
+    real contra Google): `{"error":{"code":"invalid_credentials","message":"The
+    external API returned an error when trying to refresh the access
+    token. Please try again later.","payload":{"connection":{...,"errors":[{"type":"auth","log_id":"..."}]}}}}`,
+    HTTP 400. **Importante**: Nango no revalida contra el proveedor en cada
+    pedido — mientras el `access_token` cacheado no llegó a su
+    `expires_at` nominal, `GET /connection` devuelve ese token igual,
+    aunque el proveedor ya lo haya invalidado (confirmado: Google devolvió
+    401 al usar ese mismo token directo, mientras Nango lo seguía dando
+    por bueno). El error real solo aparece cuando Nango intenta refrescar
+    de verdad — al pasar el `expires_at` cacheado, o forzando el botón
+    "Refresh" del dashboard de Nango. Un backend que solo llama
+    `GET /connection` puede tardar hasta la duración del access token
+    (normalmente 1h) en enterarse de una revocación.
+  - Todo error de Nango en este endpoint sigue la forma
+    `{error:{code,message}}` (con `payload` adicional en algunos casos).
 
 ### Alternativa: proxy de Nango (sin manejar el token en absoluto)
 
@@ -70,7 +104,7 @@ sin recibir nunca el `access_token`:
 ```
 {METHOD} {NANGO_SERVER_URL}/proxy/{ruta-de-la-api-externa}
 Authorization: Bearer {NANGO_SECRET_KEY}
-Connection-Id: {conexion_id}
+Connection-Id: {nango_connection_id}
 Provider-Config-Key: {clave}
 ```
 
@@ -87,6 +121,10 @@ inválida):
 ```sql
 select marcar_conexion_oauth_invalida(:conexion_id, :motivo_sanitizado);
 ```
+
+`:conexion_id` acá es el `id` de `conexiones_oauth` del Paso 1 (no el
+`nango_connection_id`) — es la fila de Supabase la que cambia de estado, no
+nada del lado de Nango.
 
 - `:motivo_sanitizado` es un texto corto y sin datos sensibles (nunca el
   token, nunca la respuesta cruda de Nango o del proveedor) — mismo criterio

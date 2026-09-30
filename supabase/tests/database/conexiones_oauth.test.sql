@@ -2,7 +2,7 @@
 -- 20260930-153545-conexiones-oauth-nango). Ver data-model.md y contracts/.
 begin;
 
-select plan(41);
+select plan(45);
 
 -- ============================================================================
 -- Fixture
@@ -64,7 +64,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select public.registrar_integracion_oauth('google', 'Google')$$,
+  $$select public.registrar_integracion_oauth('google-pgtap-fixture', 'Google')$$,
   '42501',
   null,
   'un administrador de organización no puede registrar una integración (superadmin únicamente)'
@@ -80,7 +80,7 @@ select set_config(
 set local role authenticated;
 
 insert into t_ids (key, val)
-select 'integracion_google', (public.registrar_integracion_oauth('google', 'Google')).id;
+select 'integracion_google', (public.registrar_integracion_oauth('google-pgtap-fixture', 'Google')).id;
 
 insert into t_ids (key, val)
 select 'integracion_deshabilitada', (public.registrar_integracion_oauth('ms-deshabilitada', 'Microsoft (prueba)')).id;
@@ -194,18 +194,24 @@ select throws_ok(
 -- ============================================================================
 
 select throws_ok(
-  $$select public.confirmar_conexion_oauth('00000000-0000-0000-0000-000000000000')$$,
+  $$select public.confirmar_conexion_oauth('00000000-0000-0000-0000-000000000000', 'nango-conn-1')$$,
   'P0002',
   null,
   'confirmar_conexion_oauth rechaza una conexión que no existe'
 );
 
-select public.confirmar_conexion_oauth((select val from t_ids where key = 'conexion_x_google'));
+select public.confirmar_conexion_oauth((select val from t_ids where key = 'conexion_x_google'), 'nango-conn-1');
 
 select is(
   (select estado from conexiones_oauth where id = (select val from t_ids where key = 'conexion_x_google')),
   'activa',
   'confirmar_conexion_oauth deja la conexión activa'
+);
+
+select is(
+  (select nango_connection_id from conexiones_oauth where id = (select val from t_ids where key = 'conexion_x_google')),
+  'nango-conn-1',
+  'confirmar_conexion_oauth guarda el connection_id real que devolvió Nango (research.md R8)'
 );
 
 select is(
@@ -230,7 +236,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  format($$select public.confirmar_conexion_oauth('%s')$$, (select val from t_ids where key = 'conexion_x_google')),
+  format($$select public.confirmar_conexion_oauth('%s', 'nango-conn-y')$$, (select val from t_ids where key = 'conexion_x_google')),
   '42501',
   null,
   'el administrador de Y no puede confirmar una conexión de X'
@@ -317,7 +323,7 @@ set local role authenticated;
 select is(
   (public.iniciar_conexion_oauth('e1111111-1111-1111-1111-111111111111', (select val from t_ids where key = 'integracion_google'))).id,
   (select val from t_ids where key = 'conexion_x_google'),
-  'reautorizar reutiliza el mismo id/connection_id de una conexión con_error'
+  'reautorizar reutiliza el mismo id de una conexión con_error (bookkeeping de Supabase, distinto del connection_id de Nango desde research.md R8)'
 );
 
 select is(
@@ -328,7 +334,16 @@ select is(
   'reautorizar no crea una segunda fila'
 );
 
-select public.confirmar_conexion_oauth((select val from t_ids where key = 'conexion_x_google'));
+-- /connect/sessions/reconnect apunta al mismo nango_connection_id existente
+-- (contracts/conectar-oauth.md, iniciar-sesion-oauth) — se simula pasando el
+-- mismo valor otra vez, no uno nuevo.
+select public.confirmar_conexion_oauth((select val from t_ids where key = 'conexion_x_google'), 'nango-conn-1');
+
+select is(
+  (select nango_connection_id from conexiones_oauth where id = (select val from t_ids where key = 'conexion_x_google')),
+  'nango-conn-1',
+  'reautorizar conserva el mismo nango_connection_id (no cambia de identidad en Nango)'
+);
 
 select is(
   (select tipo from eventos_conexion_oauth where conexion_id = (select val from t_ids where key = 'conexion_x_google') order by id desc limit 1),
@@ -337,6 +352,27 @@ select is(
 );
 
 reset role;
+
+-- ============================================================================
+-- nango_connection_id: único cuando no es null, y legible por authenticated
+-- ============================================================================
+
+select throws_ok(
+  format(
+    $$insert into conexiones_oauth (organizacion_id, integracion_id, nango_connection_id) values ('%s', '%s', 'nango-conn-1')$$,
+    'e2222222-2222-2222-2222-222222222222',
+    (select val from t_ids where key = 'integracion_deshabilitada')
+  ),
+  '23505',
+  null,
+  'no puede haber dos filas con el mismo nango_connection_id (unique parcial)'
+);
+
+select is(
+  has_column_privilege('authenticated', 'conexiones_oauth', 'nango_connection_id', 'SELECT'),
+  true,
+  'authenticated puede leer nango_connection_id (RLS de la tabla sigue aplicando)'
+);
 
 -- ============================================================================
 -- Aislamiento por organización (Principio I)
@@ -377,7 +413,7 @@ select is(
 );
 
 select throws_ok(
-  $$update integraciones_oauth set habilitada = false where clave = 'google'$$,
+  $$update integraciones_oauth set habilitada = false where clave = 'google-pgtap-fixture'$$,
   '42501',
   null,
   'authenticated no puede escribir integraciones_oauth directo (sin GRANT de insert/update)'
@@ -406,13 +442,13 @@ select is(
 );
 
 select is(
-  private.datos_despacho_conexion_oauth('e1111111-1111-1111-1111-111111111111', 'google'),
-  (select val from t_ids where key = 'conexion_x_google'),
-  'datos_despacho_conexion_oauth resuelve el conexion_id activo de X para google'
+  private.datos_despacho_conexion_oauth('e1111111-1111-1111-1111-111111111111', 'google-pgtap-fixture'),
+  'nango-conn-1',
+  'datos_despacho_conexion_oauth resuelve el connection_id real de Nango (nango_connection_id), no el id de conexiones_oauth (research.md R8)'
 );
 
 select throws_ok(
-  $$select private.datos_despacho_conexion_oauth('e2222222-2222-2222-2222-222222222222', 'google')$$,
+  $$select private.datos_despacho_conexion_oauth('e2222222-2222-2222-2222-222222222222', 'google-pgtap-fixture')$$,
   'P0002',
   null,
   'datos_despacho_conexion_oauth falla si la organización no tiene conexión activa a esa integración'
