@@ -79,6 +79,12 @@
       "version": "1.0.0",
       "title": "Mapeo de identificadores externos de clientes",
       "paths": ["supabase/migrations/20260930140000_mapeo_identificadores_clientes.sql", "supabase/tests/database/mapeo_identificadores_clientes.test.sql"]
+    },
+    {
+      "id": "oauth-connections-nango",
+      "version": "1.0.0",
+      "title": "Conexiones OAuth de plataforma vía Nango",
+      "paths": ["infra/nango/compose.yaml", "infra/nango/README.md", "supabase/migrations/20260930160000_conexiones_oauth.sql", "supabase/migrations/20260930165825_datos_despacho_conexion_oauth.sql", "supabase/migrations/20260930203338_nango_connection_id_real.sql", "supabase/tests/database/conexiones_oauth.test.sql", "supabase/functions/iniciar-sesion-oauth/index.ts", "apps/web/src/pages/conexiones-oauth/list.tsx", "apps/web/src/pages/integraciones-oauth/administrar.tsx", "apps/web/src/providers/nango/index.ts", "docs/adoptar-conexiones-oauth.md"]
     }
   ]
 }
