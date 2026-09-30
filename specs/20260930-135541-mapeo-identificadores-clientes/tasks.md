@@ -13,6 +13,11 @@ description: "Task list template for feature implementation"
 prueba pgTAP de aislamiento para todo cambio sensible de RLS ("Technology
 and Quality Gates"), y esta spec es justamente eso.
 
+**Desvío post-implementación**: code review (skill `code-review`) encontró
+que T003 no había agregado las policies de insert/delete "cinturón de
+seguridad" que `data-model.md`/`research.md` ya describían, y que faltaban
+casos de prueba de FR-003/FR-008 — ver commit 14ff74f.
+
 **Organization**: toda la spec vive en un único archivo de migración
 (mismo patrón que las specs 003 y 013 de este repo: tabla + RLS + funciones
 en un solo `.sql`), así que las tareas de distintas historias comparten
