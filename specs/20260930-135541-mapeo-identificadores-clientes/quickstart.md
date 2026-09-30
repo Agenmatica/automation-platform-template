@@ -58,3 +58,17 @@ que esta spec es plataforma pura sin integración puntual.
    confirmar que un miembro sin rol de administrador puede leer pero no
    puede vincular ni desvincular, y que ningún usuario puede ver ni
    modificar vínculos de clientes de otra organización.
+
+## Ejecución registrada (2026-09-30)
+
+Se ejecutaron los pasos 1-7 a mano contra la base local (`supabase/migrations/20260930140000_mapeo_identificadores_clientes.sql` aplicada), simulando cada rol con `set_config('request.jwt.claims', ...)` + `set local role authenticated` dentro de una única transacción con `rollback` final (sin dejar datos de prueba en la base):
+
+- Paso 1: `vincular_identificador_externo` creó el vínculo y devolvió la fila.
+- Paso 2: la re-vinculación del mismo par al mismo cliente devolvió la misma fila (mismo `id`) sin duplicar — 1 sola fila para ese par.
+- Paso 3: vincular el mismo par a otro cliente falló con el mensaje `El identificador externo ya está vinculado a otro cliente`; el vínculo original conservó su `cliente_id`.
+- Paso 4: un miembro sin rol de administrador listó el vínculo por `cliente_id` y lo resolvió por `sistema`/`identificador_externo`.
+- Paso 5: un administrador de otra organización obtuvo 0 filas para el mismo `cliente_id` (aislamiento).
+- Paso 6: `desvincular_identificador_externo` eliminó el vínculo (count pasó a 0) y el mismo par se vinculó sin problema a otro cliente de la misma organización.
+- Paso 7: eliminar el cliente propietario del vínculo lo eliminó en cascada (count 0) sin desvincularlo antes.
+
+El paso 8 (pgTAP) corrió por separado: `supabase test db --local supabase/tests/database/mapeo_identificadores_clientes.test.sql` → `21/21` pruebas en verde (incluye los mismos casos de arriba más el rechazo por permiso, por cliente inexistente y por sistema/identificador vacíos). La corrida completa de `pnpm test` en la máquina de desarrollo mostró además 5 archivos de pgTAP de otra spec en curso (`catalogo-sistemas-externos`) fallando por una migración suya ya aplicada a la base local compartida pero no presente en esta rama (agrega una FK de `conexiones.sistema_externo` a una tabla `sistemas_externos` nueva) — no relacionado con esta spec; `pnpm lint`, `pnpm build`, `pnpm infra:config` y el resto de `pnpm test` (adopción de plantilla, `apps/web`, y el archivo pgTAP de esta spec) terminaron en verde.
