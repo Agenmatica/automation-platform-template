@@ -14,17 +14,17 @@
 
 ## Fase 2 — Fundaciones de esquema (Supabase)
 
-- [ ] T005 Crear migración aditiva `supabase/migrations/<timestamp>_conexiones_oauth.sql` con las tablas `integraciones_oauth`, `conexiones_oauth` (incluyendo `unique (organizacion_id, integracion_id)` e índice por `organizacion_id`) y `eventos_conexion_oauth`, con su comentario de reversión documentado (Technology Gates).
-- [ ] T006 En la misma migración, crear las funciones `SECURITY DEFINER`/`set search_path = ''` de `data-model.md`: `iniciar_conexion_oauth`, `confirmar_conexion_oauth`, `marcar_conexion_oauth_invalida`, `registrar_integracion_oauth`, `actualizar_integracion_oauth`, reutilizando `private.es_administrador_de` y el chequeo de superadmin ya existentes.
-- [ ] T007 En la misma migración, habilitar RLS y políticas de `select` por organización (administrador/superadmin) en `conexiones_oauth` y `eventos_conexion_oauth`; `integraciones_oauth` legible por cualquier persona autenticada con contexto de organización activo, sin `insert`/`update` directo para `authenticated` en ninguna de las tres tablas.
-- [ ] T008 [P] Crear esqueleto pgTAP en `supabase/tests/database/conexiones_oauth.test.sql` (tablas, columnas, constraints, RLS habilitada).
+- [X] T005 Crear migración aditiva `supabase/migrations/20260930160000_conexiones_oauth.sql` con las tablas `integraciones_oauth`, `conexiones_oauth` (incluyendo `unique (organizacion_id, integracion_id)` e índice por `organizacion_id`) y `eventos_conexion_oauth`, con su comentario de reversión documentado (Technology Gates).
+- [X] T006 En la misma migración, crear las funciones `SECURITY DEFINER`/`set search_path = ''` de `data-model.md`: `iniciar_conexion_oauth`, `confirmar_conexion_oauth`, `marcar_conexion_oauth_invalida`, `registrar_integracion_oauth`, `actualizar_integracion_oauth`, reutilizando `private.es_administrador_de` y el chequeo de superadmin ya existentes.
+- [X] T007 En la misma migración, habilitar RLS y políticas de `select` por organización (administrador/superadmin) en `conexiones_oauth` y `eventos_conexion_oauth`; `integraciones_oauth` legible por cualquier persona autenticada con contexto de organización activo, sin `insert`/`update` directo para `authenticated` en ninguna de las tres tablas.
+- [X] T008 [P] Crear esqueleto pgTAP en `supabase/tests/database/conexiones_oauth.test.sql` (tablas, columnas, constraints, RLS habilitada).
 
 **Checkpoint**: las tablas y funciones existen; ninguna organización puede leer la fila de otra (pgTAP de aislamiento mínimo pasa).
 
 ## Fase 3 — Historia 1: conectar una cuenta externa (P1)
 
-- [ ] T009 [US1] pgTAP: `iniciar_conexion_oauth` crea una fila `pendiente`, es idempotente (no duplica con `unique`), y falla si la integración no está `habilitada` o quien llama no administra esa organización — en `supabase/tests/database/conexiones_oauth.test.sql`.
-- [ ] T010 [US1] pgTAP: `confirmar_conexion_oauth` solo actúa sobre conexiones de la propia organización del llamador y registra el evento `creada` — en `supabase/tests/database/conexiones_oauth.test.sql`.
+- [X] T009 [US1] pgTAP: `iniciar_conexion_oauth` crea una fila `pendiente`, es idempotente (no duplica con `unique`), y falla si la integración no está `habilitada` o quien llama no administra esa organización — en `supabase/tests/database/conexiones_oauth.test.sql`.
+- [X] T010 [US1] pgTAP: `confirmar_conexion_oauth` solo actúa sobre conexiones de la propia organización del llamador y registra el evento `creada` — en `supabase/tests/database/conexiones_oauth.test.sql`.
 - [ ] T011 [US1] Agregar dependencia `@nangohq/frontend` en `apps/web` e implementar `apps/web/src/providers/nango/` (wrapper mínimo: construir cliente Nango con la URL pública del entorno, exponer una función `conectar(clave, conexionId)`).
 - [ ] T012 [US1] Implementar la pantalla/feature `apps/web/src/features/conexiones-oauth/` (Refine): listar integraciones habilitadas, botón "Conectar" que llama `iniciar_conexion_oauth` → `nango.auth(...)` → `confirmar_conexion_oauth`, declarando ubicación/icono en la navegación, estados de carga/vacío/error compartidos y accesibilidad (Principio VI).
 - [ ] T013 [US1] Verificar manualmente el flujo completo contra un proveedor real en modo Testing siguiendo `quickstart.md` (pasos 1-5) y registrar la evidencia sanitizada en este archivo.
@@ -33,8 +33,8 @@
 
 ## Fase 4 — Historia 2: obtener un token vigente sin manejar refresh (P1)
 
-- [ ] T014 [US2] pgTAP: `marcar_conexion_oauth_invalida` deja `estado = 'con_error'`, registra el evento `invalidada` con motivo, y es invocable por `service_role` además de por administrador/superadmin de esa organización — en `supabase/tests/database/conexiones_oauth.test.sql`.
-- [ ] T015 [US2] pgTAP: el `select` de resolución de `conexion_id` por `organizacion_id` + `clave` (Paso 1 de `contracts/obtener-token-oauth.md`) respeta RLS entre organizaciones.
+- [X] T014 [US2] pgTAP: `marcar_conexion_oauth_invalida` deja `estado = 'con_error'`, registra el evento `invalidada` con motivo, y es invocable únicamente por `service_role` (desvío respecto de `data-model.md`, que mencionaba también admin/superadmin: sin GRANT a `authenticated` a propósito, mismo criterio que `private.marcar_conexion_credencial_invalida` de spec 013 — ver comentario de la función en la migración) — en `supabase/tests/database/conexiones_oauth.test.sql`.
+- [X] T015 [US2] pgTAP: el `select` de resolución de `conexion_id` por `organizacion_id` + `clave` (Paso 1 de `contracts/obtener-token-oauth.md`) respeta RLS entre organizaciones.
 - [ ] T016 [US2] Verificar manualmente el Paso 2 del contrato (`GET {NANGO_SERVER_URL}/connection/:id`) contra la conexión activa creada en la Fase 3, siguiendo `quickstart.md` (paso 8), y registrar la evidencia (sin exponer el token) en este archivo.
 - [ ] T017 [US2] Revisar que `contracts/obtener-token-oauth.md` quede consistente con el resultado real del paso anterior (nombres de campos de la respuesta de Nango, forma exacta del error de refresh) y corregir si algo difiere de lo documentado.
 
@@ -42,7 +42,7 @@
 
 ## Fase 5 — Historia 3: ver estado y reautorizar (P2)
 
-- [ ] T018 [US3] pgTAP: reautorizar (repetir `iniciar_conexion_oauth` + `confirmar_conexion_oauth` sobre una conexión `con_error`) no duplica la fila y registra el evento `reautorizada` — en `supabase/tests/database/conexiones_oauth.test.sql`.
+- [X] T018 [US3] pgTAP: reautorizar (repetir `iniciar_conexion_oauth` + `confirmar_conexion_oauth` sobre una conexión `con_error`) no duplica la fila y registra el evento `reautorizada` — en `supabase/tests/database/conexiones_oauth.test.sql`.
 - [ ] T019 [US3] Extender la pantalla de la Fase 3 para mostrar el estado de cada conexión (`activa`/`con_error`/`pendiente`) con los patrones compartidos de estado ya existentes en el panel, y ofrecer "Reautorizar" cuando el estado es `con_error`.
 - [ ] T020 [US3] Verificar manualmente el escenario de revocación + reautorización de `quickstart.md` (paso 6) y registrar evidencia.
 
@@ -50,7 +50,7 @@
 
 ## Fase 6 — Historia 4: registrar un proveedor nuevo sin tocar el producto (P3)
 
-- [ ] T021 [US4] pgTAP: `registrar_integracion_oauth`/`actualizar_integracion_oauth` solo son ejecutables por superadmin; una integración deshabilitada rechaza `iniciar_conexion_oauth` para cualquier organización.
+- [X] T021 [US4] pgTAP: `registrar_integracion_oauth`/`actualizar_integracion_oauth` solo son ejecutables por superadmin; una integración deshabilitada rechaza `iniciar_conexion_oauth` para cualquier organización.
 - [ ] T022 [US4] Implementar una pantalla mínima de superadmin (lista + alta + toggle de `habilitada`) reutilizando los patrones de UI ya existentes del panel de funcionalidades (spec 009), sin lógica de negocio de ningún proveedor concreto.
 - [ ] T023 [US4] Verificar manualmente que dar de alta una segunda integración de prueba (proveedor distinto de Google) no requiere ningún cambio de esquema ni de la pantalla de la Fase 3.
 
