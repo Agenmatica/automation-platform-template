@@ -38,20 +38,47 @@ create index clientes_identificadores_externos_cliente_id_idx
 alter table clientes_identificadores_externos enable row level security;
 
 -- Lectura: acotada a quien puede ver el cliente dueño del vínculo, mismo
--- criterio que el resto de tablas de negocio de esta plataforma. Sin
--- policies de insert/update/delete con grant a authenticated: toda
--- escritura pasa por las funciones SECURITY DEFINER de abajo (mismo patrón
--- que conexiones en 20260914150000_orquestacion_multi_organizacion.sql, no
--- el de clientes en 20260908172920_fundacion_multitenant.sql) porque la
--- invariante de unicidad global (FR-002) y el comportamiento idempotente de
--- la re-vinculación (FR-004) no se pueden expresar solo con RLS.
+-- criterio que el resto de tablas de negocio de esta plataforma. El
+-- private.organizacion_id() va envuelto en un select escalar para que
+-- Postgres lo evalúe una sola vez por consulta (initplan) en vez de una vez
+-- por fila candidata — mismo patrón que private.es_administrador_de() en
+-- 20260914150000_orquestacion_multi_organizacion.sql.
 create policy clientes_identificadores_externos_select on clientes_identificadores_externos
   for select to authenticated
   using (
     exists (
       select 1 from clientes c
-      where c.id = clientes_identificadores_externos.cliente_id
-        and c.organizacion_id = private.organizacion_id()
+      where c.id = cliente_id
+        and c.organizacion_id = (select private.organizacion_id())
+    )
+  );
+
+-- Sin GRANT de insert/update/delete a authenticated (más abajo): toda
+-- escritura pasa por las funciones SECURITY DEFINER de esta migración
+-- (mismo patrón que conexiones en 20260914150000_orquestacion_multi_organizacion.sql,
+-- no el de clientes en 20260908172920_fundacion_multitenant.sql) porque la
+-- invariante de unicidad global (FR-002) y el comportamiento idempotente de
+-- la re-vinculación (FR-004) no se pueden expresar solo con RLS. Las
+-- policies de insert/delete se definen igual, como cinturón de seguridad,
+-- por si algún día se otorgara el grant de tabla por error — mismo patrón
+-- que conexiones_insert/conexiones_delete en esa misma migración.
+create policy clientes_identificadores_externos_insert on clientes_identificadores_externos
+  for insert to authenticated
+  with check (
+    exists (
+      select 1 from clientes c
+      where c.id = cliente_id
+        and (select private.es_administrador_de(c.organizacion_id))
+    )
+  );
+
+create policy clientes_identificadores_externos_delete on clientes_identificadores_externos
+  for delete to authenticated
+  using (
+    exists (
+      select 1 from clientes c
+      where c.id = cliente_id
+        and (select private.es_administrador_de(c.organizacion_id))
     )
   );
 

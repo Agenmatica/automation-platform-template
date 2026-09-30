@@ -3,7 +3,7 @@
 -- contracts/mapeo-identificadores-externos.md.
 begin;
 
-select plan(21);
+select plan(27);
 
 -- ============================================================================
 -- Fixture
@@ -28,12 +28,44 @@ insert into clientes (id, organizacion_id, nombre) values
   ('f3000000-0000-0000-0000-000000000002', 'f1111111-1111-1111-1111-111111111111', 'Cliente X2'),
   ('f3000000-0000-0000-0000-000000000003', 'f2222222-2222-2222-2222-222222222222', 'Cliente Y1');
 
+insert into auth.users (id, email) values
+  ('f5000000-0000-0000-0000-000000000005', 'superadmin-mapeo@example.com');
+
+insert into superadmins (user_id) values ('f5000000-0000-0000-0000-000000000005');
+
+insert into superadmin_organizacion_activa (user_id, organizacion_id) values
+  ('f5000000-0000-0000-0000-000000000005', 'f1111111-1111-1111-1111-111111111111');
+
 create temporary table t_ids (key text primary key, val uuid);
 grant all on t_ids to authenticated;
 
 -- ============================================================================
--- Historia 1: vincular_identificador_externo (FR-001, FR-002, FR-004,
--- FR-009, FR-010, FR-011)
+-- Fundamentos: sin grant de insert/update/delete a authenticated (Decisión 1
+-- de research.md) — toda escritura pasa por las funciones SECURITY DEFINER
+-- de abajo, nunca por un insert/update/delete directo del cliente.
+-- ============================================================================
+
+select is(
+  has_table_privilege('authenticated', 'clientes_identificadores_externos', 'INSERT'),
+  false,
+  'authenticated no tiene INSERT directo sobre clientes_identificadores_externos'
+);
+
+select is(
+  has_table_privilege('authenticated', 'clientes_identificadores_externos', 'UPDATE'),
+  false,
+  'authenticated no tiene UPDATE directo sobre clientes_identificadores_externos'
+);
+
+select is(
+  has_table_privilege('authenticated', 'clientes_identificadores_externos', 'DELETE'),
+  false,
+  'authenticated no tiene DELETE directo sobre clientes_identificadores_externos'
+);
+
+-- ============================================================================
+-- Historia 1: vincular_identificador_externo (FR-001, FR-002, FR-003,
+-- FR-004, FR-009, FR-010, FR-011)
 -- ============================================================================
 
 select set_config(
@@ -120,6 +152,17 @@ select is(
   'el intento fallido no modificó el vínculo original (FR-010)'
 );
 
+select lives_ok(
+  $$select public.vincular_identificador_externo('f3000000-0000-0000-0000-000000000001', 'otro-sistema', 'ext-999')$$,
+  'un cliente puede tener vinculado más de un identificador, de sistemas distintos (FR-003)'
+);
+
+select is(
+  (select count(*)::int from clientes_identificadores_externos where cliente_id = 'f3000000-0000-0000-0000-000000000001'),
+  2,
+  'el cliente queda con sus dos identificadores simultáneos, de sistemas distintos (FR-003)'
+);
+
 reset role;
 
 -- ============================================================================
@@ -135,14 +178,29 @@ set local role authenticated;
 
 select is(
   (select count(*)::int from clientes_identificadores_externos where cliente_id = 'f3000000-0000-0000-0000-000000000001'),
-  1,
-  'un miembro (sin rol administrador) puede listar los identificadores de un cliente de su organización (FR-005)'
+  2,
+  'un miembro (sin rol administrador) puede listar los identificadores de un cliente de su organización, incluidos los de distintos sistemas (FR-005, FR-003)'
 );
 
 select is(
   (select cliente_id from clientes_identificadores_externos where sistema = 'sistema-prueba' and identificador_externo = 'ext-001'),
   'f3000000-0000-0000-0000-000000000001'::uuid,
   'un miembro puede resolver el cliente a partir de sistema + identificador (FR-006)'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', 'f5000000-0000-0000-0000-000000000005', 'role', 'authenticated')::text,
+  true
+);
+set local role authenticated;
+
+select is(
+  (select count(*)::int from clientes_identificadores_externos where cliente_id = 'f3000000-0000-0000-0000-000000000001'),
+  2,
+  'un superadmin con la organización de X activa ve los identificadores de sus clientes (FR-008)'
 );
 
 reset role;
@@ -245,17 +303,16 @@ select set_config(
 );
 set local role authenticated;
 
-insert into t_ids (key, val)
-select 'vinculo_cascada', (public.vincular_identificador_externo('f3000000-0000-0000-0000-000000000001', 'sistema-cascada', 'ext-cascada')).id;
+select public.vincular_identificador_externo('f3000000-0000-0000-0000-000000000001', 'sistema-cascada', 'ext-cascada');
 
 reset role;
 
 delete from clientes where id = 'f3000000-0000-0000-0000-000000000001';
 
 select is(
-  (select count(*)::int from clientes_identificadores_externos where id = (select val from t_ids where key = 'vinculo_cascada')),
+  (select count(*)::int from clientes_identificadores_externos where cliente_id = 'f3000000-0000-0000-0000-000000000001'),
   0,
-  'eliminar un cliente elimina en cascada sus identificadores externos vinculados (FR-010, SC-004)'
+  'eliminar un cliente elimina en cascada TODOS sus identificadores externos vinculados, incluido el de otro sistema que quedaba de la Historia 1 (FR-010, SC-004)'
 );
 
 select * from finish();
