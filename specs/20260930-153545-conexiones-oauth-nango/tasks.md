@@ -85,6 +85,30 @@ vía JDBC directo, sin `select` sobre `conexiones_oauth`/`integraciones_oauth`.
   - Ninguna credencial real (contraseña de Google, secretos de Nango) quedó escrita en ningún archivo de este repo — solo tokens de prueba efímeros, ya vencidos/revocados al momento de cerrar esta tarea.
 - [X] T028 Documentar en `research.md` (R7) la fragilidad operativa encontrada: el stack local de Supabase es único por repo, no por worktree — un `docker restart` del edge runtime tras borrar el worktree que montaba puede tumbarlo para todas las sesiones que comparten ese proyecto local. Mitigado en el momento con un lock de archivo fuera de cualquier worktree, coordinado con el resto de las sesiones activas; sin cambio de código en esta spec.
 
+## Code review (2026-09-30)
+
+Corrido sobre el diff completo contra `main` (Standards + Spec en paralelo,
+skill `code-review`), antes de mergear. Sin violaciones duras en ninguno de
+los dos ejes.
+
+- **Corregido**: `data-model.md` había quedado desactualizado desde el fix
+  de `nango_connection_id` (commit `fb7c011`) — todavía documentaba `id =
+  connection_id de Nango` y la firma vieja de un solo parámetro de
+  `confirmar_conexion_oauth`. Corregido en este mismo commit.
+- **Riesgo de seguridad real, documentado como aceptado (no bloqueante)**:
+  `confirmar_conexion_oauth` no valida contra la API de Nango que el
+  `nango_connection_id` recibido corresponda a una autorización real
+  completada — un admin de organización podría invocarlo directo con un
+  valor inventado. Radio de daño acotado a la propia organización del
+  admin (el Paso 2 del contrato fallaría contra Nango en el primer uso
+  real). Detalle completo en `data-model.md`, tabla de funciones.
+- Hallazgos menores (juicio, no corregidos): duplicación de rama en el
+  ternario de estado de `list.tsx`, `nango_connection_id` expuesto a
+  `authenticated` sin uso actual en la UI, y FR-008 (auditoría) sin
+  columnas explícitas de `integracion_id`/`resultado` en
+  `eventos_conexion_oauth` (derivables por join). Ninguno justifica
+  frenar el merge de una spec ya validada en vivo de punta a punta.
+
 ## Dependencias
 
 Fase 1 → Fase 2 → Historia 1 → Historia 2 → Historia 3 → Historia 4 → Fase 7.
