@@ -32,6 +32,13 @@ insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('e2000000-0000-0000-0000-000000000001', 'e2222222-2222-2222-2222-222222222222', 'administrador'),
   ('e3000000-0000-0000-0000-000000000001', 'e1111111-1111-1111-1111-111111111111', 'miembro');
 
+-- Fixture de catálogo (spec catálogo-sistemas-externos): conexiones.sistema_externo
+-- ahora tiene FK a sistemas_externos.
+insert into sistemas_externos (id, descripcion) values
+  ('sistema-x', 'Sistema X (fixture de test, sin valor de negocio)'),
+  ('sistema-y', 'Sistema Y (fixture de test, sin valor de negocio)'),
+  ('sistema-x-inactivo', 'Sistema X inactivo (fixture de test, sin valor de negocio)');
+
 insert into conexiones (id, organizacion_id, sistema_externo, credencial_vault_id) values
   ('e1111111-1111-1111-1111-111111111112', 'e1111111-1111-1111-1111-111111111111', 'sistema-x', gen_random_uuid()),
   ('e2222222-2222-2222-2222-222222222223', 'e2222222-2222-2222-2222-222222222222', 'sistema-y', gen_random_uuid());

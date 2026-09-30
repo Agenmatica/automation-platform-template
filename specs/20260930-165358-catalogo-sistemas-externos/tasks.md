@@ -31,7 +31,7 @@ correspondiente a su ángulo.
 
 **Purpose**: elegir el nombre del archivo de migración, sin contenido aún.
 
-- [ ] T001 Elegir el timestamp de la migración siguiendo la convención de
+- [X] T001 Elegir el timestamp de la migración siguiendo la convención de
   `supabase/migrations/` (mayor que el último archivo existente,
   `20260925210000_destrabar_conexion_invalida.sql`) y crear el archivo vacío
   `supabase/migrations/<timestamp>_catalogo_sistemas_externos.sql` con el
@@ -50,20 +50,20 @@ esto aplicado.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 En `supabase/migrations/<timestamp>_catalogo_sistemas_externos.sql`
+- [X] T002 En `supabase/migrations/<timestamp>_catalogo_sistemas_externos.sql`
   (de T001), crear la tabla `sistemas_externos` (`id text primary key`,
   `descripcion text not null`) con `comment on table` explicando el patrón
   "agregar un sistema externo es una fila nueva, no un check fijo" — mismo
   texto que `roles_organizacion` en
   `supabase/migrations/20260908172920_fundacion_multitenant.sql:18-19`, sin
   ningún `insert` de datos (FR-002 de `spec.md`: la tabla queda vacía).
-- [ ] T003 En el mismo archivo, habilitar RLS sobre `sistemas_externos` y
+- [X] T003 En el mismo archivo, habilitar RLS sobre `sistemas_externos` y
   crear la policy `sistemas_externos_select` (`for select to authenticated
   using (true)`), sin policy de escritura — ver `data-model.md`.
-- [ ] T004 En el mismo archivo, agregar
+- [X] T004 En el mismo archivo, agregar
   `grant select on sistemas_externos to authenticated;` (el proyecto tiene
   `auto_expose_new_tables = false`, hace falta explícito).
-- [ ] T005 En el mismo archivo, agregar la constraint
+- [X] T005 En el mismo archivo, agregar la constraint
   `conexiones_sistema_externo_fkey` sobre `conexiones.sistema_externo`
   referenciando `sistemas_externos (id)` con `not valid` — sin
   `validate constraint` en esta migración (research.md, R2). Comentario
@@ -91,7 +91,7 @@ de solo lectura para cualquier autenticado.
 > el comportamiento esperado — la migración y el test se escriben en el
 > mismo PR).
 
-- [ ] T006 [US1] Crear `supabase/tests/database/catalogo_sistemas_externos.test.sql`
+- [X] T006 [US1] Crear `supabase/tests/database/catalogo_sistemas_externos.test.sql`
   con: (a) `sistemas_externos` empieza vacía (`count(*) = 0`); (b)
   `throws_ok` con errcode `23503` al llamar `crear_conexion` con un
   `sistema_externo` inexistente; (c) insertar una fila de fixture en
@@ -104,7 +104,7 @@ de solo lectura para cualquier autenticado.
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Actualizar el fixture de
+- [X] T007 [US1] Actualizar el fixture de
   `supabase/tests/database/orquestacion_multi_organizacion.test.sql`:
   agregar `insert into sistemas_externos (id, descripcion) values
   ('sistema-de-prueba', '...')` junto al resto del fixture inicial (cerca
@@ -130,22 +130,22 @@ verde para los 4 archivos de abajo, sin tocar sus asserts existentes.
 
 ### Implementation for User Story 2
 
-- [ ] T008 [P] [US2] Actualizar el fixture de
+- [X] T008 [P] [US2] Actualizar el fixture de
   `supabase/tests/database/ciclo_ejecuciones_workers.test.sql`: agregar
   `insert into sistemas_externos (id, descripcion) values ('sistema-x',
   '...'), ('sistema-y', '...'), ('sistema-x-inactivo', '...')` antes de los
   `insert into conexiones` en las líneas 35 y 174.
-- [ ] T009 [P] [US2] Actualizar el fixture de
+- [X] T009 [P] [US2] Actualizar el fixture de
   `supabase/tests/database/conexion_invalida_trabada.test.sql`: agregar
   `insert into sistemas_externos (id, descripcion) values
   ('sistema-trabado', '...')` antes del `insert into conexiones` en la
   línea 21.
-- [ ] T010 [P] [US2] Actualizar el fixture de
+- [X] T010 [P] [US2] Actualizar el fixture de
   `supabase/tests/database/ejecucion_en_curso_worker.test.sql`: agregar
   `insert into sistemas_externos (id, descripcion) values
   ('sistema-en-curso', '...')` antes del `insert into conexiones` en la
   línea 17.
-- [ ] T011 [P] [US2] Actualizar el fixture de
+- [X] T011 [P] [US2] Actualizar el fixture de
   `supabase/tests/database/outbox_ejecuciones.test.sql`: agregar
   `insert into sistemas_externos (id, descripcion) values ('outbox-x',
   '...'), ('outbox-y', '...')` antes del `insert into conexiones` en la
@@ -167,7 +167,7 @@ constitución (Technology and Quality Gates), no cambia comportamiento.
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Revisar
+- [X] T012 [US3] Revisar
   `supabase/migrations/<timestamp>_catalogo_sistemas_externos.sql`
   completa y confirmar que el comentario de cabecera (T001) lista, en
   orden inverso a su creación: `drop constraint
@@ -184,12 +184,12 @@ y verificadas de forma independiente.
 
 **Purpose**: gates de validación del repo y cierre del PR (sin mergear).
 
-- [ ] T013 Correr `pnpm lint`, `pnpm build` e `pnpm infra:config` en verde.
-- [ ] T014 Con `pnpm dev:supabase` corriendo, correr `pnpm test` completo y
+- [X] T013 Correr `pnpm lint`, `pnpm build` e `pnpm infra:config` en verde.
+- [X] T014 Con `pnpm dev:supabase` corriendo, correr `pnpm test` completo y
   confirmar que toda la suite pgTAP pasa, incluida
   `catalogo_sistemas_externos.test.sql` (T006) y los 5 archivos con
   fixtures actualizados (T007-T011).
-- [ ] T015 Ejecutar manualmente contra el stack local las Validaciones 1-4
+- [X] T015 Ejecutar manualmente contra el stack local las Validaciones 1-4
   de `quickstart.md` (además de que ya estén cubiertas por pgTAP, para
   confirmar el comportamiento end-to-end vía `psql`/SQL Editor, no solo vía
   test).
