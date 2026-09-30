@@ -2,7 +2,7 @@
 -- 20260930-153545-conexiones-oauth-nango). Ver data-model.md y contracts/.
 begin;
 
-select plan(36);
+select plan(41);
 
 -- ============================================================================
 -- Fixture
@@ -384,6 +384,46 @@ select throws_ok(
 );
 
 reset role;
+
+-- ============================================================================
+-- private.datos_despacho_conexion_oauth (resolución para flows de Kestra,
+-- mismo criterio que private.datos_despacho_conexion de spec 013 — se llama
+-- como postgres, dueño de la función, para probar la lógica de negocio; el
+-- GRANT real se confirma aparte con has_function_privilege, igual que ese
+-- archivo documenta para kestra_orquestacion)
+-- ============================================================================
+
+select is(
+  has_function_privilege('kestra_orquestacion', 'private.datos_despacho_conexion_oauth(uuid, text)', 'EXECUTE'),
+  true,
+  'kestra_orquestacion tiene EXECUTE de datos_despacho_conexion_oauth'
+);
+
+select is(
+  has_function_privilege('authenticated', 'private.datos_despacho_conexion_oauth(uuid, text)', 'EXECUTE'),
+  false,
+  'authenticated no tiene EXECUTE de datos_despacho_conexion_oauth — solo kestra_orquestacion la necesita'
+);
+
+select is(
+  private.datos_despacho_conexion_oauth('e1111111-1111-1111-1111-111111111111', 'google'),
+  (select val from t_ids where key = 'conexion_x_google'),
+  'datos_despacho_conexion_oauth resuelve el conexion_id activo de X para google'
+);
+
+select throws_ok(
+  $$select private.datos_despacho_conexion_oauth('e2222222-2222-2222-2222-222222222222', 'google')$$,
+  'P0002',
+  null,
+  'datos_despacho_conexion_oauth falla si la organización no tiene conexión activa a esa integración'
+);
+
+select throws_ok(
+  $$select private.datos_despacho_conexion_oauth('e1111111-1111-1111-1111-111111111111', 'no-existe')$$,
+  'P0002',
+  null,
+  'datos_despacho_conexion_oauth falla si la integración no existe'
+);
 
 select * from finish();
 rollback;

@@ -88,6 +88,12 @@ Ninguna de estas funciones hace una llamada HTTP saliente ni conoce el
 `NANGO_SECRET_KEY` — ese secreto vive únicamente en el entorno del backend o
 worker del producto derivado que consume `contracts/obtener-token-oauth.md`.
 
+## Función adicional (`private`, solo JDBC directo — no alcanzable por PostgREST)
+
+| Función | Quién | Qué hace |
+|---|---|---|
+| `datos_despacho_conexion_oauth(organizacion_id, clave)` | únicamente `kestra_orquestacion` | Resuelve el `conexion_id` activo de una organización para una integración, para que un flow de Kestra (JDBC directo, mismo patrón que `private.datos_despacho_conexion` de spec 013) lo pase al worker por variable de entorno. Falla con `P0002` si no hay conexión activa. No expone ningún dato de Nango. |
+
 ## Relación con conceptos existentes
 
 - **`organizaciones`**: dueña de cada `conexiones_oauth`, igual que dueña de

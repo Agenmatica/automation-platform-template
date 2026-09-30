@@ -56,6 +56,19 @@
 
 **Checkpoint**: el mecanismo admite un segundo proveedor sin tocar el esquema ya publicado.
 
+## Fase 6.1 — Resolución para flows de Kestra (desvío, ver commit `20260930165825`)
+
+Gap real reportado por el agente de `exportar-planilla-contable` (primer
+consumidor en paralelo): un flow de Kestra corre como `kestra_orquestacion`
+vía JDBC directo, sin `select` sobre `conexiones_oauth`/`integraciones_oauth`.
+
+- [X] `private.datos_despacho_conexion_oauth(organizacion_id, clave)` en
+  `supabase/migrations/20260930165825_datos_despacho_conexion_oauth.sql`,
+  mismo criterio que `private.datos_despacho_conexion` (spec 013). pgTAP:
+  grants (`kestra_orquestacion` sí, `authenticated` no), resolución correcta
+  y `P0002` sin conexión activa / integración inexistente.
+- [X] Documentado como variante del Paso 1 en `contracts/obtener-token-oauth.md`.
+
 ## Fase 7 — Documentación y validación
 
 - [X] T024 [P] Escribir `docs/adoptar-conexiones-oauth.md`: cómo un producto derivado habilita este mecanismo, cómo registra su primera integración real y dónde vive el secreto de Nango en cada entorno.

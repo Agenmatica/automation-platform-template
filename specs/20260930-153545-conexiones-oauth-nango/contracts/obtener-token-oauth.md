@@ -24,6 +24,23 @@ where c.organizacion_id = :organizacion_id
   debe tratarlo como "conexión no disponible" (mostrar/loguear ese estado, no
   reintentar contra Nango).
 
+### Variante: un flow de Kestra (JDBC directo, sin PostgREST)
+
+Un flow que corre como `kestra_orquestacion` (mismo patrón que
+`plantilla-generico.yml`/`plantilla-dedicado.yml`, spec 013) no tiene `select`
+directo sobre `conexiones_oauth`/`integraciones_oauth` — igual que no lo tiene
+sobre `conexiones`/`servidores_organizacion`. Para ese caso, el Paso 1 es:
+
+```sql
+select private.datos_despacho_conexion_oauth(:organizacion_id, :clave);
+```
+
+Devuelve el `conexion_id` activo, o falla con `P0002` si la organización no
+tiene una conexión activa a esa integración (el flow trata ese error igual
+que "conexión no disponible": no pasa a pedir un token). Ningún token ni dato
+de Nango sale de esta función — eso lo sigue haciendo el worker en el Paso 2,
+con su propio `NANGO_SECRET_KEY_*`, nunca el flow.
+
 ## Paso 2 — Pedir el token a Nango (fuera de Supabase, servidor a servidor)
 
 ```
