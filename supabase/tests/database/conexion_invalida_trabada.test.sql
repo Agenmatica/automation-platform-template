@@ -18,6 +18,11 @@ insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('c1000000-0000-0000-0000-000000000001', 'c1111111-1111-1111-1111-111111111111', 'administrador'),
   ('c2000000-0000-0000-0000-000000000001', 'c2222222-2222-2222-2222-222222222222', 'administrador');
 
+-- Fixture de catálogo (spec catálogo-sistemas-externos): conexiones.sistema_externo
+-- ahora tiene FK a sistemas_externos.
+insert into sistemas_externos (id, descripcion) values
+  ('sistema-trabado', 'Sistema trabado (fixture de test, sin valor de negocio)');
+
 insert into conexiones (id, organizacion_id, sistema_externo, estado, credencial_vault_id) values
   ('c1111111-1111-1111-1111-111111111112', 'c1111111-1111-1111-1111-111111111111', 'sistema-trabado', 'credencial_invalida',
    vault.create_secret('credencial-vieja', 'conexion-trabada-' || gen_random_uuid())),

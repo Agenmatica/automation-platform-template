@@ -26,6 +26,11 @@ insert into organizaciones (id, nombre) values
   ('d1111111-1111-1111-1111-111111111111', 'Organización X'),
   ('d2222222-2222-2222-2222-222222222222', 'Organización Y');
 
+-- Fixture de catálogo (spec catálogo-sistemas-externos): conexiones.sistema_externo
+-- ahora tiene FK a sistemas_externos, este valor de prueba necesita su fila.
+insert into sistemas_externos (id, descripcion) values
+  ('sistema-de-prueba', 'Sistema de prueba (fixture de tests, sin valor de negocio)');
+
 insert into auth.users (id, email) values
   ('d5000000-0000-0000-0000-000000000005', 'superadmin-orquestacion@example.com'),
   ('d1000000-0000-0000-0000-000000000001', 'admin-x-orquestacion@example.com'),

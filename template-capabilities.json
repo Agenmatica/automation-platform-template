@@ -67,6 +67,18 @@
       "version": "1.0.0",
       "title": "Runners self-hosted locales con store de pnpm compartido y topes",
       "paths": ["infra/runner/compose.yaml"]
+    },
+    {
+      "id": "catalog-sistema-externo",
+      "version": "1.0.0",
+      "title": "Catálogo real para sistema_externo en conexiones",
+      "paths": ["supabase/migrations/20260930170144_catalogo_sistemas_externos.sql", "supabase/tests/database/catalogo_sistemas_externos.test.sql"]
+    },
+    {
+      "id": "mapeo-identificadores-externos",
+      "version": "1.0.0",
+      "title": "Mapeo de identificadores externos de clientes",
+      "paths": ["supabase/migrations/20260930140000_mapeo_identificadores_clientes.sql", "supabase/tests/database/mapeo_identificadores_clientes.test.sql"]
     }
   ]
 }
