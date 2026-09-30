@@ -61,13 +61,19 @@ para esto antes de que esta spec existiera, migrar sus filas a
 las diferencias — mismo criterio que otras guías de adopción de este
 template (ver `docs/adoptar-ciclo-ejecuciones.md`, sección 4).
 
-## 4. UI de Refine
+## 4. UI de Refine y Edge Function
 
-`apps/web/src/pages/conexiones-oauth/list.tsx` y
-`apps/web/src/pages/integraciones-oauth/administrar.tsx` son reutilizables
-tal cual (no tienen lógica de negocio de ningún proveedor concreto). Copiarlas
-junto con `apps/web/src/providers/nango/` y sumar `@nangohq/frontend` a
-`package.json`. Agregar `VITE_NANGO_PUBLIC_SERVER_URL` al `.env` de `apps/web`.
+`apps/web/src/pages/conexiones-oauth/list.tsx`,
+`apps/web/src/pages/integraciones-oauth/administrar.tsx` y
+`supabase/functions/iniciar-sesion-oauth/` son reutilizables tal cual (no
+tienen lógica de negocio de ningún proveedor concreto). Copiarlas junto con
+`apps/web/src/providers/nango/` y sumar `@nangohq/frontend` a `package.json`.
+Agregar `VITE_NANGO_PUBLIC_SERVER_URL` al `.env` de `apps/web`, y
+`NANGO_URL`/`NANGO_SECRET_KEY` a los secretos de Edge Functions de ese
+entorno (`supabase secrets set` — nunca en un archivo versionado). La Edge
+Function es necesaria: el SDK de frontend de Nango exige un Connect Session
+Token generado server-to-server, no solo `host` (`contracts/conectar-oauth.md`
+§2.1).
 
 ## 5. Mapeo de este producto
 

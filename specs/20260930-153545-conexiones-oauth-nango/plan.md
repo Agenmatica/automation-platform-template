@@ -35,6 +35,7 @@ guarda en Postgres.
 5. **El frontend nunca ve un secreto.** El flujo de conexión usa `@nangohq/frontend` (`nango.auth(clave, conexionId)`), que abre el popup de consentimiento del proveedor y solo devuelve éxito/error — ni tokens ni claves de Nango llegan al navegador. La confirmación de éxito la reporta el propio navegador (mismo nivel de confianza que `crear_conexion` en spec 013, que también acepta el resultado reportado por quien ya completó la acción sensible del lado correcto).
 6. **`integraciones_oauth` es un catálogo de plataforma, no de producto.** Alta/baja vía función `SECURITY DEFINER` restringida a superadmin — agregar un proveedor nuevo no requiere migración de esquema (FR-006), solo una fila nueva y su alta correspondiente como "Integration" en el dashboard de Nango (client id/secret del proveedor, fuera de Git).
 7. **Nango self-hosted vive en `infra/nango/compose.yaml`**, con los 3 servicios confirmados contra el `docker-compose.yaml` oficial de NangoHQ/nango (`nango-db`, `nango-redis`, `nango-server`; sin Temporal ni Elasticsearch), variables en `.env.example`, puertos configurables (mismo patrón que la spec 015) y comando `dev:nango`/`dev:down:nango`.
+8. **El popup de consentimiento necesita un Connect Session Token, no solo `host`.** Descubierto verificando el flujo real: `@nangohq/frontend` 0.71.x exige `publicKey` o `connectSessionToken` — `host` a secas ya no alcanza para self-host. Ese token se genera server-to-server con `NANGO_SECRET_KEY_*` (nunca en el navegador), vía una Edge Function nueva (`iniciar-sesion-oauth`, mismo patrón que `emitir-acceso-reporte` de spec 007: RLS de `conexiones_oauth` decide la autorización, la función solo agrega el secreto de Nango). El contrato de `contracts/conectar-oauth.md` documenta el paso adicional.
 
 ## Chequeo constitucional
 
@@ -75,6 +76,7 @@ infra/nango/
 
 supabase/migrations/<timestamp>_conexiones_oauth.sql
 supabase/tests/database/conexiones_oauth.test.sql
+supabase/functions/iniciar-sesion-oauth/   # Connect Session Token server-to-server (decisión 8)
 
 apps/web/src/
 ├── pages/conexiones-oauth/list.tsx        # pantalla por organización (Historia 1 y 3)

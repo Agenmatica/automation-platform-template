@@ -18,18 +18,42 @@ por un `insert`/`update` directo sobre `conexiones_oauth`.
 - **Quién**: administrador de esa organización o superadmin.
 - **Qué hace**: crea la fila si no existe (`estado = 'pendiente'`) o devuelve
   la existente sin duplicar (`unique (organizacion_id, integracion_id)`).
-- **Devuelve**: la fila completa. El cliente usa `id` como `connectionId` y
-  `integraciones_oauth.clave` como `providerConfigKey` para:
+- **Devuelve**: la fila completa. El cliente usa `id` como `connectionId`.
 
-  ```ts
-  import Nango from '@nangohq/frontend';
+### 2.1 Pedir un Connect Session Token
 
-  const nango = new Nango({ host: NANGO_PUBLIC_SERVER_URL }); // self-hosted: host, no publicKey
-  const result = await nango.auth(clave, conexionId);
-  ```
+El SDK de frontend de Nango (`@nangohq/frontend` ≥ 0.71) ya no acepta
+`host` a secas para self-host: exige además un **Connect Session Token** de
+corta duración (30 min), generado server-to-server con `NANGO_SECRET_KEY_*`
+— un secreto que nunca debe llegar al navegador. Ese token se pide a la Edge
+Function `iniciar-sesion-oauth`:
 
-  (El SDK del frontend habla directo con `nango-server`; ni el navegador ni
-  Refine ven ningún secreto de Nango ni del proveedor en este paso.)
+```ts
+const { data } = await supabaseClient.functions.invoke('iniciar-sesion-oauth', {
+  body: { conexion_id: conexionId },
+});
+```
+
+- **Quién**: la misma persona que ya pasó el paso 2 (la función reautoriza
+  con el JWT de quien llama contra RLS de `conexiones_oauth` — no reimplementa
+  el chequeo de permiso).
+- **Qué hace la función**: llama a `POST {NANGO_URL}/connect/sessions` con
+  `Authorization: Bearer {NANGO_SECRET_KEY}` y devuelve únicamente el
+  `token` de sesión — nunca el secreto en sí.
+
+### 2.2 Abrir el popup de consentimiento
+
+```ts
+import Nango from '@nangohq/frontend';
+
+const nango = new Nango({ host: NANGO_PUBLIC_SERVER_URL, connectSessionToken: token });
+const result = await nango.auth(clave, conexionId);
+```
+
+(El SDK del frontend habla directo con `nango-server`; ni el navegador ni
+Refine ven ningún secreto de Nango ni del proveedor en este paso — el
+`connectSessionToken` es de corta duración y de un solo uso conceptual, no
+un secreto de larga vida.)
 
 - **Falla si**: la integración no está `habilitada`, o quien llama no es
   administrador de esa organización ni superadmin.

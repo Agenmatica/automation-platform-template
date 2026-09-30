@@ -98,3 +98,54 @@ para el flujo de consentimiento en desarrollo, igual que Supabase Auth local.
 **Alternativa rechazada**: que el template intente proveer o reservar un
 dominio — contradice el límite explícito de esta spec (la plantilla no asume
 ni provee el dominio de cada producto derivado).
+
+## R6. `@nangohq/frontend` exige un Connect Session Token para el popup
+
+**Decisión**: antes de llamar `nango.auth(...)`, el frontend pide un
+Connect Session Token a la Edge Function `iniciar-sesion-oauth`, que lo
+genera server-to-server (`POST {NANGO_URL}/connect/sessions` con
+`Authorization: Bearer {NANGO_SECRET_KEY}`) y devuelve únicamente el token
+de sesión (corta duración, 30 min).
+
+**Evidencia**: verificado contra la instancia local real (Nango 0.71.10,
+`nangohq/nango-server:hosted`): `new Nango({ host }).auth(...)` sin
+`publicKey` ni `connectSessionToken` falla en el cliente con
+`AuthError: "You must specify a public key OR a connect session token"`
+(`node_modules/@nangohq/frontend/dist/index.js`, método `ensureCredentials`).
+Encontrado probando el flujo real de punta a punta (no en la documentación
+pública al momento de escribir el contrato original) — el SDK cambió este
+requisito en algún punto entre la documentación consultada en R1/R2 y la
+versión 0.71.10 instalada.
+
+**Alternativas rechazadas**:
+- *Usar `publicKey` en vez de `connectSessionToken`*: el self-host de esta
+  versión no expone un concepto estable de "public key" equivalente al de
+  Nango Cloud en el dashboard consultado; `connectSessionToken` es además la
+  opción que Nango documenta como reemplazo recomendado (permite acotar
+  `allowed_integrations` por sesión, algo que una public key de larga vida
+  no ofrece).
+- *Generar el token desde una función SQL*: mismo motivo que R2 (sin HTTP
+  saliente desde Postgres) — se resuelve con una Edge Function, igual que
+  `emitir-acceso-reporte` de spec 007 resuelve el guest token de Superset.
+
+## R7. Fragilidad operativa: el stack local de Supabase es único por repo, no por worktree
+
+**Hallazgo** (no de esta spec en particular, pero encontrado verificándola):
+`supabase_edge_runtime_<project_id>` monta en modo bind el directorio
+`supabase/functions` del worktree desde el que se corrió el último
+`supabase start` — no hay un contenedor por worktree. Si ese worktree se
+borra (una spec cerrada, una limpieza), un `docker restart` posterior de ese
+contenedor falla (`mkdir ...: file exists`) y el contenedor queda detenido
+para **todos** los worktrees que comparten ese proyecto Supabase local —
+Edge Functions de cualquier spec en curso deja de responder hasta que
+alguien corra `supabase stop && supabase start` desde un worktree que sí
+existe (repuntando el mount a ese worktree).
+
+**Mitigación aplicada, no automatizada**: un lock de archivo
+(`automation-platform-template/.stack-local.lock/owner`, fuera de cualquier
+worktree — en el directorio padre) que cualquier sesión toma antes de
+`stop`/`start` del stack compartido y suelta al terminar, coordinado por
+avisos entre sesiones. No es una capacidad de esta plantilla, es una
+convención operativa manual mientras el equipo de agentes trabaje en
+paralelo sobre varios worktrees del mismo repo — documentado acá porque
+esta spec fue la que lo encontró en producción, no porque la resuelva.

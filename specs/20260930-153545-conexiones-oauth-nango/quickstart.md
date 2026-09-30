@@ -18,6 +18,12 @@
 4. Correr la migración de esta spec (`pnpm dev:supabase` + `supabase db
    reset` si hace falta) y registrar esa misma clave en el catálogo:
    `select registrar_integracion_oauth('google', 'Google');` (como superadmin).
+4.1. Copiar `supabase/functions/.env.example` a `supabase/functions/.env` y
+   completar `NANGO_URL` (en local, `http://host.docker.internal:3003`) y
+   `NANGO_SECRET_KEY` (el mismo valor que `NANGO_SECRET_KEY_DEV` del paso 1).
+   Sin esto, el botón "Conectar" falla: el SDK de frontend de Nango exige un
+   Connect Session Token que solo esta Edge Function puede generar
+   (`contracts/conectar-oauth.md` §2.1, `research.md` R6).
 5. Desde Refine, con una organización activa, abrir la pantalla de
    conexiones, iniciar la conexión de "Google" y completar el consentimiento.
    Verificar que el estado pasa a "activa".
