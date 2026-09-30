@@ -193,7 +193,7 @@ y verificadas de forma independiente.
   de `quickstart.md` (además de que ya estén cubiertas por pgTAP, para
   confirmar el comportamiento end-to-end vía `psql`/SQL Editor, no solo vía
   test).
-- [ ] T016 Code review real (skill `code-review`) del diff completo de esta
+- [X] T016 Code review real (skill `code-review`) del diff completo de esta
   spec contra `main` antes de avisar "lista para mergear" — instrucción
   explícita del coordinador; esta sesión nunca mergea su propio PR.
 
