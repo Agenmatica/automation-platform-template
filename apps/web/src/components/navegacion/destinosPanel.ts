@@ -8,6 +8,8 @@ import HubIcon from '@mui/icons-material/Hub'
 import GroupIcon from '@mui/icons-material/Group'
 import SettingsIcon from '@mui/icons-material/Settings'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
+import VpnKeyIcon from '@mui/icons-material/VpnKey'
+import ExtensionIcon from '@mui/icons-material/Extension'
 import type { ContextoPanel } from '../../context/ContextoPanel'
 
 // Única fuente de secciones/destinos/audiencia del sider (spec
@@ -53,6 +55,7 @@ export const SECCIONES_PANEL: SeccionPanel[] = [
     etiqueta: 'Configuración',
     destinos: [
       { id: 'conexiones', etiqueta: 'Conexiones', ruta: '/conexiones', icono: HubIcon, audiencia: 'administrador' },
+      { id: 'conexiones-oauth', etiqueta: 'Conexiones OAuth', ruta: '/conexiones-oauth', icono: VpnKeyIcon, audiencia: 'administrador' },
       { id: 'miembros', etiqueta: 'Miembros', ruta: '/miembros', icono: GroupIcon, audiencia: 'administrador' },
     ],
   },
@@ -65,6 +68,7 @@ export const SECCIONES_PANEL: SeccionPanel[] = [
       { id: 'funcionalidades', etiqueta: 'Funcionalidades', ruta: '/features/administrar', icono: SettingsIcon, audiencia: 'superadmin' },
       { id: 'analitica-administrar', etiqueta: 'Analítica (administrar)', ruta: '/analitica/administrar', icono: BarChartIcon, audiencia: 'superadmin' },
       { id: 'ia', etiqueta: 'IA gobernada', ruta: '/ia', icono: SmartToyIcon, audiencia: 'superadmin' },
+      { id: 'integraciones-oauth', etiqueta: 'Integraciones OAuth', ruta: '/integraciones-oauth/administrar', icono: ExtensionIcon, audiencia: 'superadmin' },
     ],
   },
 ]
