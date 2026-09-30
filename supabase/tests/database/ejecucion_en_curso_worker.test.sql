@@ -14,6 +14,11 @@ select plan(21);
 insert into organizaciones (id, nombre) values
   ('f1111111-1111-1111-1111-111111111111', 'Organización en curso');
 
+-- Fixture de catálogo (spec catálogo-sistemas-externos): conexiones.sistema_externo
+-- ahora tiene FK a sistemas_externos.
+insert into sistemas_externos (id, descripcion) values
+  ('sistema-en-curso', 'Sistema en curso (fixture de test, sin valor de negocio)');
+
 insert into conexiones (id, organizacion_id, sistema_externo, credencial_vault_id) values
   ('f1111111-1111-1111-1111-111111111112', 'f1111111-1111-1111-1111-111111111111', 'sistema-en-curso', gen_random_uuid());
 

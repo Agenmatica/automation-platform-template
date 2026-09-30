@@ -23,6 +23,11 @@ insert into auth.users (id, email) values
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('d1000000-0000-0000-0000-000000000001', 'd1111111-1111-1111-1111-111111111111', 'administrador'),
   ('d2000000-0000-0000-0000-000000000001', 'd2222222-2222-2222-2222-222222222222', 'administrador');
+-- Fixture de catálogo (spec catálogo-sistemas-externos): conexiones.sistema_externo
+-- ahora tiene FK a sistemas_externos.
+insert into sistemas_externos (id, descripcion) values
+  ('outbox-x', 'Outbox X (fixture de test, sin valor de negocio)'),
+  ('outbox-y', 'Outbox Y (fixture de test, sin valor de negocio)');
 insert into conexiones (id, organizacion_id, sistema_externo, credencial_vault_id) values
   ('d1111111-1111-1111-1111-111111111112', 'd1111111-1111-1111-1111-111111111111', 'outbox-x', gen_random_uuid()),
   ('d2222222-2222-2222-2222-222222222223', 'd2222222-2222-2222-2222-222222222222', 'outbox-y', gen_random_uuid());
