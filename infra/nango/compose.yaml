@@ -51,7 +51,9 @@ services:
       # Secreto de plataforma para autenticar contra la API de Nango
       # (Authorization: Bearer) desde el backend/worker de un producto
       # derivado — nunca desde el navegador (contracts/obtener-token-oauth.md).
-      NANGO_SECRET_KEY_DEV: ${NANGO_SECRET_KEY_DEV:-change-me-local}
+      # Debe ser un UUID v4 (la API de Nango lo valida) — este es un default
+      # de ejemplo, cambiar en cualquier entorno compartido.
+      NANGO_SECRET_KEY_DEV: ${NANGO_SECRET_KEY_DEV:-01df8743-e924-4364-8e5e-952170af0721}
       # Sin dashboard "Connect UI" propio: el flujo de conexión de esta
       # plantilla usa @nangohq/frontend contra el popup de consentimiento
       # directamente (contracts/conectar-oauth.md), no el widget hospedado.
