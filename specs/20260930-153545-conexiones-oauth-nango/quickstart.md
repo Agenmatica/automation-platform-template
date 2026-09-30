@@ -2,7 +2,9 @@
 
 ## Desarrollo local
 
-1. `Copy-Item infra/nango/.env.example infra/nango/.env` y completar
+1. Con `.env` ya copiado desde `.env.example` en la raíz (ver README), copiar
+   ese mismo archivo también a `infra/nango/.env` (Compose lo lee desde la
+   carpeta del propio `compose.yaml`, no desde la raíz) y completar
    `NANGO_ENCRYPTION_KEY` (generar con `openssl rand -base64 32` o similar) y
    `NANGO_SECRET_KEY_DEV` (cualquier valor local, no sensible fuera de tu
    máquina).

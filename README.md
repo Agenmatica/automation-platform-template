@@ -28,6 +28,7 @@ pnpm dev:supabase
 pnpm dev:refine
 pnpm dev:kestra
 pnpm dev:superset
+pnpm dev:nango
 ```
 
 Cada comando levanta sólo un producto Docker y queda agrupado de forma
@@ -43,6 +44,7 @@ independiente en Docker Desktop. Para detener uno, ejecuta
 | Supabase Auth (mails de prueba, Mailpit) | http://127.0.0.1:3102 |
 | Kestra | http://127.0.0.1:8082 |
 | Superset | http://127.0.0.1:8088 |
+| Nango (dashboard) | http://127.0.0.1:3003 |
 
 ### Usuarios y credenciales (solo stack local)
 
@@ -60,6 +62,7 @@ existen en Docker/Postgres local, nunca en un ambiente remoto.
 | Kestra | `admin@local.test` | `ChangeMe1Local` | `.env.example` → copiar a `infra/kestra/.env` (`KESTRA_BASIC_AUTH_USERNAME` / `KESTRA_BASIC_AUTH_PASSWORD`) |
 | `kestra_backups` (rol Postgres, conexión JDBC directa del flow de respaldos, spec 011) | `kestra_backups` | `change-me-local` | `.env.example` (`KESTRA_BACKUPS_DB_PASSWORD`) — se rota por entorno, nunca queda en la migración (research.md R8) |
 | Superset | `admin` (email `admin@local.test`) | `change-me-local` | `.env.example` → copiar a `infra/superset/.env` (`SUPERSET_ADMIN_USERNAME` / `SUPERSET_ADMIN_PASSWORD`) |
+| Nango (dashboard, spec `20260930-153545-conexiones-oauth-nango`) | `admin@local.test` | `ChangeMe1Local` | `.env.example` → copiar a `infra/nango/.env` (`NANGO_DASHBOARD_USERNAME` / `NANGO_DASHBOARD_PASSWORD`) |
 
 El superadmin de Refine es un usuario más de Supabase Auth marcado en la
 tabla `superadmins` (ver quickstart de la spec 003) — no es un login

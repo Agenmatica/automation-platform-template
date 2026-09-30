@@ -69,8 +69,9 @@ specs/20260930-153545-conexiones-oauth-nango/
 ```text
 infra/nango/
 ├── compose.yaml
-├── .env.example
 └── README.md
+
+.env.example                            # sección Nango agregada (convención ya existente, no un .env.example por producto)
 
 supabase/migrations/<timestamp>_conexiones_oauth.sql
 supabase/tests/database/conexiones_oauth.test.sql

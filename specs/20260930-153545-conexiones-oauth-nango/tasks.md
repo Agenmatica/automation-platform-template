@@ -5,10 +5,10 @@
 
 ## Fase 1 — Infraestructura de Nango
 
-- [ ] T001 Crear `infra/nango/compose.yaml` con `nango-db` (`postgres:16.0-alpine`), `nango-redis` (`redis:7.2.4`) y `nango-server` (`nangohq/nango-server:hosted`, pineado por tag/digest), puertos configurables por variable de entorno (mismo patrón que la spec 015) y nombre de proyecto Compose siguiendo la convención del repo.
-- [ ] T002 [P] Crear `infra/nango/.env.example` con `NANGO_ENCRYPTION_KEY`, `NANGO_DB_USER`, `NANGO_DB_PASSWORD`, `NANGO_DB_NAME`, `SERVER_PORT`, `NANGO_SERVER_URL`, `NANGO_PUBLIC_SERVER_URL`, `NANGO_DASHBOARD_USERNAME`, `NANGO_DASHBOARD_PASSWORD`, `NANGO_SECRET_KEY_DEV` — todos con defaults locales de ejemplo, nunca secretos reales.
-- [ ] T003 [P] Agregar `dev:nango`, `dev:down:nango` e `infra:config:nango` a `package.json` (y sumar `infra:config:nango` al agregado `infra:config`).
-- [ ] T004 [P] Documentar el servicio en `infra/nango/README.md` (arranque local, dashboard, cómo registrar una integración de prueba) y sumar la fila de Nango a la tabla de servicios de `README.md` raíz.
+- [X] T001 Crear `infra/nango/compose.yaml` con `nango-db` (`postgres:16.0-alpine`), `nango-redis` (`redis:7.2.4`) y `nango-server` (`nangohq/nango-server:hosted`, pineado por tag/digest), puertos configurables por variable de entorno (mismo patrón que la spec 015) y nombre de proyecto Compose siguiendo la convención del repo.
+- [X] T002 [P] Sumar al `.env.example` raíz (convención ya existente: Compose lee `.env` desde la carpeta del propio compose.yaml, así que se copia a `infra/nango/.env`) las variables `NANGO_PORT`, `NANGO_ENCRYPTION_KEY`, `NANGO_DB_PASSWORD`, `NANGO_DASHBOARD_USERNAME`, `NANGO_DASHBOARD_PASSWORD`, `NANGO_SERVER_URL`, `NANGO_PUBLIC_SERVER_URL`, `NANGO_SECRET_KEY_DEV` — todas con defaults locales de ejemplo, nunca secretos reales; y agregar `NANGO_PORT` a la tabla de puertos de la spec 015.
+- [X] T003 [P] Agregar `dev:nango`, `dev:down:nango` e `infra:config:nango` a `package.json` (y sumar `infra:config:nango` al agregado `infra:config`).
+- [X] T004 [P] Documentar el servicio en `infra/nango/README.md` (arranque local, dashboard, cómo registrar una integración de prueba) y sumar la fila de Nango a la tabla de servicios de `README.md` raíz.
 
 **Checkpoint**: `pnpm dev:nango` levanta los 3 servicios y `pnpm infra:config` valida el Compose nuevo; el dashboard de Nango es alcanzable en local.
 
