@@ -58,8 +58,8 @@
 
 ## Fase 7 — Documentación y validación
 
-- [ ] T024 [P] Escribir `docs/adoptar-conexiones-oauth.md`: cómo un producto derivado habilita este mecanismo, cómo registra su primera integración real y dónde vive el secreto de Nango en cada entorno.
-- [ ] T025 [P] Actualizar `docs/deployment.md` con la operación de `nango-server` en staging/producción (dominio propio del producto, igual que Kestra/Superset).
+- [X] T024 [P] Escribir `docs/adoptar-conexiones-oauth.md`: cómo un producto derivado habilita este mecanismo, cómo registra su primera integración real y dónde vive el secreto de Nango en cada entorno.
+- [X] T025 [P] Actualizar `docs/deployment.md` con la operación de `nango-server` en staging/producción (dominio propio del producto, igual que Kestra/Superset).
 - [ ] T026 Ejecutar `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (con `pnpm dev:supabase` corriendo) y registrar el resultado en este archivo.
 - [ ] T027 Ejecutar `quickstart.md` completo de punta a punta y documentar evidencia sanitizada (sin tokens, sin credenciales) en este archivo.
 
