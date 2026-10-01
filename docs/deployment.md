@@ -33,10 +33,12 @@ supere el plan gratuito de Vercel/Supabase ni sea necesario ampliar el VPS.
 - `infra/superset/compose.yaml`: Superset en el VPS, detrás de HTTPS/reverse proxy.
 - `infra/playwright/compose.yaml`: servidor de Playwright en el VPS, sólo
   accesible para Kestra (no pasa por el reverse proxy, no es público).
-- `infra/nango/compose.yaml`: Nango self-hosted en el VPS, detrás de
+- `infra/nango/compose.yaml` + `infra/nango/compose.vps.yaml`: Nango
+  self-hosted en el VPS, incluido en `scripts/deploy-vps.mjs`, detrás de
   HTTPS/reverse proxy propio del producto derivado — el callback OAuth
   (`NANGO_SERVER_URL`/`NANGO_PUBLIC_SERVER_URL`) necesita ese dominio; el
-  template no lo provee (spec `20260930-153545-conexiones-oauth-nango`,
+  template no provee el reverse proxy en sí (spec
+  `20260930-153545-conexiones-oauth-nango`,
   [guía de adopción](./adoptar-conexiones-oauth.md)).
 - Los workers se agregan como su propio Compose cuando exista un caso concreto.
 
