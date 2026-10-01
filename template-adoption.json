@@ -8,7 +8,7 @@
     "worker-image-security": { "version": "1.0.2", "status": "adopted" },
     "operable-refine-panel": { "version": "1.1.0", "status": "adopted" },
     "governed-ai-core": { "version": "1.0.0", "status": "adopted" },
-    "portable-typescript-tooling": { "version": "1.0.1", "status": "adopted" },
+    "portable-typescript-tooling": { "version": "1.1.0", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.0.0", "status": "adopted" },
     "template-capability-sync": { "version": "1.0.1", "status": "adopted" },
     "embedded-analytics-runtime": { "version": "1.0.0", "status": "adopted" },
