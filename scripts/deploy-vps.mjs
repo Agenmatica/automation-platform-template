@@ -8,7 +8,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const envFile = path.join(root, `.env.${environment}`);
 try { await access(envFile); } catch { throw new Error(`No existe .env.${environment} en el VPS.`); }
 
-for (const product of ['kestra', 'superset', 'playwright']) {
+for (const product of ['kestra', 'superset', 'playwright', 'nango']) {
   const composeBase = `infra/${product}/compose.yaml`;
   const composeVps = `infra/${product}/compose.vps.yaml`;
   const args = ['compose', '--project-name', `platform-${environment}-${product}`, '--env-file', envFile, '-f', composeBase, '-f', composeVps];
