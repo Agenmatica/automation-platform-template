@@ -42,6 +42,13 @@ supere el plan gratuito de Vercel/Supabase ni sea necesario ampliar el VPS.
   [guía de adopción](./adoptar-conexiones-oauth.md)).
 - Los workers se agregan como su propio Compose cuando exista un caso concreto.
 
+`scripts/deploy-vps.mjs` corre `docker compose pull --ignore-buildable` seguido de
+`docker compose build` por producto antes de `up -d`: un servicio con `image:` se baja
+del registro, uno con `build:` (como `superset-init`) se compila desde su Dockerfile —
+sin esto, el deploy fallaba al toparse con el primer producto que no tiene de dónde
+bajarse. El script usa `fileURLToPath(import.meta.url)` en vez de `import.meta.dirname`
+porque corre contra el Node preinstalado del VPS, no necesariamente ≥20.11.
+
 No se promueven bases copiando datos. Se promueven código, migraciones y
 configuración; las credenciales son distintas en cada entorno.
 
