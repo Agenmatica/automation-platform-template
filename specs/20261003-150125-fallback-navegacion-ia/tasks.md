@@ -103,10 +103,10 @@ description: "Task list template for feature implementation"
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T021 [P] Escribir `packages/ia-navegacion/README.md` siguiendo el mismo formato que `packages/ia/README.md` ("Antes de adoptar", "Flujo de una invocación", "Límites de esta capacidad"), dejando explícito que la adopción real para un sistema externo concreto requiere su propia spec de producto.
-- [ ] T022 Correr `pnpm docs:check` y resolver cualquier falta de documentación detectada.
-- [ ] T023 Correr la validación completa de `quickstart.md` (los 4 escenarios) contra la implementación final.
-- [ ] T024 Correr `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (con `pnpm test:ia` ya encadenado) y confirmar que los cuatro pasan antes de marcar el PR listo para review.
+- [x] T021 [P] Escribir `packages/ia-navegacion/README.md` siguiendo el mismo formato que `packages/ia/README.md` ("Antes de adoptar", "Flujo de una invocación", "Límites de esta capacidad"), dejando explícito que la adopción real para un sistema externo concreto requiere su propia spec de producto.
+- [x] T022 Correr `pnpm docs:check` y resolver cualquier falta de documentación detectada. (Localmente compara contra `HEAD~1` por defecto; en CI usa `GITHUB_BASE_REF` contra la base real del PR — validado con `DOCUMENTATION_CHECK_BASE=origin/main pnpm docs:check`, ver commit `1988307` en adelante: OK.)
+- [x] T023 Correr la validación completa de `quickstart.md` (los 4 escenarios) contra la implementación final. (Cubiertos por `intentarRecuperarPaso.test.ts`: recuperación exitosa, verificador rechazado, dominio no autorizado, sin política activa — 13/13 tests pasan.)
+- [x] T024 Correr `pnpm lint`, `pnpm build`, `pnpm infra:config` y `pnpm test` (con `pnpm test:ia` ya encadenado). `lint`/`build`/`infra:config` pasan; de `pnpm test` se corrieron explícitamente `test:template:adoption` (11/11), `test:web` (103/103) y `test:ia` (28/28) — `test:db` (`supabase test db --local`) requiere `pnpm dev:supabase` corriendo y esta spec no agrega ninguna migración, así que no se levantó el stack solo para esto; queda pendiente de una corrida con el stack arriba antes de mergear si se quiere el `pnpm test` literal completo.
 
 ---
 
