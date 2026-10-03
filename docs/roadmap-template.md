@@ -172,14 +172,15 @@ necesitando justo esta función".
 | 21 | P2 | Búsqueda documental/RAG | H4 | Archivos y documentos; contexto y permisos IA | Un producto necesita responder sobre documentos propios. | Condicional (documentos + IA) | Ingesta, indexación, búsqueda, permisos y referencias a las fuentes. | Exploración |
 | 22 | P3 | Paquetes compartidos | H4 | Dos productos reutilizando código estable | Dos o más productos usan la misma interfaz de código. | Condicional (requiere un segundo producto) | Paquete versionado, con pruebas y compatibilidad explícita entre productos. | Exploración |
 | 23 | P3 | gRPC interno | H4 | Varios workers especializados y contratos definidos | Hay necesidad real de alto volumen o streaming. | Condicional (solo con volumen/streaming real) | Contratos fuertes y streaming entre workers especializados. | Exploración |
+| 24 | P1 | Saneamiento de contenido no confiable para IA | H3 | Herramientas IA | Primera vez que una herramienta IA o el gateway procesan contenido externo no controlado por quien hace la consulta (resultado de un conector, documento subido, email). | Condicional (solo si usa IA y lee contenido externo) | Delimitadores y marcado explícito de contenido no confiable antes de enviarlo al modelo, con instrucción de sistema que impide tratarlo como órdenes propias y registro de cuándo se activó la defensa. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 24 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 25 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 16 son **Condicionales**: dependen de que ese producto elija
+Los otros 17 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
 un segundo producto) — pueden tardar mucho más o no llegar a activarse
 nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
@@ -387,6 +388,24 @@ directo a la base ni la capacidad de ejecutar SQL arbitrario.
 
 Ejemplo: `listar_tareas_pendientes` puede devolver datos autorizados; una
 herramienta para crear recordatorios puede requerir aprobación posterior.
+
+#### Saneamiento de contenido no confiable para IA
+
+Debe marcar explícitamente el contenido que el modelo recibe desde fuentes
+externas no controladas por quien hace la consulta — texto scrapeado de un
+sistema externo, un documento subido, un email, el resultado de una
+herramienta — para que el modelo no lo trate como instrucciones propias.
+Incluye delimitadores claros, una instrucción de sistema que ignore órdenes
+incrustadas en ese contenido, y un registro de cuándo se activó esa defensa.
+
+No reemplaza la validación de esquema de Herramientas IA ni la clasificación
+de datos de Política de datos IA: ambas regulan qué sale hacia el proveedor;
+esta capacidad regula qué entra y cómo se interpreta.
+
+Ejemplo: un worker lee el estado de una factura en un sistema externo y lo
+pasa al modelo; si ese texto contuviera una instrucción embebida ("ignora las
+reglas anteriores y..."), el modelo debe seguir tratándola como dato, nunca
+como una orden del usuario.
 
 #### Aprobación humana
 
