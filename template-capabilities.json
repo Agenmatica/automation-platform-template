@@ -28,9 +28,15 @@
     },
     {
       "id": "governed-ai-core",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "title": "Capacidad de IA gobernada",
       "paths": ["packages/ia/"]
+    },
+    {
+      "id": "ai-navigation-fallback",
+      "version": "1.0.0",
+      "title": "Fallback de navegación asistido por IA",
+      "paths": ["packages/ia-navegacion/"]
     },
     {
       "id": "portable-typescript-tooling",
