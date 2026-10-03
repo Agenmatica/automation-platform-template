@@ -175,17 +175,19 @@ necesitando justo esta función".
 | 24 | P1 | Saneamiento de contenido no confiable para IA | H3 | Herramientas IA | Primera vez que una herramienta IA o el gateway procesan contenido externo no controlado por quien hace la consulta (resultado de un conector, documento subido, email). | Condicional (solo si usa IA y lee contenido externo) | Delimitadores y marcado explícito de contenido no confiable antes de enviarlo al modelo, con instrucción de sistema que impide tratarlo como órdenes propias y registro de cuándo se activó la defensa. | Exploración |
 | 25 | P3 | Rate limiting en el borde de la API | H2 | Gestión de entornos | Primer endpoint público (REST/Refine) expuesto a tráfico no confiable, más allá del presupuesto que ya aplica Gateway IA solo a invocaciones de IA. | Condicional (solo si hay riesgo real de abuso) | Límite de tasa configurable por IP/organización en el borde, con respuesta consistente y registro del rechazo. | Exploración |
 | 26 | P3 | Testing de carga/performance | H2 | E2E en CI | Primer flujo crítico con expectativa real de concurrencia o volumen (no solo corrección funcional). | Condicional (solo si hay expectativa real de carga) | Línea base de performance versionada (umbral de latencia/throughput) que corre bajo demanda, no en cada PR. | Exploración |
+| 27 | P2 | Centro de notificaciones in-app | H2 | Notificaciones (#18) | Primer aviso que un usuario necesita ver sin salir del panel (no solo por correo). | Condicional (solo si el producto necesita avisos visibles dentro de la app) | Lista de notificaciones dentro del panel (campanita, marcar como leído) que consume lo que #18 ya dispara; #18 resuelve el envío, esto resuelve dónde se ve. | Exploración |
+| 28 | P3 | Alta de organización autoservicio | H4 | Organizaciones, roles y RLS | Un producto derivado necesita que una organización se dé de alta sin intervención de un superadmin. | Condicional (hoy todo producto deriva organizaciones por provisión manual, modelo deliberado de consultoría) | Flujo de signup público que crea organización y primer admin sin RPC manual. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 26 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 28 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 18 son **Condicionales**: dependen de que ese producto elija
+Los otros 20 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
-un segundo producto, tráfico no confiable, volumen real) — pueden tardar
-mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+un segundo producto, tráfico no confiable, volumen real, alta autoservicio)
+— pueden tardar mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
 la diferencia es si la función en sí va a existir.
 
 > **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
