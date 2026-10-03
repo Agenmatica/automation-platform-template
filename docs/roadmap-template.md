@@ -191,19 +191,27 @@ necesitando justo esta función".
 | 40 | P1 | Rotación de secretos de larga vida | H2 | Blindaje de secretos en la orquestación (spec 014) | Primer secreto raíz (contraseña de DB, API key de proveedor) sin rotar desde su creación. | Condicional (solo si hay secretos de larga vida reales en producción) | Rotación programada o a demanda de credenciales raíz, distinta del acceso efímero que ya resuelve spec 014 — eso resuelve quién las ve, esto resuelve que no queden fijas para siempre. | Exploración |
 | 41 | P2 | Cabeceras de seguridad HTTP | H2 | Gestión de entornos | Primer despliegue expuesto a tráfico público real. | Condicional (solo si hay exposición pública real) | CSP, HSTS, X-Frame-Options y afines configurados en el Refine servido, versionados como parte de `infra/refine/`. | Exploración |
 | 42 | P3 | Canal de divulgación de vulnerabilidades | H2 | Ninguna | Primer cliente real con datos sensibles en producción. | Condicional (solo si hay datos sensibles reales expuestos) | `security.txt` o proceso documentado de reporte responsable, con tiempo de respuesta esperado. | Exploración |
+| 43 | P1 | Backup de Storage (archivos) | H2 | Backups automáticos de Postgres (spec 011) | Primer archivo real en Storage sin respaldo cuando se construya #17. | Condicional (solo si el producto usa Storage para datos de negocio) | Respaldo automático de buckets de Storage, mismo patrón de verificación estructural que ya usa el backup de Postgres. | Exploración |
+| 44 | P2 | Visibilidad de costos de infraestructura entre productos | H2 | Gestión de entornos | Más de un producto derivado corriendo en paralelo. | Condicional (solo si hay más de un producto real en producción) | Resumen de gasto de infraestructura (VPS, Supabase, IA) por producto derivado, para la agencia, no para el cliente final. | Exploración |
+| 45 | P2 | Retención y eliminación de datos por política general | H2 | Multi-tenancy | Primera necesidad real de borrar datos de negocio por antigüedad o pedido, más allá de lo puntual que ya existe (interacciones IA, evidencia de workers). | Condicional (solo si hay una política de retención real que cumplir) | Mecanismo genérico de retención/purga configurable por tabla de producto, mismo patrón que ya usa `packages/ia`. | Exploración |
+| 46 | P2 | Accesibilidad (WCAG) sin piso definido | H2 | Panel operable y extensible (Refine) | Primera pantalla nueva construida sin un nivel WCAG objetivo documentado. | Condicional (solo si el producto necesita cumplir un nivel de accesibilidad) | Nivel WCAG objetivo documentado en la constitución, con `accessibility-compliance`/`accessibility-testing` aplicadas de forma consistente. | Exploración |
+| 47 | P3 | Documentación de API autogenerada (OpenAPI) | H4 | Contratos de integración (#11); Claves de API por organización (#35) | Primer cliente externo integrando contra claves de API reales. | Condicional (solo si hay integración partner-a-partner real) | Spec OpenAPI generada desde los contratos ya documentados, servida junto al panel. | Exploración |
+| 48 | P3 | Trazas distribuidas entre Kestra/workers/Supabase | H2 | Monitoreo, alertas y errores (#8) | Primer fallo real que cruza varios servicios y cuesta reconstruir la secuencia. | Condicional (solo si hay fallos reales difíciles de rastrear entre servicios) | Identificador de correlación propagado entre Kestra, workers y Supabase, visible en el registro de errores de #8. | Exploración |
+| 49 | P3 | Alertas de gasto inesperado en infraestructura | H2 | Visibilidad de costos de infraestructura entre productos (#44) | Primer gasto de infraestructura fuera de lo esperado. | Condicional (solo si hay riesgo real de gasto descontrolado, ej. uso de IA) | Umbral configurable con aviso cuando el gasto de un producto se desvía de lo esperado. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 42 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 49 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 34 son **Condicionales**: dependen de que ese producto elija
+Los otros 41 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
 un segundo producto, tráfico no confiable, volumen real, alta autoservicio,
 portabilidad, branding, seguridad reforzada, rastro legal, secretos de
-larga vida, exposición pública) — pueden tardar mucho más o no llegar a
-activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+larga vida, exposición pública, un segundo producto en paralelo, retención
+de datos, accesibilidad, gasto descontrolado) — pueden tardar mucho más o
+no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
 la diferencia es si la función en sí va a existir.
 
 > **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
