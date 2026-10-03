@@ -63,6 +63,18 @@ opcional, default `{}` — cualquier objeto). Un esquema `{}` no restringe
 nada: un contrato que no necesita forma real de datos sigue funcionando sin
 cambios.
 
+## Costo estimado y evaluaciones
+
+`calcularCostoEstimado` es aritmética pura sobre tokens usados y una tarifa
+que el consumidor ya conoce (no hay catálogo de precios en la plataforma);
+el resultado es responsabilidad del consumidor guardarlo, por ejemplo en el
+`detalle` de un evento de interacción, que ya es un `Record<string, unknown>`
+sin esquema fijo. `ejecutarCasosEvaluacion` corre una lista de casos
+(entrada, salida esperada) contra la función ejecutora del propio consumidor
+y reporta qué casos coinciden — útil para confirmar que un cambio de modelo
+o de prompt no rompió comportamientos ya validados. Ninguna de las dos
+funciones depende de ni modifica el resto de la capacidad.
+
 ## Límites de esta capacidad
 
 La biblioteca no elige casos de negocio, no implementa navegación ni expone
