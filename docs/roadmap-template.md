@@ -178,17 +178,27 @@ necesitando justo esta función".
 | 27 | P2 | Centro de notificaciones in-app | H2 | Notificaciones (#18) | Primer aviso que un usuario necesita ver sin salir del panel (no solo por correo). | Condicional (solo si el producto necesita avisos visibles dentro de la app) | Lista de notificaciones dentro del panel (campanita, marcar como leído) que consume lo que #18 ya dispara; #18 resuelve el envío, esto resuelve dónde se ve. | Exploración |
 | 28 | P3 | Alta de organización autoservicio | H4 | Organizaciones, roles y RLS | Un producto derivado necesita que una organización se dé de alta sin intervención de un superadmin. | Condicional (hoy todo producto deriva organizaciones por provisión manual, modelo deliberado de consultoría) | Flujo de signup público que crea organización y primer admin sin RPC manual. | Exploración |
 | 29 | P2 | Búsqueda global en el panel | H2 | Multi-tenancy | Varias organizaciones con volumen real de datos, donde cruzar entidades (miembros, ejecuciones, documentos) ya no entra en una sola pantalla. | Condicional (solo si hay volumen real de datos a cruzar) | Barra de búsqueda que cruza entidades del panel con los mismos límites de organización activa que ya aplica RLS — no reemplaza #21 (búsqueda semántica sobre documentos para IA). | Exploración |
+| 30 | P1 | Exportación/portabilidad de datos de una organización | H2 | Multi-tenancy | Una organización pide llevarse sus datos o cerrar su cuenta. | Condicional (solo si el producto necesita dar portabilidad real) | Export completo y auditable de todo lo que pertenece a una organización, respetando los mismos límites que ya aplica RLS. | Exploración |
+| 31 | P1 | Panel de consumo por organización | H2 | Multi-tenancy; Trazas, costos y evaluaciones IA (#13) | Soporte o capacidad necesitan ver cuánto usa una organización sin entrar a Superset. | Condicional (solo si hace falta visibilidad de uso sin billing) | Resumen de ejecuciones, almacenamiento y costo de IA por organización, consultable sin exportar a analítica. | Exploración |
+| 32 | P1 | Branding por organización | H2 | Multi-tenancy | Un producto necesita mostrarse con identidad visual distinta por cliente final (logo, color, quizás subdominio). | Condicional (solo si el producto blanquea marca) | Configuración de marca por organización (logo, paleta, nombre visible) aplicada al panel sin tocar código por cliente. | Exploración |
+| 33 | P1 | Soft-delete / papelera con recuperación | H2 | Multi-tenancy | Primera eliminación accidental real reportada, o primer dato con alto costo de pérdida. | Condicional (solo si el producto maneja datos cuya eliminación accidental es costosa) | Patrón de borrado lógico con ventana de recuperación y purga diferida, reutilizable entre tablas de producto — complementa, no reemplaza, los backups (#6). | Exploración |
+| 34 | P2 | Reportes programados | H2 | Notificaciones (#18); Centro de notificaciones (#27); Analítica embebida | Un usuario necesita recibir un dashboard o export por cadencia, sin entrar a buscarlo. | Condicional (solo si hay reportes recurrentes reales) | Programación de envío periódico de un dashboard de Superset o un export, entregado vía #18/#27. | Exploración |
+| 35 | P3 | Claves de API por organización | H4 | Multi-tenancy; Contratos de integración | Un cliente final necesita integrar su propio sistema contra la plataforma sin login de usuario. | Condicional (solo si hay integración partner-a-partner real) | Claves de API con alcance por organización, rotación y revocación, documentadas como contrato de integración. | Exploración |
+| 36 | P3 | Webhooks salientes | H4 | Contratos de integración | Una organización necesita enterarse de un evento de la plataforma en su propio sistema, sin sondear. | Condicional (solo si hay un consumidor externo real esperando eventos) | Suscripción por organización a eventos de plataforma, con entrega firmada y reintentos — complemento saliente de las conexiones OAuth entrantes ya existentes. | Exploración |
+| 37 | P3 | Modo mantenimiento / banner de plataforma | H2 | Gestión de entornos | Primera ventana de mantenimiento planeada que afecta a todas las organizaciones. | Condicional (solo si hace falta avisar de antemano, no solo detectar fallas como #8) | Banner de aviso a nivel plataforma, activable/desactivable por superadmin, visible en todo el panel. | Exploración |
+| 38 | P3 | 2FA/MFA | H2 | Autogestión de contraseña | Primer requisito real de seguridad reforzada más allá de contraseña. | Condicional (solo si el producto o un cliente lo exige) | Segundo factor opcional u obligatorio por organización, sin romper el flujo de recuperación existente. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 29 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 38 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 21 son **Condicionales**: dependen de que ese producto elija
+Los otros 30 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
-un segundo producto, tráfico no confiable, volumen real, alta autoservicio)
-— pueden tardar mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+un segundo producto, tráfico no confiable, volumen real, alta autoservicio,
+portabilidad, branding, seguridad reforzada) — pueden tardar mucho más o no
+llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
 la diferencia es si la función en sí va a existir.
 
 > **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
