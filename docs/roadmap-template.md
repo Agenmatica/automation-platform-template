@@ -187,18 +187,19 @@ necesitando justo esta función".
 | 36 | P3 | Webhooks salientes | H4 | Contratos de integración | Una organización necesita enterarse de un evento de la plataforma en su propio sistema, sin sondear. | Condicional (solo si hay un consumidor externo real esperando eventos) | Suscripción por organización a eventos de plataforma, con entrega firmada y reintentos — complemento saliente de las conexiones OAuth entrantes ya existentes. | Exploración |
 | 37 | P3 | Modo mantenimiento / banner de plataforma | H2 | Gestión de entornos | Primera ventana de mantenimiento planeada que afecta a todas las organizaciones. | Condicional (solo si hace falta avisar de antemano, no solo detectar fallas como #8) | Banner de aviso a nivel plataforma, activable/desactivable por superadmin, visible en todo el panel. | Exploración |
 | 38 | P3 | 2FA/MFA | H2 | Autogestión de contraseña | Primer requisito real de seguridad reforzada más allá de contraseña. | Condicional (solo si el producto o un cliente lo exige) | Segundo factor opcional u obligatorio por organización, sin romper el flujo de recuperación existente. | Exploración |
+| 39 | P3 | Aceptación de términos/privacidad versionada | H2 | Autogestión de contraseña | Primera vez que el producto necesita rastrear qué versión de términos/privacidad aceptó cada usuario. | Condicional (solo si hace falta ese rastro, no todo producto lo necesita) | Registro de aceptación por usuario y versión de documento legal, con bloqueo fail-closed si hay una versión nueva sin aceptar. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 38 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 39 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 30 son **Condicionales**: dependen de que ese producto elija
+Los otros 31 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
 un segundo producto, tráfico no confiable, volumen real, alta autoservicio,
-portabilidad, branding, seguridad reforzada) — pueden tardar mucho más o no
-llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+portabilidad, branding, seguridad reforzada, rastro legal) — pueden tardar
+mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
 la diferencia es si la función en sí va a existir.
 
 > **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
