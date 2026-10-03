@@ -21,6 +21,7 @@ Esta entrega aporta una capa genérica intermedia entre `capacidad-ia-gobernada`
 - Q: ¿Quién declara el vocabulario de acciones permitidas y los verificadores — el núcleo o el consumidor? → A: El consumidor, por paso recuperable; el núcleo nunca ofrece acciones por defecto ni verificadores genéricos, porque ambos dependen de la estructura de cada sitio.
 - Q: ¿Qué pasa si el consumidor no declaró un paso como recuperable? → A: El mecanismo nunca se invoca; el worker sigue su propio manejo de error existente. Esta capacidad no detecta bloqueos, solo los resuelve cuando el consumidor decide invocarla.
 - Q: ¿El presupuesto de intentos/tiempo es propio de esta capacidad o el de `capacidad-ia-gobernada`? → A: Es el mismo presupuesto de la política activa del consumidor en `packages/ia`; esta capa no define un límite adicional ni lo duplica, solo lo consume.
+- Q: ¿Qué pasa si el consumidor invoca el mecanismo sin tener una política activa configurada en `capacidad-ia-gobernada`? → A: Es el mismo caso que cualquier otro fallo no recuperable: el mecanismo se detiene antes de proponer o ejecutar cualquier acción y devuelve el control al consumidor con ese motivo, sin crear una ruta de error distinta a la ya cubierta por FR-009.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -88,7 +89,7 @@ Cuando el bloqueo no es seguro de resolver con el mecanismo común — sesión i
 - **FR-006**: Tras una recuperación verificada, el consumidor DEBE poder reanudar desde un checkpoint idempotente declarado por él mismo, sin que el mecanismo repita efectos de negocio ya confirmados.
 - **FR-007**: El mecanismo DEBE reutilizar exclusivamente el presupuesto de intentos y tiempo de la política activa del consumidor en `capacidad-ia-gobernada`; no DEBE definir, acumular ni exponer un presupuesto propio independiente.
 - **FR-008**: Un reintento de infraestructura del orquestador sobre la misma tarea NO DEBE contabilizarse como un intento de este mecanismo.
-- **FR-009**: Ante sesión inválida, autenticación adicional exigida por el sitio, dominio fuera de lo declarado, resultado incierto o presupuesto agotado, el mecanismo DEBE detenerse y devolver el control al consumidor, incluyendo el motivo, para que use su propio manejo de error y la revisión humana ya provista por `capacidad-ia-gobernada`; no DEBE crear un canal de escalamiento ni de auditoría paralelo.
+- **FR-009**: Ante sesión inválida, autenticación adicional exigida por el sitio, dominio fuera de lo declarado, resultado incierto, presupuesto agotado o ausencia de una política activa en `capacidad-ia-gobernada` para ese consumidor, el mecanismo DEBE detenerse y devolver el control al consumidor, incluyendo el motivo, para que use su propio manejo de error y la revisión humana ya provista por `capacidad-ia-gobernada`; no DEBE crear un canal de escalamiento ni de auditoría paralelo.
 - **FR-010**: El mecanismo DEBE emitir únicamente los eventos sanitizados que ya provee `capacidad-ia-gobernada`; no DEBE agregar un canal de observabilidad propio ni registrar valores de negocio, selectores o contenido de la página.
 - **FR-011**: El mecanismo NO DEBE conocer ni referenciar ningún sistema externo, dominio de negocio o producto concreto; toda su superficie DEBE expresarse en términos de pasos, acciones, verificadores y checkpoints declarados por el consumidor.
 
