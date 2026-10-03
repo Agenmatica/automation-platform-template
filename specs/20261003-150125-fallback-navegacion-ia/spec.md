@@ -22,6 +22,7 @@ Esta entrega aporta una capa genérica intermedia entre `capacidad-ia-gobernada`
 - Q: ¿Qué pasa si el consumidor no declaró un paso como recuperable? → A: El mecanismo nunca se invoca; el worker sigue su propio manejo de error existente. Esta capacidad no detecta bloqueos, solo los resuelve cuando el consumidor decide invocarla.
 - Q: ¿El presupuesto de intentos/tiempo es propio de esta capacidad o el de `capacidad-ia-gobernada`? → A: Es el mismo presupuesto de la política activa del consumidor en `packages/ia`; esta capa no define un límite adicional ni lo duplica, solo lo consume.
 - Q: ¿Qué pasa si el consumidor invoca el mecanismo sin tener una política activa configurada en `capacidad-ia-gobernada`? → A: Es el mismo caso que cualquier otro fallo no recuperable: el mecanismo se detiene antes de proponer o ejecutar cualquier acción y devuelve el control al consumidor con ese motivo, sin crear una ruta de error distinta a la ya cubierta por FR-009.
+- Q: ¿Una invocación puede reintentar una segunda acción propuesta por IA después de que el verificador rechace la primera, dentro del mismo presupuesto? → A: No. `packages/ia` ya define ese comportamiento para toda la capacidad de IA gobernada: un rechazo de verificador o de contrato termina la interacción de inmediato, sin fallback ("Un incumplimiento de contrato o verificador se rechaza sin fallback", `packages/ia/README.md`). Esta capa no puede ofrecer un comportamiento distinto al del núcleo que reutiliza. El presupuesto de intentos/tiempo de la política sigue existiendo, pero gobierna únicamente la resiliencia técnica entre modelo principal y de fallback dentro de una misma invocación, no una segunda propuesta de acción tras un rechazo de verificador.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -37,7 +38,7 @@ Un worker de navegador invoca el mecanismo común cuando su camino determinista 
 
 1. **Given** un paso declarado recuperable con acciones permitidas y verificador, **When** el camino determinista del consumidor falla, **Then** el mecanismo propone una acción exclusivamente del vocabulario declarado y la ejecuta en la sesión ya autenticada del consumidor.
 2. **Given** una acción ejecutada, **When** el verificador del consumidor confirma el resultado esperado, **Then** el mecanismo devuelve control al consumidor con éxito y sin reiniciar sesión.
-3. **Given** una acción ejecutada, **When** el verificador del consumidor NO confirma el resultado esperado, **Then** el mecanismo no asume éxito y continúa dentro del mismo presupuesto de intentos hasta agotarlo o lograr verificación.
+3. **Given** una acción ejecutada, **When** el verificador del consumidor NO confirma el resultado esperado, **Then** el mecanismo no asume éxito, detiene esa invocación de forma terminal y devuelve el control al consumidor sin proponer una segunda acción dentro de la misma invocación.
 
 ---
 
@@ -74,7 +75,7 @@ Cuando el bloqueo no es seguro de resolver con el mecanismo común — sesión i
 
 - Un consumidor puede declarar un paso recuperable cuyo verificador depende de una ventana o pestaña emergente del navegador; el mecanismo no asume que el resultado vive en la página original.
 - Si el consumidor no declaró ninguna acción permitida para un paso, el mecanismo no tiene vocabulario para proponer y debe detenerse de inmediato, sin invocar a la IA.
-- Un verificador que lanza una excepción se trata igual que un verificador que no confirma éxito: no hay recuperación, se cuenta el intento.
+- Un verificador que lanza una excepción se trata igual que un verificador que no confirma éxito: la invocación termina sin éxito, de forma terminal, igual que un rechazo de contrato.
 - Dos invocaciones concurrentes del mecanismo sobre la misma sesión/contexto de navegador no están soportadas por esta capacidad; la concurrencia de ejecución es responsabilidad del consumidor, igual que en el resto de `capacidad-ia-gobernada`.
 
 ## Requirements *(mandatory)*
@@ -85,9 +86,9 @@ Cuando el bloqueo no es seguro de resolver con el mecanismo común — sesión i
 - **FR-002**: El mecanismo DEBE invocarse únicamente cuando el consumidor lo solicita explícitamente tras un fallo de su propio camino determinista; nunca debe detectar bloqueos por sí mismo.
 - **FR-003**: Toda acción propuesta por la IA DEBE pertenecer al vocabulario de acciones permitidas declarado por el consumidor para ese paso; una acción fuera de ese vocabulario DEBE rechazarse antes de ejecutarse.
 - **FR-004**: El mecanismo DEBE ejecutar la acción propuesta dentro de la misma sesión y contexto de navegador ya autenticado que recibió del consumidor; no DEBE reautenticar, no DEBE abrir una sesión nueva, y no DEBE navegar fuera del dominio declarado por el consumidor para ese paso.
-- **FR-005**: El mecanismo NO DEBE considerar exitosa una recuperación sin que el verificador determinista del consumidor confirme el resultado esperado; una verificación fallida o que lanza una excepción cuenta como intento sin éxito.
+- **FR-005**: El mecanismo NO DEBE considerar exitosa una recuperación sin que el verificador determinista del consumidor confirme el resultado esperado; una verificación fallida o que lanza una excepción DEBE terminar esa invocación sin éxito de forma inmediata, sin proponer una segunda acción dentro de la misma invocación.
 - **FR-006**: Tras una recuperación verificada, el consumidor DEBE poder reanudar desde un checkpoint idempotente declarado por él mismo, sin que el mecanismo repita efectos de negocio ya confirmados.
-- **FR-007**: El mecanismo DEBE reutilizar exclusivamente el presupuesto de intentos y tiempo de la política activa del consumidor en `capacidad-ia-gobernada`; no DEBE definir, acumular ni exponer un presupuesto propio independiente.
+- **FR-007**: El mecanismo DEBE reutilizar exclusivamente el presupuesto de intentos y tiempo de la política activa del consumidor en `capacidad-ia-gobernada` para la resiliencia técnica entre modelo principal y de fallback dentro de una misma invocación; no DEBE definir, acumular ni exponer un presupuesto propio independiente, y no DEBE usar ese presupuesto para ofrecer una segunda acción tras un rechazo de verificador o de contrato.
 - **FR-008**: Un reintento de infraestructura del orquestador sobre la misma tarea NO DEBE contabilizarse como un intento de este mecanismo.
 - **FR-009**: Ante sesión inválida, autenticación adicional exigida por el sitio, dominio fuera de lo declarado, resultado incierto, presupuesto agotado o ausencia de una política activa en `capacidad-ia-gobernada` para ese consumidor, el mecanismo DEBE detenerse y devolver el control al consumidor, incluyendo el motivo, para que use su propio manejo de error y la revisión humana ya provista por `capacidad-ia-gobernada`; no DEBE crear un canal de escalamiento ni de auditoría paralelo.
 - **FR-010**: El mecanismo DEBE emitir únicamente los eventos sanitizados que ya provee `capacidad-ia-gobernada`; no DEBE agregar un canal de observabilidad propio ni registrar valores de negocio, selectores o contenido de la página.
