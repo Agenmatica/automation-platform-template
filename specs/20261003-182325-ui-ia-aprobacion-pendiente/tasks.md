@@ -58,6 +58,7 @@ description: "Task list template for feature implementation"
 
 - T011: verificación visual en navegador real no realizable en este entorno (ver T011 arriba). Cubierto por verificación equivalente con render real + datos reales en Postgres.
 - Code-review de dos ejes (Standards + Spec) tras T012: 1 hallazgo real de Spec (faltaba indicador de progreso, Historia 2/Escenario 4) y 3 judgement calls de Standards (duplicación de `ESTADOS_NECESITAN_ACCION_HUMANA`, matching frágil por substring en la migración, sobre-reclamo del Principio VI en plan.md) — los 4 corregidos, ver commit 85296ba.
+- Pasada adicional de `web-design-guidelines` + `authz-security` sobre toda la spec (regla permanente nueva, aplicada retroactivamente): 4 hallazgos de UX/accesibilidad (prefers-reduced-motion, tooltips para distinguir rechazar/cancelar, indicador de carga, aria-live) y 1 hallazgo de seguridad P1 (`registrar_evento_interaccion_ia` no exigía superadmin específicamente para resolver una revisión/aprobación pendiente — un worker podía saltear `resolver_revision_ia`) — los 5 corregidos, ver commit 4e3e50c y data-model.md.
 
 ## Al cerrar (merge del PR)
 
