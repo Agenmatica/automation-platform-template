@@ -32,8 +32,11 @@ No expone nada más: ni acceso a Vault, ni a la configuración de proveedores, n
 ```ts
 type AdaptadorInvocacionIa = {
   invocarProveedor: (entradaSanitizada: Record<string, unknown>, perfilId: string) => Promise<unknown>
+  resolverObjetivo: (objetivo: string) => { dominio: string } | null // permite validar el dominio ANTES de ejecutar
   ejecutarAccion: (accion: AccionPermitida) => Promise<void> // mapea `objetivo` a un Locator real y lo ejecuta
 }
 ```
+
+`resolverObjetivo` devuelve `null` si el consumidor no reconoce esa clave — en ese caso el mecanismo la trata igual que un dominio no autorizado (FR-004), nunca como "sin acciones permitidas".
 
 Esta capa nunca llama directamente a un SDK de proveedor de IA ni a Playwright: delega ambos al adaptador del consumidor, igual que `@platform/ia` delega el transporte de proveedor a cada consumidor (ver su README, sección "Antes de adoptar", punto 4).

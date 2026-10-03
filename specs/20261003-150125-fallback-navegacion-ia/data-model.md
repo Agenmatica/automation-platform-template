@@ -54,6 +54,6 @@ Lo que el mecanismo devuelve al consumidor al terminar.
 | `estado` | `'recuperado' \| 'no_recuperable'` | Nunca un tercer estado "parcial": o se verificó éxito, o se detuvo. |
 | `motivo` | `string \| null` | Presente cuando `estado === 'no_recuperable'`: `'dominio_no_autorizado' \| 'sin_acciones_permitidas' \| 'verificador_rechazado' \| 'sin_politica_activa' \| 'presupuesto_agotado' \| 'error_tecnico'`. |
 | `checkpoint` | `CheckpointReanudacion \| null` | Eco del checkpoint declarado, presente solo cuando `estado === 'recuperado'`. |
-| `interaccionId` | `string` | Identificador de la interacción de `packages/ia` asociada, para que el consumidor pueda correlacionar con la auditoría/revisión humana ya existente. |
+| `interaccionId` | `string` | `crypto.randomUUID()` generado por esta capa al iniciar la invocación (`packages/ia`'s `InteraccionEnCurso` no expone un id propio); sirve para que el consumidor correlacione esta llamada con sus propios logs, no es un id que `packages/ia` reconozca por sí mismo. |
 
 No hay transiciones de estado propias de esta capa: el estado de la interacción subyacente (`iniciada → preparando → invocando → respuesta_validada/rechazada/revision_humana → completada`) es integramente el de `packages/ia` (`interacciones.ts`); esta capa solo lo traduce a `ResultadoInvocacion` para el consumidor.

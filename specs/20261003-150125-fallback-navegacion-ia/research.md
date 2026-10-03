@@ -39,3 +39,19 @@
 **Rationale**: sin esta corrección, los tests reales de esta nueva capacidad (y los ya existentes de `packages/ia`) nunca se ejecutarían en CI, violando la puerta de calidad de la constitución ("Toda entrega debe... pasar los tests"). Es una corrección mínima y necesaria para que esta misma entrega sea verificable, no una ampliación de alcance.
 
 **Alternatives considered**: dejar el gap para una spec separada — rechazado, porque entonces esta propia entrega quedaría sin verificación real en CI, que es exactamente la garantía que la constitución exige para toda entrega.
+
+## Decisión 6: `@platform/ia` necesitó `exports`/`main` — nunca se había importado como paquete
+
+**Decision**: se agregó `"main": "./src/index.ts"` y `"exports": "./src/index.ts"` a `packages/ia/package.json`.
+
+**Rationale**: al implementar, `vitest` falló con `Failed to resolve entry for package "@platform/ia"` — su `package.json` no declaraba ningún punto de entrada. Esto confirma que, hasta esta spec, nada fuera del propio paquete lo importaba por nombre (sus propios archivos se importan entre sí por ruta relativa). Como `build` corre con `--noEmit` (no genera `dist/`), el único punto de entrada posible hoy es el código fuente TypeScript; `vitest`/`vite-node` lo transforman en el momento, sin prebuild.
+
+**Alternatives considered**: generar un `dist/` real con `tsc` (quitando `--noEmit`) — rechazado por ahora: cambia el contrato de build de un paquete ya mergeado (`packages/ia`) fuera del alcance de esta spec; si en el futuro se necesita publicar o consumir fuera del monorepo, se vuelve a evaluar.
+
+## Decisión 7: el handshake de `iniciarInvocacion` es de dos pasos, y el fallback técnico requiere un loop
+
+**Decision**: la secuencia correcta para abrir una invocación es `iniciarInteraccion()` → `iniciarInvocacion()` (iniciada → preparando) → `iniciarInvocacion()` de nuevo (preparando → invocando, recién ahí incrementa intentos y fija `perfilEfectivoId`). Un fallo técnico se maneja con un loop: `registrarFallo(interaccion, politica, 'tecnico')` devuelve una interacción con `estado: 'invocando'` y un `perfilEfectivoId` de fallback cuando hay presupuesto y perfil de fallback configurado; si devuelve `estado: 'revision_humana'`, no queda más fallback y la invocación termina.
+
+**Rationale**: se descubrió al correr los tests por primera vez (`TRANSICION_IA_INVALIDA` al llamar `registrarFallo`/`completarInteraccion` con la interacción todavía en `'preparando'`, no `'invocando'`). Sin este loop, esta capa nunca habría aprovechado el perfil de fallback que la política ya permite — habría tratado cualquier fallo técnico como terminal en el primer intento, desaprovechando una garantía que `capacidad-ia-gobernada` ya ofrece.
+
+**Alternatives considered**: ninguna — es el único uso correcto de la API existente; no hay una alternativa de diseño aquí, solo una lectura más cuidadosa del código ya mergeado.
