@@ -48,6 +48,16 @@ en cualquier nivel de anidamiento, referencia una organización distinta.
 Sin esa clave declarada, el comportamiento es idéntico al de un consumidor
 que no maneja datos organizacionales: ningún chequeo nuevo.
 
+## Esquemas de entrada y salida
+
+`esquemaEntrada` y `esquemaSalida` del contrato son JSON Schema real, validado
+con `ajv`: `prepararInvocacion` rechaza los datos de entrada que no cumplen
+`esquemaEntrada` antes de sanitizar o invocar al proveedor, y `validarSalida`
+rechaza una respuesta que no cumple `esquemaSalida` (segundo parámetro
+opcional, default `{}` — cualquier objeto). Un esquema `{}` no restringe
+nada: un contrato que no necesita forma real de datos sigue funcionando sin
+cambios.
+
 ## Límites de esta capacidad
 
 La biblioteca no elige casos de negocio, no implementa navegación ni expone
