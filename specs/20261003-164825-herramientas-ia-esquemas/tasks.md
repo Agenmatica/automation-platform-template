@@ -9,11 +9,11 @@ description: "Task list template for feature implementation"
 
 ## Phase 1: Setup
 
-- [ ] T001 Agregar `ajv` a `packages/ia/package.json` (dependencies).
+- [x] T001 Agregar `ajv` a `packages/ia/package.json` (dependencies).
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T002 Crear `validarContraEsquema(valor, esquema, codigoError)` en `packages/ia/src/validarContrato.ts` usando `ajv` (depende de T001).
+- [x] T002 Crear `validarContraEsquema(valor, esquema, codigoError)` en `packages/ia/src/validarContrato.ts` usando `ajv` (depende de T001).
 
 **Checkpoint**: función base lista.
 
@@ -21,13 +21,13 @@ description: "Task list template for feature implementation"
 
 ### Tests ⚠️
 
-- [ ] T003 [P] [US1] Test "entrada cumple esquema real, prepara con normalidad" en `packages/ia/src/ejecutar.test.ts` (quickstart Escenario 1).
-- [ ] T004 [P] [US1] Test "entrada no cumple esquema real (tipo equivocado), lanza ENTRADA_IA_FUERA_DE_ESQUEMA antes de sanitizar" en `packages/ia/src/ejecutar.test.ts` (quickstart Escenario 2).
-- [ ] T005 [P] [US1] Test "esquemaEntrada {} no rechaza nada" en `packages/ia/src/ejecutar.test.ts` (quickstart Escenario 4).
+- [x] T003 [P] [US1] Test "entrada cumple esquema real, prepara con normalidad" en `packages/ia/src/ejecutar.test.ts` (quickstart Escenario 1).
+- [x] T004 [P] [US1] Test "entrada no cumple esquema real (tipo equivocado), lanza ENTRADA_IA_FUERA_DE_ESQUEMA antes de sanitizar" en `packages/ia/src/ejecutar.test.ts` (quickstart Escenario 2).
+- [x] T005 [P] [US1] Test "esquemaEntrada {} no rechaza nada" en `packages/ia/src/ejecutar.test.ts` (quickstart Escenario 4).
 
 ### Implementation
 
-- [ ] T006 [US1] Llamar `validarContraEsquema(entrada, contrato.esquemaEntrada, 'ENTRADA_IA_FUERA_DE_ESQUEMA')` dentro de `prepararInvocacion` (`packages/ia/src/ejecutar.ts`), sobre `entrada` cruda, antes de `validarAislamientoOrganizacion` y `sanitizarDato` (depende de T002).
+- [x] T006 [US1] Llamar `validarContraEsquema(entrada, contrato.esquemaEntrada, 'ENTRADA_IA_FUERA_DE_ESQUEMA')` dentro de `prepararInvocacion` (`packages/ia/src/ejecutar.ts`), sobre `entrada` cruda, antes de `validarAislamientoOrganizacion` y `sanitizarDato` (depende de T002).
 
 **Checkpoint**: MVP funcional.
 
@@ -35,22 +35,22 @@ description: "Task list template for feature implementation"
 
 ### Tests ⚠️
 
-- [ ] T007 [P] [US2] Test "salida cumple esquema real, no lanza" en `packages/ia/src/validarContrato.test.ts` (quickstart Escenario 3, caso positivo).
-- [ ] T008 [P] [US2] Test "salida no cumple esquema real, lanza RESPUESTA_IA_FUERA_DE_ESQUEMA" en `packages/ia/src/validarContrato.test.ts` (quickstart Escenario 3).
-- [ ] T009 [P] [US2] Test "sin segundo argumento, comportamiento idéntico al actual (solo objeto)" en `packages/ia/src/validarContrato.test.ts` — confirma que el test existente (`validarSalida('respuesta')`) sigue pasando sin modificarlo.
+- [x] T007 [P] [US2] Test "salida cumple esquema real, no lanza" en `packages/ia/src/validarContrato.test.ts` (quickstart Escenario 3, caso positivo).
+- [x] T008 [P] [US2] Test "salida no cumple esquema real, lanza RESPUESTA_IA_FUERA_DE_ESQUEMA" en `packages/ia/src/validarContrato.test.ts` (quickstart Escenario 3).
+- [x] T009 [P] [US2] Test "sin segundo argumento, comportamiento idéntico al actual (solo objeto)" en `packages/ia/src/validarContrato.test.ts` — confirma que el test existente (`validarSalida('respuesta')`) sigue pasando sin modificarlo.
 
 ### Implementation
 
-- [ ] T010 [US2] Agregar parámetro opcional `esquemaSalida: object = {}` a `validarSalida` (`packages/ia/src/validarContrato.ts`) y llamar `validarContraEsquema` después del chequeo de objeto existente (depende de T002).
+- [x] T010 [US2] Agregar parámetro opcional `esquemaSalida: object = {}` a `validarSalida` (`packages/ia/src/validarContrato.ts`) y llamar `validarContraEsquema` después del chequeo de objeto existente (depende de T002).
 
 **Checkpoint**: ambas historias funcionan.
 
 ## Phase 5: Polish
 
-- [ ] T011 [P] Agregar sección breve a `packages/ia/README.md` sobre esquemas reales.
-- [ ] T012 Confirmar `pnpm --filter @platform/ia-navegacion test` (17/17) sin ninguna modificación a ese paquete (SC-004).
-- [ ] T013 Correr `pnpm --filter @platform/ia build`, `pnpm --filter @platform/ia test`, `pnpm lint`, `pnpm build`, `pnpm infra:config`, `pnpm docs:check`.
-- [ ] T014 Subir versión de `governed-ai-core` en `template-capabilities.json`/`template-adoption.json` (minor).
+- [x] T011 [P] Agregar sección breve a `packages/ia/README.md` sobre esquemas reales.
+- [x] T012 Confirmar `pnpm --filter @platform/ia-navegacion test` (17/17) sin ninguna modificación a ese paquete (SC-004).
+- [x] T013 Correr `pnpm --filter @platform/ia build`, `pnpm --filter @platform/ia test`, `pnpm lint`, `pnpm build`, `pnpm infra:config`, `pnpm docs:check`.
+- [x] T014 Subir versión de `governed-ai-core` en `template-capabilities.json`/`template-adoption.json` (minor).
 
 ## Notas de desvío
 

@@ -33,4 +33,15 @@ describe('ejecución gobernada', () => {
       prepararInvocacion(contratoConOrganizacion, politica, { texto: 'x', organizacionId: 'org-1' }, 0, new Date(), { organizacionId: 'org-1' }),
     ).toEqual({ texto: 'x', organizacionId: 'org-1' })
   })
+  it('entrada que cumple un esquemaEntrada real prepara con normalidad', () => {
+    const contratoConEsquema: ContratoConsumidor = { ...contrato, esquemaEntrada: { type: 'object', required: ['texto'], properties: { texto: { type: 'string' } } } }
+    expect(prepararInvocacion(contratoConEsquema, politica, { texto: 'ok' }, 0, new Date())).toEqual({ texto: 'ok' })
+  })
+  it('entrada que no cumple un esquemaEntrada real se rechaza antes de sanitizar', () => {
+    const contratoConEsquema: ContratoConsumidor = { ...contrato, esquemaEntrada: { type: 'object', required: ['texto'], properties: { texto: { type: 'string' } } } }
+    expect(() => prepararInvocacion(contratoConEsquema, politica, { texto: 123 }, 0, new Date())).toThrow('ENTRADA_IA_FUERA_DE_ESQUEMA')
+  })
+  it('esquemaEntrada {} no rechaza ningún dato (compatibilidad)', () => {
+    expect(prepararInvocacion(contrato, politica, { texto: 'cualquiera' }, 0, new Date())).toEqual({ texto: 'cualquiera' })
+  })
 })
