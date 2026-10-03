@@ -25,7 +25,7 @@ Migración aditiva que agrega `esperando_aprobacion` al check constraint de `ia_
 - **III. Automatizaciones idempotentes y auditables**: la migración documenta su reversión implícita (constraint aditivo, se puede acotar de nuevo si hiciera falta); sin cambio de comportamiento para transiciones existentes.
 - **IV. Un monorepo**: sin cambios de despliegue.
 - **V. Simplicidad operativa**: no se agrega la función de creación de interacciones (sigue sin caso de uso real que la use completa, ver Assumptions); se corrige solo lo que bloquea un estado que YA existe en TypeScript.
-- **VI. Panel operable y extensible**: esta entrega ES la corrección de un incumplimiento de este principio (la pantalla no usaba los patrones compartidos de carga/vacío) — aplica directamente.
+- **VI. Panel operable y extensible**: corrige el sub-punto de carga/vacío (la pantalla no usaba `EstadoCargaPagina`/`EstadoVacio`) y el de error al resolver (`EstadoError` en vez de `Alert` inline) — no cubre el sub-punto de identidad visible: `interacciones.tsx` sigue mostrando `consumidor_codigo`/`origen` como texto plano, sin el tratamiento de identificador técnico que el principio también pide; eso es preexistente y queda fuera de este alcance (FR-006 no lo incluye).
 - **VII. Documentación**: este plan + comentario de migración.
 
 Las migraciones de Supabase son aditivas (regla explícita del CLAUDE.md) — cumplido, sin alter destructivo.

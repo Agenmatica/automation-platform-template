@@ -12,8 +12,9 @@ begin
   from pg_constraint con
   join pg_class rel on rel.oid = con.conrelid
   join pg_namespace nsp on nsp.oid = rel.relnamespace
+  join pg_attribute att on att.attrelid = rel.oid and att.attnum = any(con.conkey)
   where nsp.nspname = 'public' and rel.relname = 'ia_interacciones' and con.contype = 'c'
-    and pg_get_constraintdef(con.oid) like '%estado%';
+    and att.attname = 'estado';
   if v_constraint_name is not null then
     execute format('alter table public.ia_interacciones drop constraint %I', v_constraint_name);
   end if;

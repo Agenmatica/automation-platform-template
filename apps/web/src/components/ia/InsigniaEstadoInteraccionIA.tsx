@@ -1,20 +1,31 @@
-import { Chip } from '@mui/material'
+import { Chip, CircularProgress } from '@mui/material'
 import type { EstadoInteraccion } from '@platform/ia'
 
-const CATEGORIA_POR_ESTADO: Record<EstadoInteraccion, { color: 'info' | 'success' | 'warning' | 'error'; etiqueta: string }> = {
-  iniciada: { color: 'info', etiqueta: 'En curso' },
-  preparando: { color: 'info', etiqueta: 'En curso' },
-  invocando: { color: 'info', etiqueta: 'En curso' },
-  respuesta_validada: { color: 'info', etiqueta: 'En curso' },
-  completada: { color: 'success', etiqueta: 'Completada' },
-  esperando_aprobacion: { color: 'warning', etiqueta: 'Espera aprobación' },
-  revision_humana: { color: 'warning', etiqueta: 'Revisión humana' },
-  rechazada: { color: 'error', etiqueta: 'Rechazada' },
-  fallida_tecnica: { color: 'error', etiqueta: 'Falla técnica' },
-  cancelada: { color: 'error', etiqueta: 'Cancelada' },
+type Categoria =
+  | { tipo: 'progreso'; etiqueta: string }
+  | { tipo: 'color'; color: 'success' | 'warning' | 'error'; etiqueta: string }
+
+// Los dos estados con color 'warning' son exactamente ESTADOS_NECESITAN_ACCION_HUMANA
+// (no se derivan de ahí: esta tabla es presentación, esa constante es elegibilidad de
+// acciones — conceptos distintos que hoy coinciden). Si se agrega un estado a uno,
+// revisar si corresponde también en el otro.
+const CATEGORIA_POR_ESTADO: Record<EstadoInteraccion, Categoria> = {
+  iniciada: { tipo: 'progreso', etiqueta: 'En curso' },
+  preparando: { tipo: 'progreso', etiqueta: 'En curso' },
+  invocando: { tipo: 'progreso', etiqueta: 'En curso' },
+  respuesta_validada: { tipo: 'progreso', etiqueta: 'En curso' },
+  completada: { tipo: 'color', color: 'success', etiqueta: 'Completada' },
+  esperando_aprobacion: { tipo: 'color', color: 'warning', etiqueta: 'Espera aprobación' },
+  revision_humana: { tipo: 'color', color: 'warning', etiqueta: 'Revisión humana' },
+  rechazada: { tipo: 'color', color: 'error', etiqueta: 'Rechazada' },
+  fallida_tecnica: { tipo: 'color', color: 'error', etiqueta: 'Falla técnica' },
+  cancelada: { tipo: 'color', color: 'error', etiqueta: 'Cancelada' },
 }
 
 export function InsigniaEstadoInteraccionIA({ estado }: { estado: EstadoInteraccion }) {
-  const { color, etiqueta } = CATEGORIA_POR_ESTADO[estado]
-  return <Chip size="small" color={color} label={etiqueta} />
+  const categoria = CATEGORIA_POR_ESTADO[estado]
+  if (categoria.tipo === 'progreso') {
+    return <Chip size="small" icon={<CircularProgress size={14} color="inherit" />} label={categoria.etiqueta} />
+  }
+  return <Chip size="small" color={categoria.color} label={categoria.etiqueta} />
 }

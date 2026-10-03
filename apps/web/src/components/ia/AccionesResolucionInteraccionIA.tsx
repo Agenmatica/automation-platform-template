@@ -3,8 +3,7 @@ import type { EstadoInteraccion } from '@platform/ia'
 import { useState } from 'react'
 import { EstadoError } from '../estados/EstadosPagina'
 import { supabaseClient } from '../../lib/supabase'
-
-const ESTADOS_RESOLUBLES: EstadoInteraccion[] = ['revision_humana', 'esperando_aprobacion']
+import { ESTADOS_NECESITAN_ACCION_HUMANA } from './estadosNecesitanAccionHumana'
 
 export function AccionesResolucionInteraccionIA({
   interaccionId,
@@ -18,7 +17,7 @@ export function AccionesResolucionInteraccionIA({
   const [resolviendo, setResolviendo] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (!ESTADOS_RESOLUBLES.includes(estado)) return null
+  if (!ESTADOS_NECESITAN_ACCION_HUMANA.includes(estado)) return null
 
   const resolver = async (estadoFinal: 'completada' | 'rechazada' | 'cancelada') => {
     setResolviendo(true)
