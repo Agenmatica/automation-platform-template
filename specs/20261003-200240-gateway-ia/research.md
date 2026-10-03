@@ -2,7 +2,7 @@
 
 ## Decisión 1: el endpoint de invocación no es `endpointModelos` — hace falta uno nuevo por adaptador
 
-**Decision**: el catálogo (`proveedores/catalogo.ts`) gana una función `endpointInvocacion(adaptador, modeloId)` (no un campo string fijo, porque Gemini necesita el `modeloId` interpolado en la URL) que devuelve la URL real de inferencia por adaptador:
+**Decision**: el catálogo (`proveedores/catalogo.ts`) gana una función `endpointInvocacion(proveedor: ProveedorCatalogo, modeloId)` (no un campo string fijo, porque Gemini necesita el `modeloId` interpolado en la URL, y no alcanza con el `adaptador` solo — ver más abajo) que devuelve la URL real de inferencia por adaptador:
 
 - `openai` / `openai-compatible`: `<base>/chat/completions` (mismo host base que `endpointModelos`, quitando `/models`).
 - `anthropic`: `<base>/messages` (mismo host base, quitando `/models`).
@@ -14,6 +14,8 @@
 **Alternatives considered**: pedirle al consumidor la URL completa — rechazado, es exactamente la duplicación que esta spec existe para evitar (cada consumidor tendría que saber la convención de URL de cada proveedor). Cubrir los cinco adaptadores incluyendo `baidu` — se deja `baidu` fuera de esta spec (lanza `PROVEEDOR_IA_SIN_ENDPOINT_INVOCACION`): su convención de URL de inferencia (Qianfan) no se pudo confirmar con la misma certeza que los otros cuatro sin una cuenta real, y ningún consumidor hoy lo necesita — agregarlo sin verificar sería adivinar.
 
 **Verificado contra documentación real** (no asumido): `POST https://api.anthropic.com/v1/messages` confirmado contra la documentación pública de Anthropic; `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` (modelo en el path) confirmado contra la documentación pública de Google AI — ambos coinciden con lo usado acá.
+
+**Corrección real encontrada al escribir el test (no al plan)**: la firma original de esta decisión tomaba `adaptador` solo; `openai-compatible` agrupa proveedores con hosts distintos (x.ai, DeepSeek, Alibaba Qwen, Zhipu GLM, Moonshot Kimi) — el adaptador define el *patrón* de URL (`/chat/completions`), pero el host sale de `proveedor.endpointModelos` de cada entrada del catálogo, no de una constante por adaptador. La función recibe el `ProveedorCatalogo` completo, no solo su campo `adaptador`.
 
 ## Decisión 2: la función es solo transporte — no normaliza el cuerpo de la petición ni de la respuesta
 

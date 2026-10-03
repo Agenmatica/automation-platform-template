@@ -5,8 +5,10 @@ Sin entidad de datos nueva — ninguna tabla, ninguna migración. Solo tipos y f
 ## Catálogo (`catalogo.ts`)
 
 ```ts
-export function endpointInvocacion(adaptador: AdaptadorProveedor, modeloId: string): string
+export function endpointInvocacion(proveedor: ProveedorCatalogo, modeloId: string): string
 ```
+
+Recibe el `ProveedorCatalogo` completo, no solo el `adaptador`: dentro de `openai-compatible` conviven proveedores con hosts distintos (x.ai, DeepSeek, Alibaba, Zhipu, Moonshot) — el adaptador decide el *patrón* de URL, pero el host sale de `proveedor.endpointModelos`, no de una constante por adaptador.
 
 Deriva la URL real de inferencia a partir de `endpointModelos` del proveedor (mismo host base) y el patrón de cada adaptador (research.md, Decisión 1):
 
