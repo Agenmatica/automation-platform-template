@@ -54,7 +54,7 @@ description: "Task list template for feature implementation"
 
 ## Notas de desvío
 
-Ninguna todavía.
+- `import Ajv from 'ajv'` no compila bajo `moduleResolution: NodeNext` (no construible a nivel de tipos, aunque funciona en runtime); se usó `import { Ajv } from 'ajv'` en su lugar — ver commit `2267d16`.
 
 ## Al cerrar (merge del PR)
 
