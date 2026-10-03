@@ -11,16 +11,16 @@ description: "Task list template for feature implementation"
 
 ### Tests ⚠️
 
-- [ ] T001 [P] [US1] Test "marcarContenidoNoConfiable envuelve el texto con un delimitador que incluye un nonce distinto en cada llamada, mismo texto intacto adentro" en `packages/ia/src/sanitizar.test.ts` (nuevo).
-- [ ] T002 [P] [US1] Test "prepararInvocacion con clavesNoConfiables declaradas envuelve esas claves (string) y deja las demás igual" en `packages/ia/src/ejecutar.test.ts`.
-- [ ] T003 [P] [US1] Test "prepararInvocacion con una clave no confiable de valor no-string la deja sin modificar" en el mismo archivo (Edge Case, FR-004).
-- [ ] T004 [P] [US1] Test "prepararInvocacion sin clavesNoConfiables declaradas: resultado idéntico al comportamiento actual" en el mismo archivo (FR-006).
+- [x] T001 [P] [US1] Test "marcarContenidoNoConfiable envuelve el texto con un delimitador que incluye un nonce distinto en cada llamada, mismo texto intacto adentro" en `packages/ia/src/sanitizar.test.ts` (nuevo).
+- [x] T002 [P] [US1] Test "prepararInvocacion con clavesNoConfiables declaradas envuelve esas claves (string) y deja las demás igual" en `packages/ia/src/ejecutar.test.ts`.
+- [x] T003 [P] [US1] Test "prepararInvocacion con una clave no confiable de valor no-string la deja sin modificar" en el mismo archivo (Edge Case, FR-004).
+- [x] T004 [P] [US1] Test "prepararInvocacion sin clavesNoConfiables declaradas: resultado idéntico al comportamiento actual" en el mismo archivo (FR-006).
 
 ### Implementation
 
-- [ ] T005 [US1] Agregar `clavesNoConfiables?: readonly string[]` a `ContratoConsumidor` en `packages/ia/src/types.ts`.
-- [ ] T006 [US1] Agregar `marcarContenidoNoConfiable` a `packages/ia/src/sanitizar.ts` (depende de T001).
-- [ ] T007 [US1] Aplicar el marcado automático en `prepararInvocacion` (`packages/ia/src/ejecutar.ts`), después de `sanitizarDato` (depende de T002-T004, T005, T006).
+- [x] T005 [US1] Agregar `clavesNoConfiables?: readonly string[]` a `ContratoConsumidor` en `packages/ia/src/types.ts`.
+- [x] T006 [US1] Agregar `marcarContenidoNoConfiable` a `packages/ia/src/sanitizar.ts`.
+- [x] T007 [US1] Aplicar el marcado automático en `prepararInvocacion` (`packages/ia/src/ejecutar.ts`), después de `sanitizarDato`.
 
 **Checkpoint**: MVP — un contrato que declara contenido no confiable lo tiene marcado automáticamente, sin acción manual del consumidor.
 
@@ -28,17 +28,17 @@ description: "Task list template for feature implementation"
 
 ### Tests ⚠️
 
-- [ ] T008 [P] [US2] Test "clavesActivadas devuelve solo las claves declaradas presentes como string en la entrada" en `packages/ia/src/sanitizar.test.ts`.
-- [ ] T009 [P] [US2] Test "clavesActivadas devuelve vacío si no se declaró ninguna clave o ninguna está presente" en el mismo archivo.
+- [x] T008 [P] [US2] Test "clavesActivadas devuelve solo las claves declaradas presentes como string en la entrada" en `packages/ia/src/sanitizar.test.ts`.
+- [x] T009 [P] [US2] Test "clavesActivadas devuelve vacío si no se declaró ninguna clave o ninguna está presente" en el mismo archivo.
 
 ### Implementation
 
-- [ ] T010 [US2] Agregar `clavesActivadas` a `packages/ia/src/sanitizar.ts` (depende de T008-T009).
+- [x] T010 [US2] Agregar `clavesActivadas` a `packages/ia/src/sanitizar.ts`.
 
 ## Phase 3: Polish
 
-- [ ] T011 [P] Correr `pnpm --filter @platform/ia test`, `pnpm test:ia` (incluye `packages/ia-navegacion`, debe seguir en 17/17 sin tocar su código — FR-006), `pnpm lint`, `pnpm build`.
-- [ ] T012 Subir versión de `governed-ai-core` en `template-capabilities.json`/`template-adoption.json` (self-adoption y catálogo, mismo patrón ya establecido).
+- [x] T011 [P] `pnpm --filter @platform/ia test` (63/63), `pnpm test:ia` (incluye `packages/ia-navegacion`, 17/17 sin tocar su código — FR-006 confirmado), `pnpm lint`, `pnpm build` — todo verde.
+- [x] T012 Subida versión de `governed-ai-core` en `template-capabilities.json`/`template-adoption.json`.
 
 ## Dependencies & Execution Order
 

@@ -44,4 +44,21 @@ describe('ejecución gobernada', () => {
   it('esquemaEntrada {} no rechaza ningún dato (compatibilidad)', () => {
     expect(prepararInvocacion(contrato, politica, { texto: 'cualquiera' }, 0, new Date())).toEqual({ texto: 'cualquiera' })
   })
+  it('con clavesNoConfiables declaradas, envuelve esa clave con el delimitador de marcado y deja las demás igual', () => {
+    const contratoConNoConfiable: ContratoConsumidor = { ...contrato, datosPermitidos: ['texto', 'paginaExterna'], clavesNoConfiables: ['paginaExterna'] }
+    const resultado = prepararInvocacion(contratoConNoConfiable, politica, { texto: 'propio', paginaExterna: 'contenido de la página' }, 0, new Date())
+
+    expect(resultado.texto).toBe('propio')
+    expect(resultado.paginaExterna).toContain('contenido de la página')
+    expect(resultado.paginaExterna).toMatch(/^<datos-no-confiables nonce="/)
+  })
+  it('con clavesNoConfiables declaradas pero valor no-string, lo deja sin modificar', () => {
+    const contratoConContador: ContratoConsumidor = { ...contrato, datosPermitidos: ['texto', 'intentosPrevios'], clavesNoConfiables: ['intentosPrevios'] }
+    const resultado = prepararInvocacion(contratoConContador, politica, { texto: 'propio', intentosPrevios: 3 }, 0, new Date())
+
+    expect(resultado.intentosPrevios).toBe(3)
+  })
+  it('sin clavesNoConfiables declaradas, el resultado es idéntico al comportamiento actual (compatibilidad)', () => {
+    expect(prepararInvocacion(contrato, politica, { texto: 'permitido', token: 'no' }, 0, new Date())).toEqual({ texto: 'permitido' })
+  })
 })
