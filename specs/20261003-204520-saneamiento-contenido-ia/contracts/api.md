@@ -16,7 +16,7 @@ const entrada = prepararInvocacion(contrato, politica, entradaCruda, intentos, i
 // entrada.instruccionPropia queda igual que antes.
 
 // Si el consumidor quiere auditar si se activó el marcado:
-const marcadas = clavesActivadas(contrato.clavesNoConfiables, entradaCruda)
+const marcadas = clavesActivadas(contrato, entradaCruda)
 if (marcadas.length > 0) {
   // incluir en detalle_sanitizado al registrar el evento, por ejemplo
 }

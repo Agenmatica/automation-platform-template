@@ -50,13 +50,17 @@ describe('ejecución gobernada', () => {
 
     expect(resultado.texto).toBe('propio')
     expect(resultado.paginaExterna).toContain('contenido de la página')
-    expect(resultado.paginaExterna).toMatch(/^<datos-no-confiables nonce="/)
+    expect(resultado.paginaExterna).toMatch(/<datos-no-confiables nonce="/)
   })
   it('con clavesNoConfiables declaradas pero valor no-string, lo deja sin modificar', () => {
     const contratoConContador: ContratoConsumidor = { ...contrato, datosPermitidos: ['texto', 'intentosPrevios'], clavesNoConfiables: ['intentosPrevios'] }
     const resultado = prepararInvocacion(contratoConContador, politica, { texto: 'propio', intentosPrevios: 3 }, 0, new Date())
 
     expect(resultado.intentosPrevios).toBe(3)
+  })
+  it('con clavesNoConfiables declaradas pero ausente de la entrada, no rompe nada (Edge Case)', () => {
+    const contratoConClaveAusente: ContratoConsumidor = { ...contrato, clavesNoConfiables: ['claveQueNoViene'] }
+    expect(prepararInvocacion(contratoConClaveAusente, politica, { texto: 'propio' }, 0, new Date())).toEqual({ texto: 'propio' })
   })
   it('sin clavesNoConfiables declaradas, el resultado es idéntico al comportamiento actual (compatibilidad)', () => {
     expect(prepararInvocacion(contrato, politica, { texto: 'permitido', token: 'no' }, 0, new Date())).toEqual({ texto: 'permitido' })

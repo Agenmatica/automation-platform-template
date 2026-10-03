@@ -32,11 +32,11 @@ Quien audita una interacción de IA puede ver si esa invocación procesó conten
 
 **Why this priority**: la auditoría existente (`ia_eventos_interaccion`) ya registra estado y detalle sanitizado de cada interacción; sin esta señal, no hay forma de saber desde el registro si una invocación concreta estuvo expuesta a contenido externo.
 
-**Independent Test**: se prepara una invocación con una clave no confiable declarada y se confirma que el resultado expone una señal (booleana o la lista de claves envueltas) que el consumidor puede incluir en el detalle que ya audita, sin que `packages/ia` escriba nada en la base por su cuenta.
+**Independent Test**: con una clave no confiable declarada en el contrato, se consulta la señal de activación (una función separada de `prepararInvocacion`, que no cambia la firma de retorno que ya usan los consumidores existentes) y se confirma que devuelve la lista de claves que efectivamente se activaron, lista para que el consumidor la incluya en el detalle que ya audita, sin que `packages/ia` escriba nada en la base por su cuenta.
 
 **Acceptance Scenarios**:
 
-1. **Given** una invocación que marcó contenido no confiable, **When** se inspecciona el resultado de `prepararInvocacion`, **Then** hay una señal explícita de que se activó el marcado, disponible para que el consumidor la registre si quiere.
+1. **Given** una invocación que marcó contenido no confiable, **When** el consumidor consulta la señal de activación con el mismo contrato y la misma entrada, **Then** obtiene explícitamente cuáles claves se activaron, disponible para que la registre si quiere — sin tener que inspeccionar el resultado ya sanitizado de `prepararInvocacion` para inferirlo.
 
 ### Edge Cases
 
@@ -48,11 +48,11 @@ Quien audita una interacción de IA puede ver si esa invocación procesó conten
 
 ### Functional Requirements
 
-- **FR-001**: `packages/ia` DEBE exponer una función que envuelva un texto con un delimitador que incluya un nonce aleatorio distinto en cada invocación, de forma que el delimitador no sea adivinable ni falsificable por el propio contenido envuelto.
+- **FR-001**: `packages/ia` DEBE exponer una función que envuelva un texto con un delimitador que incluya un nonce aleatorio distinto en cada invocación, de forma que el delimitador no sea adivinable ni falsificable por el propio contenido envuelto, más una instrucción de sistema explícita que indique que lo delimitado es dato, no una orden — pegada al propio texto, no como mensaje de sistema aparte, porque `packages/ia` no arma el prompt final (esa responsabilidad sigue siendo del consumidor).
 - **FR-002**: `ContratoConsumidor` DEBE poder declarar, de forma opcional, cuáles de sus `datosPermitidos` son contenido no confiable (vs. instrucciones propias del consumidor).
 - **FR-003**: `prepararInvocacion` DEBE aplicar el marcado automáticamente a las claves declaradas no confiables, después de sanitizar por campos permitidos y antes de devolver la entrada preparada — sin que el consumidor tenga que llamar la función de marcado a mano.
 - **FR-004**: El marcado DEBE aplicarse solo a valores de tipo texto; valores de otro tipo en una clave declarada no confiable quedan sin modificar (Edge Case).
-- **FR-005**: El resultado de `prepararInvocacion` DEBE exponer una señal de si se activó el marcado, para que el consumidor la incluya en lo que ya audita — sin que `packages/ia` escriba nada en la base por su cuenta.
+- **FR-005**: `packages/ia` DEBE exponer una forma de que el consumidor obtenga una señal explícita de si se activó el marcado (una función separada, consultable con el mismo contrato y entrada — no necesariamente parte del resultado de `prepararInvocacion`, para no alterar su firma y poner en riesgo FR-006), de forma que el consumidor la incluya en lo que ya audita sin que `packages/ia` escriba nada en la base por su cuenta.
 - **FR-006**: Un contrato que no declara ninguna clave no confiable NO DEBE cambiar su comportamiento actual — este cambio es aditivo y opt-in, ningún consumidor existente (`ai-navigation-fallback`) cambia su resultado.
 
 ### Key Entities

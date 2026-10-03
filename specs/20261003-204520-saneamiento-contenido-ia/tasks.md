@@ -47,7 +47,7 @@ description: "Task list template for feature implementation"
 
 ## Notas de desvío
 
-Ninguna todavía.
+Code-review de dos ejes (Standards + Spec) tras T012 encontró 3 hallazgos reales, los 3 corregidos antes de mergear: (1) `clavesActivadas` no filtraba por `datosPermitidos`, podía reportar como "activada" una clave que `sanitizarDato` ya descarta — señal de auditoría falsa; (2) la instrucción de sistema explícita que pedía el propio Input de spec.md nunca se implementó, solo el delimitador; (3) spec.md/research.md decían que la señal iría "en el resultado de `prepararInvocacion`", pero se implementó como función separada para no arriesgar FR-006 — se corrigió la redacción de spec.md en vez de forzar el cambio de firma. Ver commit de corrección y research.md Decisiones 1 y 3.
 
 ## Al cerrar (merge del PR)
 
