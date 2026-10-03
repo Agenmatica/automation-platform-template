@@ -30,7 +30,12 @@ intento; ante fallo técnico, timeout o respuesta inválida,
 política. Un incumplimiento de contrato o verificador se rechaza sin fallback.
 Al agotarse los intentos, la interacción pasa a `revision_humana`, visible y
 resoluble sólo por superadmin. Una respuesta correcta se cierra con
-`completarInteraccion`.
+`completarInteraccion` — directo a `completada`, o a `esperando_aprobacion`
+si se llama con `{ requiereAprobacionHumana: true }` (opt-in; sin ese
+parámetro, el comportamiento es idéntico al de siempre). `aprobarInteraccion`
+y `rechazarInteraccion` resuelven esa espera hacia `completada` o `rechazada`.
+Igual que con `revision_humana`, `packages/ia` no decide quién puede
+aprobar — esa autorización es de la RLS de cada producto.
 
 Para evidencias, implementar el repositorio de `purgarEvidenciasVencidas` con
 la API de Storage: primero eliminar el objeto privado y después confirmar la
