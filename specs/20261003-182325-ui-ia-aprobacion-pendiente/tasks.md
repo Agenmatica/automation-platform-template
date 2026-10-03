@@ -57,6 +57,7 @@ description: "Task list template for feature implementation"
 ## Notas de desvío
 
 - T011: verificación visual en navegador real no realizable en este entorno (ver T011 arriba). Cubierto por verificación equivalente con render real + datos reales en Postgres.
+- Code-review de dos ejes (Standards + Spec) tras T012: 1 hallazgo real de Spec (faltaba indicador de progreso, Historia 2/Escenario 4) y 3 judgement calls de Standards (duplicación de `ESTADOS_NECESITAN_ACCION_HUMANA`, matching frágil por substring en la migración, sobre-reclamo del Principio VI en plan.md) — los 4 corregidos, ver commit 85296ba.
 
 ## Al cerrar (merge del PR)
 
