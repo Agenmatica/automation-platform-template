@@ -84,7 +84,7 @@ description: "Task list template for feature implementation"
 
 ### Tests for User Story 3 ⚠️
 
-- [x] T012 [P] [US3] Test "acción propuesta fuera del vocabulario declarado se rechaza sin ejecutarse, motivo 'sin_acciones_permitidas' o equivalente" en `packages/ia-navegacion/src/intentarRecuperarPaso.test.ts`.
+- [x] T012 [P] [US3] Test "acción propuesta fuera del vocabulario declarado se rechaza sin ejecutarse, motivo 'accion_no_declarada'" en `packages/ia-navegacion/src/intentarRecuperarPaso.test.ts`. (Resuelto durante code-review: `sin_acciones_permitidas` quedó reservado exclusivamente para el pre-check de vocabulario vacío, que nunca llega a invocar al proveedor — ver `data-model.md`.)
 - [x] T013 [P] [US3] Test "acción cuyo objetivo resuelve a un dominio distinto de `paso.alcance.dominioPermitido` se rechaza sin ejecutarse, motivo 'dominio_no_autorizado'" en `packages/ia-navegacion/src/intentarRecuperarPaso.test.ts` (quickstart.md, Escenario 3).
 - [x] T014 [P] [US3] Test "verificador que resuelve `false` o lanza termina la invocación de inmediato, motivo 'verificador_rechazado', sin segunda llamada a `ejecutarAccion`" en `packages/ia-navegacion/src/intentarRecuperarPaso.test.ts` (quickstart.md, Escenario 2).
 - [x] T015 [P] [US3] Test "política inactiva (`validarPoliticaActiva` lanza) devuelve motivo 'sin_politica_activa' sin invocar al proveedor" en `packages/ia-navegacion/src/intentarRecuperarPaso.test.ts` (quickstart.md, Escenario 4).
@@ -93,7 +93,7 @@ description: "Task list template for feature implementation"
 
 ### Implementation for User Story 3
 
-- [x] T018 [US3] Agregar en `intentarRecuperarPaso` la validación de vocabulario y dominio ANTES de ejecutar cualquier acción: si la acción propuesta por `adaptadorIa.invocarProveedor` no coincide con ninguna variante de `paso.accionesPermitidas` o su `objetivo` no resuelve dentro de `paso.alcance.dominioPermitido`, devolver `{ estado: 'no_recuperable', motivo: 'sin_acciones_permitidas' | 'dominio_no_autorizado', checkpoint: null, interaccionId }` sin llamar `adaptadorIa.ejecutarAccion` (depende de T008).
+- [x] T018 [US3] Agregar en `intentarRecuperarPaso` la validación de vocabulario y dominio ANTES de ejecutar cualquier acción: si la acción propuesta por `adaptadorIa.invocarProveedor` no coincide con ninguna variante de `paso.accionesPermitidas` o su `objetivo` no resuelve dentro de `paso.alcance.dominioPermitido`, devolver `{ estado: 'no_recuperable', motivo: 'accion_no_declarada' | 'dominio_no_autorizado', checkpoint: null, interaccionId }` sin llamar `adaptadorIa.ejecutarAccion` (depende de T008).
 - [x] T019 [US3] Envolver la llamada a `paso.verificador` para que una resolución `false` o una excepción llame `registrarFallo(interaccion, politica, 'verificador')` (de `@platform/ia`) y traduzca el resultado a `{ estado: 'no_recuperable', motivo: 'verificador_rechazado', checkpoint: null, interaccionId }` (depende de T008).
 - [x] T020 [US3] Envolver `validarPoliticaActiva` y `validarPresupuesto` para capturar sus errores (`POLITICA_IA_INACTIVA`, `LIMITE_INTENTOS_IA_INVALIDO`, `LIMITE_TIEMPO_IA_INVALIDO`, `LIMITE_INTENTOS_IA`, `LIMITE_TIEMPO_IA`) y traducirlos a `motivo: 'sin_politica_activa'` o `'presupuesto_agotado'` según corresponda, sin dejar que la excepción cruda escape de `intentarRecuperarPaso` (depende de T008).
 

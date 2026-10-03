@@ -8,6 +8,7 @@ async function intentarRecuperarPaso(
   politica: PoliticaActiva,          // de @platform/ia, ya resuelta por el consumidor
   contratoConsumidor: ContratoConsumidor, // de @platform/ia
   adaptadorIa: AdaptadorInvocacionIa,     // provisto por el consumidor; llama al proveedor real
+  ahora?: () => Date,                     // SOLO pruebas: reloj inyectable para el presupuesto de tiempo; un consumidor real nunca lo pasa
 ): Promise<ResultadoInvocacion>
 ```
 

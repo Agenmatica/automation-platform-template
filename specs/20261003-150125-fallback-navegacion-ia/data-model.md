@@ -27,6 +27,10 @@ Unión discriminada cerrada (ver `research.md`, Decisión 4). Cada variante refe
 
 `objetivo` es siempre una clave simbólica que el **consumidor** resuelve a un `Locator` real de Playwright — la IA nunca recibe ni produce selectores; elige entre claves que el consumidor ya declaró y mapeó.
 
+## AccionPropuesta
+
+Lo que la IA propone y lo que el mecanismo ejecuta — mismo vocabulario que `AccionPermitida`, pero `completar_campo` lleva el valor concreto elegido (`valor: string`) en vez del permiso (`valorPermitido?: string[]`). El mecanismo valida que `tipo`+`objetivo` coincidan con una `AccionPermitida` declarada y, para `completar_campo`, que `valor` esté en `valorPermitido` cuando el consumidor lo restringió; solo entonces construye la `AccionPropuesta` que se ejecuta — nunca reenvía el objeto crudo que devolvió el proveedor.
+
 ## Verificador
 
 ```ts
@@ -52,7 +56,7 @@ Lo que el mecanismo devuelve al consumidor al terminar.
 | Campo | Tipo | Notas |
 |---|---|---|
 | `estado` | `'recuperado' \| 'no_recuperable'` | Nunca un tercer estado "parcial": o se verificó éxito, o se detuvo. |
-| `motivo` | `string \| null` | Presente cuando `estado === 'no_recuperable'`: `'dominio_no_autorizado' \| 'sin_acciones_permitidas' \| 'verificador_rechazado' \| 'sin_politica_activa' \| 'presupuesto_agotado' \| 'error_tecnico'`. |
+| `motivo` | `string \| null` | Presente cuando `estado === 'no_recuperable'`: `'sin_acciones_permitidas'` (el consumidor declaró el paso sin vocabulario — nunca se invoca al proveedor) \| `'accion_no_declarada'` (la IA propuso algo fuera del vocabulario o un valor de `completar_campo` fuera de `valorPermitido`) \| `'dominio_no_autorizado'` \| `'verificador_rechazado'` \| `'sin_politica_activa'` \| `'presupuesto_agotado'` \| `'error_tecnico'`. `'sin_acciones_permitidas'` y `'accion_no_declarada'` son motivos distintos a propósito: el primero nunca llega a invocar al proveedor, el segundo sí lo invocó y rechazó su respuesta. |
 | `checkpoint` | `CheckpointReanudacion \| null` | Eco del checkpoint declarado, presente solo cuando `estado === 'recuperado'`. |
 | `interaccionId` | `string` | `crypto.randomUUID()` generado por esta capa al iniciar la invocación (`packages/ia`'s `InteraccionEnCurso` no expone un id propio); sirve para que el consumidor correlacione esta llamada con sus propios logs, no es un id que `packages/ia` reconozca por sí mismo. |
 
