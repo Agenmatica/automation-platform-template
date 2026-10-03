@@ -1,6 +1,7 @@
-import { Alert, Button, Stack } from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import type { EstadoInteraccion } from '@platform/ia'
 import { useState } from 'react'
+import { EstadoError } from '../estados/EstadosPagina'
 import { supabaseClient } from '../../lib/supabase'
 
 const ESTADOS_RESOLUBLES: EstadoInteraccion[] = ['revision_humana', 'esperando_aprobacion']
@@ -34,7 +35,7 @@ export function AccionesResolucionInteraccionIA({
 
   return (
     <Stack spacing={1}>
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && <EstadoError titulo="No pudimos resolver esta interacción." descripcion={error} />}
       <Stack direction="row" spacing={1}>
         <Button disabled={resolviendo} onClick={() => void resolver('completada')}>Completar</Button>
         <Button color="warning" disabled={resolviendo} onClick={() => void resolver('rechazada')}>Rechazar</Button>

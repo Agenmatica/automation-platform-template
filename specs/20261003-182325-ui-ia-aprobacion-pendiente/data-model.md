@@ -14,7 +14,7 @@ alter table public.ia_interacciones add constraint ia_interacciones_estado_check
 
 ```text
 (v_actual = 'respuesta_validada' and p_estado in ('completada','rechazada','revision_humana','esperando_aprobacion'))
-(v_actual = 'esperando_aprobacion' and p_estado in ('completada','rechazada'))
+(v_actual = 'esperando_aprobacion' and p_estado in ('completada','rechazada','cancelada'))
 ```
 
 Ninguna rama existente cambia.

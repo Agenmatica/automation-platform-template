@@ -2,11 +2,11 @@
 
 ## Decisión 1: migración aditiva pura, sin tocar las transiciones existentes
 
-**Decision**: se agrega `esperando_aprobacion` al `check` de `ia_interacciones.estado` y dos ramas nuevas a la tabla de transiciones de `registrar_evento_interaccion_ia` (`respuesta_validada → esperando_aprobacion`, `esperando_aprobacion → completada/rechazada`); ninguna rama existente se modifica.
+**Decision**: se agrega `esperando_aprobacion` al `check` de `ia_interacciones.estado` y dos ramas nuevas a la tabla de transiciones de `registrar_evento_interaccion_ia` (`respuesta_validada → esperando_aprobacion`, `esperando_aprobacion → completada/rechazada/cancelada`); ninguna rama existente se modifica.
 
-**Rationale**: el patrón ya está establecido por `revision_humana`, que entra y sale desde los mismos dos puntos (`respuesta_validada` como origen, `completada`/`rechazada`/`cancelada` como destino de resolución). `esperando_aprobacion` es simétrico: mismo origen, mismo conjunto de resoluciones salvo `cancelada` (una propuesta pendiente de aprobación se completa o se rechaza; cancelarla no tiene el mismo sentido que cancelar una revisión agotada por fallo técnico — pero no hay un requisito real que lo pida, así que se deja fuera por ahora en vez de agregarlo especulativamente).
+**Rationale**: el patrón ya está establecido por `revision_humana`, que entra y sale desde los mismos dos puntos (`respuesta_validada` como origen, `completada`/`rechazada`/`cancelada` como destino de resolución). `esperando_aprobacion` es simétrico y completamente equivalente (FR-002, Historia de Usuario 3): mismo origen, mismo conjunto completo de resoluciones, porque `AccionesResolucionInteraccionIA` (Decisión en la Historia de Usuario 3) ofrece las mismas tres acciones para ambos estados — si la base no aceptara `cancelada` desde `esperando_aprobacion`, el botón "Cancelar" fallaría en ese caso mientras funciona en `revision_humana`.
 
-**Alternatives considered**: permitir también `esperando_aprobacion → cancelada` — se evaluó y se descartó por ahora: `cancelada` en el resto de la máquina de estados representa un abandono explícito del lado del consumidor (ver `iniciarInvocacion`/`registrarFallo`), no una decisión de un aprobador; agregarlo sin un caso de uso real sería anticipar un significado que todavía no se necesita.
+**Alternatives considered**: dejar fuera `esperando_aprobacion → cancelada` (versión descartada de este documento) — se revirtió: contradecía FR-002 y la Historia de Usuario 3 ("ambos ofrecen las mismas tres opciones"), y habría dejado un botón visible que la base rechaza.
 
 ## Decisión 2: `resolver_revision_ia` no cambia
 

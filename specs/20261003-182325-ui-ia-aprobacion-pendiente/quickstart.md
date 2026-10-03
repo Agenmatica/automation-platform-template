@@ -7,7 +7,7 @@ pnpm dev:supabase
 pnpm test:db
 ```
 
-pgTAP nuevo: una interacción fixture en `respuesta_validada` transiciona a `esperando_aprobacion` y se resuelve a `completada` — ambos pasos deben tener éxito; las transiciones ya existentes (incluida `revision_humana`) siguen pasando sin cambios.
+pgTAP nuevo: dos interacciones fixture en `respuesta_validada` transicionan a `esperando_aprobacion`; una se resuelve a `completada` y la otra a `cancelada` (FR-002, simétrico a `revision_humana`) — todos los pasos deben tener éxito; las transiciones ya existentes (incluida `revision_humana`) siguen pasando sin cambios.
 
 ## Frontend
 
