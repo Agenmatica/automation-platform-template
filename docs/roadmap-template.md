@@ -188,18 +188,22 @@ necesitando justo esta función".
 | 37 | P3 | Modo mantenimiento / banner de plataforma | H2 | Gestión de entornos | Primera ventana de mantenimiento planeada que afecta a todas las organizaciones. | Condicional (solo si hace falta avisar de antemano, no solo detectar fallas como #8) | Banner de aviso a nivel plataforma, activable/desactivable por superadmin, visible en todo el panel. | Exploración |
 | 38 | P3 | 2FA/MFA | H2 | Autogestión de contraseña | Primer requisito real de seguridad reforzada más allá de contraseña. | Condicional (solo si el producto o un cliente lo exige) | Segundo factor opcional u obligatorio por organización, sin romper el flujo de recuperación existente. | Exploración |
 | 39 | P3 | Aceptación de términos/privacidad versionada | H2 | Autogestión de contraseña | Primera vez que el producto necesita rastrear qué versión de términos/privacidad aceptó cada usuario. | Condicional (solo si hace falta ese rastro, no todo producto lo necesita) | Registro de aceptación por usuario y versión de documento legal, con bloqueo fail-closed si hay una versión nueva sin aceptar. | Exploración |
+| 40 | P1 | Rotación de secretos de larga vida | H2 | Blindaje de secretos en la orquestación (spec 014) | Primer secreto raíz (contraseña de DB, API key de proveedor) sin rotar desde su creación. | Condicional (solo si hay secretos de larga vida reales en producción) | Rotación programada o a demanda de credenciales raíz, distinta del acceso efímero que ya resuelve spec 014 — eso resuelve quién las ve, esto resuelve que no queden fijas para siempre. | Exploración |
+| 41 | P2 | Cabeceras de seguridad HTTP | H2 | Gestión de entornos | Primer despliegue expuesto a tráfico público real. | Condicional (solo si hay exposición pública real) | CSP, HSTS, X-Frame-Options y afines configurados en el Refine servido, versionados como parte de `infra/refine/`. | Exploración |
+| 42 | P3 | Canal de divulgación de vulnerabilidades | H2 | Ninguna | Primer cliente real con datos sensibles en producción. | Condicional (solo si hay datos sensibles reales expuestos) | `security.txt` o proceso documentado de reporte responsable, con tiempo de respuesta esperado. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 39 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 42 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 31 son **Condicionales**: dependen de que ese producto elija
+Los otros 34 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
 un segundo producto, tráfico no confiable, volumen real, alta autoservicio,
-portabilidad, branding, seguridad reforzada, rastro legal) — pueden tardar
-mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+portabilidad, branding, seguridad reforzada, rastro legal, secretos de
+larga vida, exposición pública) — pueden tardar mucho más o no llegar a
+activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
 la diferencia es si la función en sí va a existir.
 
 > **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
