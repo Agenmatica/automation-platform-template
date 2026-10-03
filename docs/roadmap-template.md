@@ -167,7 +167,7 @@ necesitando justo esta función".
 | 16 | P1 | Aprobación humana | H3 | Herramientas IA y auditoría transversal | Primera acción con efecto externo o persistente. | Condicional (solo si hay acción automatizada con efecto externo) | Flujo propuesta → revisión → aprobación/rechazo → ejecución auditable. [Spec de aprobación humana](../specs/20261003-173044-aprobacion-humana-ia/spec.md) | Parcialmente implementado: estado `esperando_aprobacion` y transiciones `aprobarInteraccion`/`rechazarInteraccion` en `packages/ia`, opt-in y sin romper compatibilidad. Quién puede aprobar sigue siendo RLS de cada producto (mismo patrón que `revision_humana`); la tabla/pantalla real de aprobación queda pendiente para cuando exista un consumidor concreto |
 | 17 | P2 | Archivos y documentos | H2 | Gestión de entornos | Primer producto que gestione documentos. | Condicional (solo si gestiona documentos) | Carga, acceso, retención y eliminación por organización con permisos explícitos. | Exploración |
 | 18 | P2 | Notificaciones | H2 | Auditoría transversal | Primera notificación fuera de Auth. | Condicional (solo si notifica algo fuera de Auth) | Interfaz común para solicitar avisos; contenido y destinatarios siguen siendo del producto. | Exploración |
-| 19 | P2 | Ejecuciones durables | H3 | Gateway IA y patrón Kestra existente | Primera tarea IA de larga duración. | Condicional (solo si usa IA) | Estados, reintentos y resultados sobre Kestra o workers. | Exploración |
+| 19 | P2 | Ejecuciones durables | H3 | Gateway IA y patrón Kestra existente | Primera tarea IA de larga duración. | Condicional (solo si usa IA) | Estados, reintentos y resultados sobre Kestra o workers. | Resuelto por composición (ver detalle) — sin código nuevo |
 | 20 | P2 | UI de IA | H4 | Gateway IA; trazas y costos IA | Una capacidad IA necesita mostrar progreso, fuentes o aprobación. | Condicional (solo si usa IA) | Piezas visuales reutilizables: estado de generación, progreso, fuentes y aprobación de propuestas. | Exploración |
 | 21 | P2 | Búsqueda documental/RAG | H4 | Archivos y documentos; contexto y permisos IA | Un producto necesita responder sobre documentos propios. | Condicional (documentos + IA) | Ingesta, indexación, búsqueda, permisos y referencias a las fuentes. | Exploración |
 | 22 | P3 | Paquetes compartidos | H4 | Dos productos reutilizando código estable | Dos o más productos usan la misma interfaz de código. | Condicional (requiere un segundo producto) | Paquete versionado, con pruebas y compatibilidad explícita entre productos. | Exploración |
@@ -379,6 +379,21 @@ el trabajo y workers ejecutan tareas especializadas si hicieran falta.
 
 Ejemplo: analizar una hora de audio puede devolver un identificador de
 ejecución; la interfaz muestra progreso y obtiene el resultado más tarde.
+
+**Resuelto por composición, sin código nuevo (2026-10-03).** Se verificó que
+los estados exactos que pide este ítem ya existen, repartidos en dos
+capacidades ya implementadas: `durable-execution-outbox`
+(`pendiente`/`reclamada`/`completada`/`agotada`/`cancelada`) y
+`worker-execution-cycle` (`en_curso`/`exitosa`/`fallida`/`timeout`). Una
+tarea de IA de larga duración se despacha como cualquier otra ejecución
+durable — Kestra la reclama vía outbox, el worker corre, y la llamada real al
+proveedor ocurre adentro de ese paso usando `governed-ai-core` (mismo patrón
+ya demostrado por `ai-navigation-fallback`). Construir un mecanismo de
+estados paralelo específico de IA sería duplicar lo que ya existe — mismo
+criterio que ya se aplicó en "Creador de productos derivados" (resuelto como
+guía, no como código). No hay spec de código para este ítem; si en el futuro
+aparece una necesidad real que esta composición no cubra, se reabre con esa
+necesidad concreta.
 
 #### Herramientas IA
 
