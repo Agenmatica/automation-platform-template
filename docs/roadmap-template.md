@@ -173,17 +173,19 @@ necesitando justo esta función".
 | 22 | P3 | Paquetes compartidos | H4 | Dos productos reutilizando código estable | Dos o más productos usan la misma interfaz de código. | Condicional (requiere un segundo producto) | Paquete versionado, con pruebas y compatibilidad explícita entre productos. | Exploración |
 | 23 | P3 | gRPC interno | H4 | Varios workers especializados y contratos definidos | Hay necesidad real de alto volumen o streaming. | Condicional (solo con volumen/streaming real) | Contratos fuertes y streaming entre workers especializados. | Exploración |
 | 24 | P1 | Saneamiento de contenido no confiable para IA | H3 | Herramientas IA | Primera vez que una herramienta IA o el gateway procesan contenido externo no controlado por quien hace la consulta (resultado de un conector, documento subido, email). | Condicional (solo si usa IA y lee contenido externo) | Delimitadores y marcado explícito de contenido no confiable antes de enviarlo al modelo, con instrucción de sistema que impide tratarlo como órdenes propias y registro de cuándo se activó la defensa. | Exploración |
+| 25 | P3 | Rate limiting en el borde de la API | H2 | Gestión de entornos | Primer endpoint público (REST/Refine) expuesto a tráfico no confiable, más allá del presupuesto que ya aplica Gateway IA solo a invocaciones de IA. | Condicional (solo si hay riesgo real de abuso) | Límite de tasa configurable por IP/organización en el borde, con respuesta consistente y registro del rechazo. | Exploración |
+| 26 | P3 | Testing de carga/performance | H2 | E2E en CI | Primer flujo crítico con expectativa real de concurrencia o volumen (no solo corrección funcional). | Condicional (solo si hay expectativa real de carga) | Línea base de performance versionada (umbral de latencia/throughput) que corre bajo demanda, no en cada PR. | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 25 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 26 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 17 son **Condicionales**: dependen de que ese producto elija
+Los otros 18 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
-un segundo producto) — pueden tardar mucho más o no llegar a activarse
-nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
+un segundo producto, tráfico no confiable, volumen real) — pueden tardar
+mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
 la diferencia es si la función en sí va a existir.
 
 > **Horizonte 3 no se abre solo porque llegó su turno en la cola.** Empieza
