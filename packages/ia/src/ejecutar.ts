@@ -1,7 +1,8 @@
-import type { ContratoConsumidor } from './types.js'
+import type { ContextoOrganizacion, ContratoConsumidor } from './types.js'
 import { validarPoliticaActiva, type PoliticaActiva } from './politicas.js'
 import { sanitizarDato } from './sanitizar.js'
 import { validarPresupuesto } from './validarContrato.js'
+import { validarAislamientoOrganizacion } from './contextoOrganizacion.js'
 
 export function prepararInvocacion(
   contrato: ContratoConsumidor,
@@ -9,9 +10,11 @@ export function prepararInvocacion(
   entrada: unknown,
   intentos: number,
   iniciadoEn: Date,
+  contextoOrganizacion: ContextoOrganizacion = { organizacionId: null },
 ): Record<string, unknown> {
   validarPoliticaActiva(politica)
   validarPresupuesto(intentos, politica.limiteIntentos, iniciadoEn, politica.limiteSegundos)
+  validarAislamientoOrganizacion(entrada, contrato.claveAislamientoOrganizacion, contextoOrganizacion)
   const sanitizada = sanitizarDato(entrada, contrato.datosPermitidos)
   if (!sanitizada || typeof sanitizada !== 'object' || Array.isArray(sanitizada)) throw new Error('ENTRADA_IA_INVALIDA')
   return sanitizada as Record<string, unknown>

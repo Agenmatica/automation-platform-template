@@ -18,4 +18,19 @@ describe('ejecución gobernada', () => {
     expect(() => validarPoliticaActiva({ ...politica, limiteIntentos: 3 })).toThrow('LIMITE_INTENTOS_IA_INVALIDO')
     expect(() => validarPoliticaActiva({ ...politica, limiteSegundos: 91 })).toThrow('LIMITE_TIEMPO_IA_INVALIDO')
   })
+  it('sin contextoOrganizacion ni claveAislamientoOrganizacion, el comportamiento es idéntico al de antes (compatibilidad)', () => {
+    expect(prepararInvocacion(contrato, politica, { texto: 'permitido', token: 'no' }, 0, new Date())).toEqual({ texto: 'permitido' })
+  })
+  it('con claveAislamientoOrganizacion declarada, rechaza datos de otra organización antes de sanitizar', () => {
+    const contratoConOrganizacion: ContratoConsumidor = { ...contrato, datosPermitidos: ['texto', 'organizacionId'], claveAislamientoOrganizacion: 'organizacionId' }
+    expect(() =>
+      prepararInvocacion(contratoConOrganizacion, politica, { texto: 'x', organizacionId: 'org-2' }, 0, new Date(), { organizacionId: 'org-1' }),
+    ).toThrow('ORGANIZACION_IA_NO_AUTORIZADA')
+  })
+  it('con claveAislamientoOrganizacion declarada y organización coincidente, prepara con normalidad', () => {
+    const contratoConOrganizacion: ContratoConsumidor = { ...contrato, datosPermitidos: ['texto', 'organizacionId'], claveAislamientoOrganizacion: 'organizacionId' }
+    expect(
+      prepararInvocacion(contratoConOrganizacion, politica, { texto: 'x', organizacionId: 'org-1' }, 0, new Date(), { organizacionId: 'org-1' }),
+    ).toEqual({ texto: 'x', organizacionId: 'org-1' })
+  })
 })

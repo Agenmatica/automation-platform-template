@@ -12,6 +12,9 @@ export type ContratoConsumidor = {
   datosPermitidos: readonly string[]
   limiteIntentos: number
   limiteSegundos: number
+  claveAislamientoOrganizacion?: string | null
 }
 
 export type ResultadoSanitizado = { estado: EstadoInteraccion; intentos: number; resultado?: object; errorSanitizado?: string }
+
+export type ContextoOrganizacion = { organizacionId: string | null }
