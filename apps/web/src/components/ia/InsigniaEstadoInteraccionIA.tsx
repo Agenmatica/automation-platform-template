@@ -1,4 +1,4 @@
-import { Chip, CircularProgress } from '@mui/material'
+import { Chip, CircularProgress, useMediaQuery } from '@mui/material'
 import type { EstadoInteraccion } from '@platform/ia'
 
 type Categoria =
@@ -23,9 +23,13 @@ const CATEGORIA_POR_ESTADO: Record<EstadoInteraccion, Categoria> = {
 }
 
 export function InsigniaEstadoInteraccionIA({ estado }: { estado: EstadoInteraccion }) {
+  const prefiereMenosMovimiento = useMediaQuery('(prefers-reduced-motion: reduce)')
   const categoria = CATEGORIA_POR_ESTADO[estado]
   if (categoria.tipo === 'progreso') {
-    return <Chip size="small" icon={<CircularProgress size={14} color="inherit" />} label={categoria.etiqueta} />
+    const indicador = prefiereMenosMovimiento
+      ? <CircularProgress size={14} color="inherit" variant="determinate" value={75} />
+      : <CircularProgress size={14} color="inherit" />
+    return <Chip size="small" icon={indicador} label={categoria.etiqueta} />
   }
   return <Chip size="small" color={categoria.color} label={categoria.etiqueta} />
 }

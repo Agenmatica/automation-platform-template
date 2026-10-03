@@ -1,8 +1,21 @@
 import { render, screen } from '@testing-library/react'
 import type { EstadoInteraccion } from '@platform/ia'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ESTADOS_NECESITAN_ACCION_HUMANA } from './estadosNecesitanAccionHumana'
 import { InsigniaEstadoInteraccionIA } from './InsigniaEstadoInteraccionIA'
+
+function mockPrefiereMenosMovimiento(prefiere: boolean) {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: prefiere && query === '(prefers-reduced-motion: reduce)',
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+}
 
 const CASOS: Array<[EstadoInteraccion, string]> = [
   ['iniciada', 'En curso'],
@@ -18,6 +31,10 @@ const CASOS: Array<[EstadoInteraccion, string]> = [
 ]
 
 describe('InsigniaEstadoInteraccionIA', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it.each(CASOS)('muestra una etiqueta para el estado %s', (estado, etiquetaEsperada) => {
     render(<InsigniaEstadoInteraccionIA estado={estado} />)
 
@@ -52,6 +69,20 @@ describe('InsigniaEstadoInteraccionIA', () => {
     render(<InsigniaEstadoInteraccionIA estado="completada" />)
 
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
+
+  it('respeta prefers-reduced-motion: el indicador de progreso deja de animarse', () => {
+    mockPrefiereMenosMovimiento(true)
+    render(<InsigniaEstadoInteraccionIA estado="invocando" />)
+
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow')
+  })
+
+  it('anima el indicador de progreso cuando no hay preferencia de movimiento reducido', () => {
+    mockPrefiereMenosMovimiento(false)
+    render(<InsigniaEstadoInteraccionIA estado="invocando" />)
+
+    expect(screen.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow')
   })
 
   it.each(ESTADOS_NECESITAN_ACCION_HUMANA)(

@@ -56,4 +56,14 @@ describe('AccionesResolucionInteraccionIA', () => {
 
     expect(onResuelto).not.toHaveBeenCalled()
   })
+
+  it('anuncia el error dinámicamente para lectores de pantalla (aria-live)', async () => {
+    vi.mocked(supabaseClient.rpc).mockResolvedValue({ data: null, error: { message: 'boom' } } as never)
+    render(<AccionesResolucionInteraccionIA interaccionId="int-1" estado="revision_humana" onResuelto={vi.fn()} />)
+
+    screen.getByRole('button', { name: 'Rechazar' }).click()
+
+    expect(await screen.findByRole('status')).toHaveTextContent('boom')
+  })
+
 })

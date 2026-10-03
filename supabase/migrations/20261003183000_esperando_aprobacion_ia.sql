@@ -39,6 +39,13 @@ begin
   if jsonb_typeof(p_detalle_sanitizado) <> 'object' then raise exception 'Detalle IA inválido' using errcode = '22023'; end if;
   select estado into v_actual from public.ia_interacciones where id = p_interaccion_id for update;
   if v_actual is null then raise exception 'Interacción IA inexistente' using errcode = '22023'; end if;
+  -- Resolver una revisión humana o una aprobación pendiente es, por diseño,
+  -- una decisión de superadmin exclusivamente vía resolver_revision_ia — el
+  -- rol workers_orquestacion puede llamar esta función para el resto del
+  -- ciclo de vida, pero no para saltearse esa aprobación.
+  if v_actual in ('revision_humana', 'esperando_aprobacion') and p_estado in ('completada', 'rechazada', 'cancelada') and not private.is_superadmin() then
+    raise exception 'Solo el superadmin puede resolver una revisión o aprobación pendiente' using errcode = '42501';
+  end if;
   if not ((v_actual = 'iniciada' and p_estado in ('preparando','rechazada','cancelada')) or (v_actual = 'preparando' and p_estado in ('invocando','rechazada','cancelada')) or (v_actual = 'invocando' and p_estado in ('respuesta_validada','fallida_tecnica','revision_humana','rechazada')) or (v_actual = 'respuesta_validada' and p_estado in ('completada','rechazada','revision_humana','esperando_aprobacion')) or (v_actual = 'revision_humana' and p_estado in ('completada','rechazada','cancelada')) or (v_actual = 'esperando_aprobacion' and p_estado in ('completada','rechazada','cancelada'))) then raise exception 'Transición IA inválida' using errcode = '22023'; end if;
   select coalesce(max(secuencia), 0) + 1 into v_secuencia from public.ia_eventos_interaccion where interaccion_id = p_interaccion_id;
   insert into public.ia_eventos_interaccion (interaccion_id, secuencia, tipo, detalle_sanitizado) values (p_interaccion_id, v_secuencia, p_estado, p_detalle_sanitizado);

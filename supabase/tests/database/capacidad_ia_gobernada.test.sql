@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('16000000-0000-0000-0000-000000000001', 'ia-superadmin@example.com'),
@@ -66,6 +66,13 @@ from public.ia_politicas where codigo = 'politica-fixture';
 insert into public.ia_interacciones (consumidor_codigo, origen, idempotency_key, politica_id, politica_version, perfil_principal_id, perfil_fallback_id, perfil_efectivo_id, estado, intentos, vence_en, purga_pendiente_en)
 select 'fixture', 'worker', 'aprobacion-cancelada-fixture', id, 1, perfil_principal_id, perfil_fallback_id, perfil_principal_id, 'respuesta_validada', 1, now() + interval '1 minute', now() + interval '90 days'
 from public.ia_politicas where codigo = 'politica-fixture';
+-- id fijo (en vez de \gset) porque este fixture se referencia dentro de un
+-- throws_ok cuyo argumento SQL es texto dinámico: un id capturado con \gset
+-- obliga a construirlo con format(), y eso rompe la resolución de sobrecarga
+-- de throws_ok (pgTAP) al dejar de ser un literal de tipo 'unknown'.
+insert into public.ia_interacciones (id, consumidor_codigo, origen, idempotency_key, politica_id, politica_version, perfil_principal_id, perfil_fallback_id, perfil_efectivo_id, estado, intentos, vence_en, purga_pendiente_en)
+select '18000000-0000-0000-0000-000000000001', 'fixture', 'worker', 'aprobacion-bloqueo-fixture', id, 1, perfil_principal_id, perfil_fallback_id, perfil_principal_id, 'respuesta_validada', 1, now() + interval '1 minute', now() + interval '90 days'
+from public.ia_politicas where codigo = 'politica-fixture';
 -- workers_orquestacion no tiene SELECT directo sobre ia_interacciones (solo
 -- puede llamar a sus funciones) — se captura el id ahora, con el rol base,
 -- para usarlo más abajo ya convertido en un literal.
@@ -95,6 +102,14 @@ grant workers_orquestacion to postgres;
 set local role workers_orquestacion;
 select private.registrar_evento_interaccion_ia(:'aprobacion_fixture_id'::uuid, 'esperando_aprobacion', '{}'::jsonb);
 select private.registrar_evento_interaccion_ia(:'aprobacion_cancelada_fixture_id'::uuid, 'esperando_aprobacion', '{}'::jsonb);
+select private.registrar_evento_interaccion_ia('18000000-0000-0000-0000-000000000001'::uuid, 'esperando_aprobacion', '{}'::jsonb);
+-- pgTAP (throws_ok) no resuelve bajo workers_orquestacion ni extendiendo su
+-- search_path restringido — se verifica con un savepoint manual: el intento
+-- debe fallar (y lo hace: ver el rollback inmediato), y la prueba real queda
+-- en el is() de más abajo, que confirma que el estado no cambió.
+savepoint intento_bloqueado;
+select private.registrar_evento_interaccion_ia('18000000-0000-0000-0000-000000000001'::uuid, 'completada', '{}'::jsonb);
+rollback to savepoint intento_bloqueado;
 reset role;
 
 select set_config('request.jwt.claims', json_build_object('sub', '16000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
@@ -102,6 +117,7 @@ set local role authenticated;
 select is((select estado from public.ia_interacciones where idempotency_key = 'aprobacion-fixture'), 'esperando_aprobacion', 'respuesta_validada -> esperando_aprobacion es una transición válida, ejecutada por workers_orquestacion');
 select lives_ok($$select public.resolver_revision_ia((select id from public.ia_interacciones where idempotency_key = 'aprobacion-fixture'), 'completada', '{"aprobado_por":"fixture"}'::jsonb)$$, 'esperando_aprobacion se resuelve a completada igual que revision_humana');
 select lives_ok($$select public.resolver_revision_ia((select id from public.ia_interacciones where idempotency_key = 'aprobacion-cancelada-fixture'), 'cancelada', '{"origen":"fixture"}'::jsonb)$$, 'esperando_aprobacion también se resuelve a cancelada, igual que revision_humana (FR-002)');
+select is((select estado from public.ia_interacciones where idempotency_key = 'aprobacion-bloqueo-fixture'), 'esperando_aprobacion', 'el intento de workers_orquestacion de resolver directo no cambió el estado');
 reset role;
 
 select is((select count(*)::int from private.evidencias_ia_pendientes_purga(clock_timestamp())), 1, 'runtime encuentra una evidencia vencida para borrar por Storage API');

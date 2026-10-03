@@ -19,6 +19,8 @@ alter table public.ia_interacciones add constraint ia_interacciones_estado_check
 
 Ninguna rama existente cambia.
 
+**Guarda de autorización agregada (hallazgo de `authz-security`, no estaba en el plan original)**: resolver una `revision_humana` o `esperando_aprobacion` (destino `completada`/`rechazada`/`cancelada`) ahora exige `private.is_superadmin()` explícitamente, además del chequeo general de `workers_orquestacion` o superadmin al tope de la función. Sin esto, `workers_orquestacion` podía llamar `registrar_evento_interaccion_ia` directo y resolver una interacción pendiente de aprobación sin pasar por `resolver_revision_ia` — exactamente el control que esta funcionalidad existe para dar. El gap ya existía para `revision_humana` antes de esta spec; se cierra ahora para ambos estados a la vez porque se está tocando esta misma tabla de transiciones.
+
 ## Componentes de UI (sin entidad de datos nueva)
 
 ### `InsigniaEstadoInteraccionIA`
