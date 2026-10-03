@@ -1,5 +1,6 @@
 export * from './types.js'
 export * from './sanitizar.js'
+export * from './contextoOrganizacion.js'
 export * from './validarContrato.js'
 export * from './configuracion.js'
 export * from './proveedores/index.js'

@@ -36,6 +36,18 @@ Para evidencias, implementar el repositorio de `purgarEvidenciasVencidas` con
 la API de Storage: primero eliminar el objeto privado y después confirmar la
 limpieza en base. Nunca borrar `storage.objects` desde SQL.
 
+## Aislamiento por organización
+
+Un contrato puede declarar `claveAislamientoOrganizacion`: el nombre del campo
+que, dentro de los datos de entrada, identifica a qué organización pertenece
+un dato. `prepararInvocacion` recibe entonces un sexto parámetro opcional,
+`contextoOrganizacion: { organizacionId }` — resuelto por el consumidor del
+lado del servidor (p. ej. `private.organizacion_id()`), **nunca** desde los
+datos de entrada ni desde el prompt — y rechaza la invocación si algún dato,
+en cualquier nivel de anidamiento, referencia una organización distinta.
+Sin esa clave declarada, el comportamiento es idéntico al de un consumidor
+que no maneja datos organizacionales: ningún chequeo nuevo.
+
 ## Límites de esta capacidad
 
 La biblioteca no elige casos de negocio, no implementa navegación ni expone

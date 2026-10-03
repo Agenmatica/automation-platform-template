@@ -13,11 +13,11 @@ description: "Task list template for feature implementation"
 
 ## Phase 1: Setup
 
-- [ ] T001 Ninguna tarea de setup: se extiende `packages/ia` existente, sin paquete ni dependencia nueva.
+- [x] T001 Ninguna tarea de setup: se extiende `packages/ia` existente, sin paquete ni dependencia nueva.
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T002 Agregar `ContextoOrganizacion` y el campo opcional `claveAislamientoOrganizacion?: string | null` a `ContratoConsumidor` en `packages/ia/src/types.ts`.
+- [x] T002 Agregar `ContextoOrganizacion` y el campo opcional `claveAislamientoOrganizacion?: string | null` a `ContratoConsumidor` en `packages/ia/src/types.ts`.
 
 **Checkpoint**: tipos listos.
 
@@ -29,17 +29,17 @@ description: "Task list template for feature implementation"
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T003 [P] [US1] Test "organización coincide, pasa con normalidad" en `packages/ia/src/contextoOrganizacion.test.ts` (quickstart Escenario 1).
-- [ ] T004 [P] [US1] Test "organización distinta en el nivel raíz se rechaza" en `packages/ia/src/contextoOrganizacion.test.ts`.
-- [ ] T005 [P] [US1] Test "organización distinta anidada dentro de un array se rechaza" en `packages/ia/src/contextoOrganizacion.test.ts` (quickstart Escenario 2).
-- [ ] T006 [P] [US1] Test "sin clave de aislamiento declarada, cualquier dato pasa sin chequeo" en `packages/ia/src/contextoOrganizacion.test.ts` (quickstart Escenario 3).
-- [ ] T007 [P] [US1] Test "clave declarada ausente en los datos de entrada no rechaza" (Edge Case de la spec) en `packages/ia/src/contextoOrganizacion.test.ts`.
+- [x] T003 [P] [US1] Test "organización coincide, pasa con normalidad" en `packages/ia/src/contextoOrganizacion.test.ts` (quickstart Escenario 1).
+- [x] T004 [P] [US1] Test "organización distinta en el nivel raíz se rechaza" en `packages/ia/src/contextoOrganizacion.test.ts`.
+- [x] T005 [P] [US1] Test "organización distinta anidada dentro de un array se rechaza" en `packages/ia/src/contextoOrganizacion.test.ts` (quickstart Escenario 2).
+- [x] T006 [P] [US1] Test "sin clave de aislamiento declarada, cualquier dato pasa sin chequeo" en `packages/ia/src/contextoOrganizacion.test.ts` (quickstart Escenario 3).
+- [x] T007 [P] [US1] Test "clave declarada ausente en los datos de entrada no rechaza" (Edge Case de la spec) en `packages/ia/src/contextoOrganizacion.test.ts`.
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Crear `validarAislamientoOrganizacion(entrada, claveAislamiento, contexto)` en `packages/ia/src/contextoOrganizacion.ts`: recorrido recursivo igual al de `sanitizarDato`, lanza `ORGANIZACION_IA_NO_AUTORIZADA` si corresponde (depende de T002).
-- [ ] T009 [US1] Llamar `validarAislamientoOrganizacion` dentro de `prepararInvocacion` (`packages/ia/src/ejecutar.ts`), después de `validarPresupuesto` y antes de `sanitizarDato`, con el nuevo parámetro opcional `contextoOrganizacion` (default `{ organizacionId: null }`) (depende de T008).
-- [ ] T010 [US1] Re-exportar `contextoOrganizacion.ts` desde `packages/ia/src/index.ts`.
+- [x] T008 [US1] Crear `validarAislamientoOrganizacion(entrada, claveAislamiento, contexto)` en `packages/ia/src/contextoOrganizacion.ts`: recorrido recursivo igual al de `sanitizarDato`, lanza `ORGANIZACION_IA_NO_AUTORIZADA` si corresponde (depende de T002).
+- [x] T009 [US1] Llamar `validarAislamientoOrganizacion` dentro de `prepararInvocacion` (`packages/ia/src/ejecutar.ts`), después de `validarPresupuesto` y antes de `sanitizarDato`, con el nuevo parámetro opcional `contextoOrganizacion` (default `{ organizacionId: null }`) (depende de T008).
+- [x] T010 [US1] Re-exportar `contextoOrganizacion.ts` desde `packages/ia/src/index.ts`.
 
 **Checkpoint**: Historia 1 funcional e independientemente testeable — MVP.
 
@@ -51,20 +51,20 @@ description: "Task list template for feature implementation"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T011 [P] [US2] Test "un campo de entrada que coincide con la clave de aislamiento y con un valor de otra organización se rechaza, sin importar qué otros campos acompañen" (confirma que no hay forma de que el dato de entrada redefina la organización efectiva) en `packages/ia/src/contextoOrganizacion.test.ts`.
+- [x] T011 [P] [US2] Test "un campo de entrada que coincide con la clave de aislamiento y con un valor de otra organización se rechaza, sin importar qué otros campos acompañen" (confirma que no hay forma de que el dato de entrada redefina la organización efectiva) en `packages/ia/src/contextoOrganizacion.test.ts`.
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Ninguna — ya la satisface la implementación de US1 por construcción (la función nunca lee `contexto.organizacionId` desde `entrada`, solo compara contra él). Este task es de verificación, no de código nuevo.
+- [x] T012 [US2] Ninguna — ya la satisface la implementación de US1 por construcción (la función nunca lee `contexto.organizacionId` desde `entrada`, solo compara contra él). Este task es de verificación, no de código nuevo.
 
 **Checkpoint**: ambas historias funcionan juntas.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T013 [P] Agregar a `packages/ia/README.md` una sección breve sobre `claveAislamientoOrganizacion`/`contextoOrganizacion`, con el mismo estilo que el resto del README.
-- [ ] T014 Confirmar compatibilidad: correr la suite completa de `packages/ia` (`ejecutar.test.ts`, `interacciones.test.ts`, etc.) sin modificar ningún test existente — si alguno necesitara cambiar, sería señal de una ruptura de compatibilidad no permitida por FR-005.
-- [ ] T015 Correr `pnpm --filter @platform/ia build`, `pnpm --filter @platform/ia test`, `pnpm lint`, `pnpm build`, `pnpm infra:config`, `pnpm docs:check`.
-- [ ] T016 Subir versión de `governed-ai-core` en `template-capabilities.json` y `template-adoption.json` (minor: nueva capacidad de validación, no solo un fix de empaquetado).
+- [x] T013 [P] Agregar a `packages/ia/README.md` una sección breve sobre `claveAislamientoOrganizacion`/`contextoOrganizacion`, con el mismo estilo que el resto del README.
+- [x] T014 Confirmar compatibilidad: correr la suite completa de `packages/ia` (`ejecutar.test.ts`, `interacciones.test.ts`, etc.) sin modificar ningún test existente — si alguno necesitara cambiar, sería señal de una ruptura de compatibilidad no permitida por FR-005.
+- [x] T015 Correr `pnpm --filter @platform/ia build`, `pnpm --filter @platform/ia test`, `pnpm lint`, `pnpm build`, `pnpm infra:config`, `pnpm docs:check`.
+- [x] T016 Subir versión de `governed-ai-core` en `template-capabilities.json` y `template-adoption.json` (minor: nueva capacidad de validación, no solo un fix de empaquetado).
 
 ## Dependencies & Execution Order
 
