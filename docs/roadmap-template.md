@@ -177,14 +177,15 @@ necesitando justo esta función".
 | 26 | P3 | Testing de carga/performance | H2 | E2E en CI | Primer flujo crítico con expectativa real de concurrencia o volumen (no solo corrección funcional). | Condicional (solo si hay expectativa real de carga) | Línea base de performance versionada (umbral de latencia/throughput) que corre bajo demanda, no en cada PR. | Exploración |
 | 27 | P2 | Centro de notificaciones in-app | H2 | Notificaciones (#18) | Primer aviso que un usuario necesita ver sin salir del panel (no solo por correo). | Condicional (solo si el producto necesita avisos visibles dentro de la app) | Lista de notificaciones dentro del panel (campanita, marcar como leído) que consume lo que #18 ya dispara; #18 resuelve el envío, esto resuelve dónde se ve. | Exploración |
 | 28 | P3 | Alta de organización autoservicio | H4 | Organizaciones, roles y RLS | Un producto derivado necesita que una organización se dé de alta sin intervención de un superadmin. | Condicional (hoy todo producto deriva organizaciones por provisión manual, modelo deliberado de consultoría) | Flujo de signup público que crea organización y primer admin sin RPC manual. | Exploración |
+| 29 | P2 | Búsqueda global en el panel | H2 | Multi-tenancy | Varias organizaciones con volumen real de datos, donde cruzar entidades (miembros, ejecuciones, documentos) ya no entra en una sola pantalla. | Condicional (solo si hay volumen real de datos a cruzar) | Barra de búsqueda que cruza entidades del panel con los mismos límites de organización activa que ya aplica RLS — no reemplaza #21 (búsqueda semántica sobre documentos para IA). | Exploración |
 
 H1 = Convertir la base en derivable · H2 = Operar un producto con confianza ·
 H3 = Capacidad AI-first segura · H4 = Capacidades activadas por demanda.
 
-8 de los 28 ítems son **Inevitables**: en cuanto exista un primer producto
+8 de los 29 ítems son **Inevitables**: en cuanto exista un primer producto
 derivado y avance por su ciclo de vida normal (creado → desplegado → en
 producción con datos reales), los va a cruzar sin importar a qué se dedique.
-Los otros 20 son **Condicionales**: dependen de que ese producto elija
+Los otros 21 son **Condicionales**: dependen de que ese producto elija
 construir justo esa función (IA, documentos, integraciones, notificaciones,
 un segundo producto, tráfico no confiable, volumen real, alta autoservicio)
 — pueden tardar mucho más o no llegar a activarse nunca. Ninguna de las dos categorías necesita saber el dominio de antemano;
