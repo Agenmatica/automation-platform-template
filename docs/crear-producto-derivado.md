@@ -111,6 +111,10 @@ una abstracción prematura del template.
   empezar.
 - Ningún secreto real del template (nunca los tuvo commiteados; tampoco el
   fork debería).
+- Los `AGENTS.md`/`CLAUDE.md` se resuelven a mano en cada `merge
+  upstream/main`: se conserva la redacción del producto y se incorpora lo
+  genérico útil que traiga el template (ej. una sección de ahorro de tokens),
+  nunca al revés.
 
 ## Verificación final
 
