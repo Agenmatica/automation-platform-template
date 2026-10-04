@@ -15,12 +15,13 @@ graphify codex install             # nudge always-on Codex (AGENTS.md)
 graphify opencode install          # plugin always-on OpenCode
 ```
 
-## Generar (por repo, local, 0 tokens)
+## Generar (por clon o worktree, local, 0 tokens)
 
 ```powershell
-graphify extract . --code-only --no-viz        # solo código, sin LLM
-graphify cluster-only . --no-label --no-viz    # GRAPH_REPORT.md sin costo
+pnpm grafo:init   # = extract --code-only + hook install
 ```
+
+O manual: `graphify extract . --code-only --no-viz` y `graphify hook install`.
 
 `.gitignore` ya excluye `node_modules/` (se respeta solo); `.graphifyignore`
 agrega generados. `graphify-out/` nunca se commitea.
