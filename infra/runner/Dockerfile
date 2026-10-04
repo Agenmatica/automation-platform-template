@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       > /etc/apt/sources.list.d/docker.list \
     && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get update && apt-get install -y --no-install-recommends \
-      docker-ce-cli docker-compose-plugin nodejs \
+      docker-ce-cli docker-compose-plugin docker-buildx-plugin nodejs \
       postgresql-client libtap-parser-sourcehandler-pgtap-perl \
     && npm install -g pnpm@11.19.0 \
     && rm -rf /var/lib/apt/lists/*
