@@ -160,6 +160,10 @@ otros productos de la máquina: una dependencia se descarga una sola vez. Para
 aislar un producto, darle otro nombre en su `.env`. Compartirlo no amplía la
 confianza: los runners ya montan el socket de Docker del host.
 
+**Buildx obligatorio.** La imagen (`infra/runner/Dockerfile`) incluye
+`docker-buildx-plugin`: el workflow de imágenes de workers lo exige para
+provenance y SBOM, y sin él falla en main.
+
 Es seguro con instalaciones en paralelo (verificado en el código de pnpm
 11.19.0): cada archivo del store se nombra por su hash y se escribe en modo
 exclusivo o con temporal + `rename` atómico; si dos procesos escriben el mismo
