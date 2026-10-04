@@ -20,8 +20,13 @@ docs/pdf/
 Thumbs.db
 *.log
 
+# Grafo local de código (Graphify, ahorro de tokens): se regenera con
+# `graphify extract . --code-only`, nunca se commitea.
+graphify-out/
+
 # Agent-local state; shared skills and instructions remain versioned.
 .claude/settings.local.json
+.claude/settings.json
 .codex/
 
 # Workdir generado del stack de Supabase propio del CI (scripts/supabase-ci.mjs).

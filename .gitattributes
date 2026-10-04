@@ -5,3 +5,4 @@
 *.toml text eol=lf
 Dockerfile text eol=lf
 *.ps1 text eol=crlf
+graphify-out/graph.json merge=graphify

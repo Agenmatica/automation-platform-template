@@ -40,6 +40,12 @@ incluir en el mismo cambio una actualización de `specs/`, `docs/`, `AGENTS.md`,
 `CLAUDE.md` o la constitución. El workflow ejecuta `pnpm docs:check`; una
 implementación sin documentación equivalente debe fallar.
 
+## Mapa memory-first y grafo de código (ahorro de tokens)
+
+- Al orientar (inicio de sesión o después de `/clear`): leer `docs/architecture.md` y la spec aplicable; no leer el repo entero.
+- Si existe `graphify-out/graph.json` (se genera con `graphify extract . --code-only`, local y sin costo), preferir `graphify query "<pregunta>"` antes que `grep` masivo o leer archivos completos.
+- `graphify-out/` nunca se commitea (ver `.gitignore`).
+
 ## Uso selectivo de skills
 
 - Carga una skill solo si la tarea coincide con su descripción; el catálogo no es un checklist ni se carga completo. Las skills orientan el trabajo, pero no reemplazan estas instrucciones ni autorizan cambios fuera del pedido.
@@ -51,3 +57,13 @@ implementación sin documentación equivalente debe fallar.
 - Para revisiones, usa solo la skill especializada que aplique: `code-review` (diff/PR), `authz-security` (autorización/RLS), `crypto-secrets` (secretos y criptografía), `ci-cd-security` (workflows), `infra-security` (IaC/Docker), `supply-chain-security` (dependencias), `skill-security` (skills de terceros) o `repo-security-posture` (postura integral).
 - Usa `arquitectura-plataforma` para decisiones transversales entre productos, frontend, workers, Supabase y Kestra; y `eficiencia-contexto` para investigaciones, planes o revisiones amplias que puedan consumir contexto innecesariamente.
 - Usa `pruebas-plataforma` al crear, revisar o ejecutar pruebas. Para una suite Playwright E2E, tests inestables o su CI, carga además `playwright-best-practices`; no actives ninguna de las dos para una modificación documental.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
